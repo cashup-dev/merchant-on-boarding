@@ -27,7 +27,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
         // Kalo udah login tapi mau akses halaman public
         if (data.authenticated && isPublicPath) {
-          router.replace('/dashboard');
+          router.replace('/');
           return;
         }
         

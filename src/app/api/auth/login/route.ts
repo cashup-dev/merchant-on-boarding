@@ -6,8 +6,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const res = await apiServer.post('/user/login', body);
-    const token = res.data.token;
-
+    const token = res.data.data.token;
+    console.log('Token:', token);
     const response = NextResponse.json({ success: true });
 
     response.cookies.set('token', token, {

@@ -1,66 +1,54 @@
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { verify } from 'jsonwebtoken';
+import { sign } from 'jsonwebtoken';
+// file: middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { json } from 'stream/consumers';
 
-const PUBLIC_PATHS = ['/signin', '/signup', '/forgot-password'];
-const PRIVATE_PATHS = ['/dashboard', '/profile', '/settings'];
+const protectedRoutes = ['/dashboard', '/profile'] // Rute yang perlu proteksi
+const authRoutes = ['/signin', '/signup'] // Rute autentikasi
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const token = request.cookies.get('token')?.value;
-  
-  // Skip API routes
-  if (pathname.startsWith('/api')) {
-    return NextResponse.next();
-  }
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const accessToken = request.cookies.get('token')?.value
+  console.log('Access Token:', accessToken?.length);
+  // Jika mencoba akses rute protected tanpa token
+  if (protectedRoutes.some(route => pathname.startsWith(route))) {
+    if (!accessToken) {
+      const signinUrl = new URL('/signin', request.url)
+      signinUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(signinUrl)
+    }
 
-  // Skip public assets
-  if (pathname.startsWith('/_next') || pathname.startsWith('/favicon.ico')) {
-    return NextResponse.next();
-  }
-
-  const isPublicPath = PUBLIC_PATHS.includes(pathname);
-  const isPrivatePath = PRIVATE_PATHS.some(path => pathname.startsWith(path));
-
-  // Kalo route gak perlu protection
-  if (!isPublicPath && !isPrivatePath) {
-    return NextResponse.next();
-  }
-
-  // Kalo udah login tapi mau ke public path
-  if (token && isPublicPath) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  // Kalo belum login tapi mau ke private path
-  if (!token && isPrivatePath) {
-    return NextResponse.redirect(new URL('/signin', request.url));
-  }
-
-  // Kalo ada token, validasi
-  if (token && isPrivatePath) {
     try {
-      // Validasi JWT
-      verify(token, process.env.JWT_SECRET!);
-      return NextResponse.next();
+      // Verifikasi token (gunakan library JWT atau API route)
+      // Contoh sederhana, sebaiknya panggil API route untuk verifikasi
+      // const isValid = await verifyToken(accessToken)
+      // if (!isValid) throw new Error('Invalid token')
     } catch (err) {
-      console.error('Invalid token:', err);
-      const response = NextResponse.redirect(new URL('/signin', request.url));
-      response.cookies.delete('token');
-      return response;
+      // Token tidak valid
+      const signinUrl = new URL('/signin', request.url)
+      signinUrl.searchParams.set('error', 'session_expired')
+      const response = NextResponse.redirect(signinUrl)
+      response.cookies.delete('accessToken')
+      return response
     }
   }
 
-  return NextResponse.next();
+  // Jika sudah signin tapi mencoba akses rute auth
+  if (authRoutes.includes(pathname) && accessToken) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  return NextResponse.next()
 }
 
+// Config untuk menentukan rute yang akan diproses middleware
 export const config = {
   matcher: [
+    '/',
+    '/profile/:path*',
     '/signin',
     '/signup',
-    '/dashboard/:path*',
-    '/profile/:path*',
-    '/settings/:path*'
-  ]
-};
+    '/forgot-password',
+  ],
+}
