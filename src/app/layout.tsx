@@ -3,6 +3,7 @@ import './globals.css';
 
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { Toaster } from 'sonner'; // ✅ tambahkan ini
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} dark:bg-gray-900`}>
+        <Toaster position="top-center" richColors closeButton /> {/* ✅ tambahkan ini */}
         <ThemeProvider>
           <SidebarProvider>{children}</SidebarProvider>
         </ThemeProvider>
