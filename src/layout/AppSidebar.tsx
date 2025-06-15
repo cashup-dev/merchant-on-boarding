@@ -18,7 +18,8 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
-import { Percent } from 'lucide-react';
+import { Percent, Store, CreditCard } from 'lucide-react';
+
 
 type NavItem = {
   name: string;
@@ -67,6 +68,16 @@ const navItems: NavItem[] = [
     icon: <Percent />,
     path: "/promo-management",
   },
+  {
+    name: "Merchant Binding",
+    icon: <Store />,
+    path: "/merchant-management",
+  },
+  {
+    name: "BIN Binding",
+    icon: <CreditCard />,
+    path: "/bin-management",
+  }
 ];
 
 const othersItems: NavItem[] = [

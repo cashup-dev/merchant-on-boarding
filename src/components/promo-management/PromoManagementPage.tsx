@@ -25,7 +25,7 @@ export default function PromoManagementPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
-  const fetchPromos = async () => {
+  const fetchPromos = useCallback(async () => {
     setLoading(true);
     try {
       const token = document.cookie
@@ -43,17 +43,18 @@ export default function PromoManagementPage() {
       if (!res.ok) throw new Error(data.message || "Request failed");
 
       setPromoList(data.data?.data || []);
+      setErrorMsg("");
     } catch (err: any) {
       console.error("❌ Failed to fetch promos", err);
       setErrorMsg(err.message || "Gagal ambil data");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPromos();
-  }, []);
+  }, [fetchPromos]);
 
   const handleCreate = () => {
     router.push("/promo-management/create");
@@ -64,25 +65,17 @@ export default function PromoManagementPage() {
     router.push(`/promo-management/edit?data=${encoded}`);
   };
 
-  const handleDelete = (id: number) => {
-    console.log("🗑️ Delete promo ID:", id);
+  const handleStatusChange = async (promoId: number, isActive: boolean) => {
+    await fetchPromos(); // Refresh data setelah status berubah
   };
 
   const handleMerchantBinding = useCallback((promo: Promo) => {
-    console.log("🔄 Navigating to merchant binding with promo:", promo.id);
     router.push(`/promo-management/merchant-bind?promoId=${promo.id}`);
   }, [router]);
 
   const handleBinBinding = useCallback((promo: Promo) => {
-    console.log("🔄 Navigating to bin binding with promo:", promo.id);
     router.push(`/promo-management/bin-bind?promoId=${promo.id}`);
   }, [router]);
-
-  console.log("🔄 Rendering PromoManagementPage", {
-    promoCount: promoList.length,
-    loading,
-    errorMsg
-  });
 
   return (
     <div className="p-6">
@@ -99,9 +92,9 @@ export default function PromoManagementPage() {
         <PromoTable
           data={promoList}
           onEdit={handleEdit}
-          onDelete={handleDelete}
           onMerchantBind={handleMerchantBinding}
           onBinBind={handleBinBinding}
+          onStatusChange={handleStatusChange}
         />
       ) : (
         <NoData message="No promo data found." />

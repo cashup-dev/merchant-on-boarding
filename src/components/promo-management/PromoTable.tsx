@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 
 type Promo = {
@@ -19,10 +19,10 @@ type Promo = {
 
 type Props = {
   data: Promo[];
-  onEdit?: (promo: Promo) => void;
-  onDelete?: (id: number) => void;
-  onMerchantBind?: (promo: Promo) => void;
-  onBinBind?: (promo: Promo) => void;
+  onEdit?: (promo: Promo) => Promise<void> | void;
+  onMerchantBind?: (promo: Promo) => Promise<void> | void;
+  onBinBind?: (promo: Promo) => Promise<void> | void;
+  onStatusChange?: (promoId: number, isActive: boolean) => Promise<void>;
 };
 
 function formatDate(dateStr?: string) {
@@ -32,46 +32,117 @@ function formatDate(dateStr?: string) {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+  }); 
 }
 
 export default function PromoTable({
   data,
   onEdit,
-  onDelete,
   onMerchantBind,
   onBinBind,
+  onStatusChange,
 }: Props) {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<number | null>(null);
+  const [loadingAction, setLoadingAction] = useState<{
+    id: number | null;
+    action: string | null;
+  }>({ id: null, action: null });
   const router = useRouter();
 
-  console.log("🔧 PromoTable props:", {
-    hasMerchantBind: !!onMerchantBind,
-    hasBinBind: !!onBinBind,
-    dataLength: data.length
-  });
-
   const toggleDropdown = (id: number) => {
-    setOpenDropdownId((prev) => (prev === id ? null : id));
-  };
-
-  const handleMerchantBind = (promo: Promo) => {
-    console.log("🔘 Merchant bind initiated for:", promo.id);
-    if (onMerchantBind) {
-      onMerchantBind(promo);
-    } else {
-      console.warn("No merchant bind handler, using fallback");
-      router.push(`/promo-management/merchant-bind?promoId=${promo.id}`);
+    if (!loadingAction.id) { // Hanya boleh toggle kalo gak ada yang loading
+      setOpenDropdownId((prev) => (prev === id ? null : id));
     }
   };
 
-  const handleBinBind = (promo: Promo) => {
-    console.log("🔘 Bin bind initiated for:", promo.id);
-    if (onBinBind) {
-      onBinBind(promo);
-    } else {
-      console.warn("No bin bind handler, using fallback");
-      router.push(`/promo-management/bin-bind?promoId=${promo.id}`);
+  const simulateLoading = () => {
+    return new Promise(resolve => setTimeout(resolve, 800)); // Simulasi loading 0.8 detik
+  };
+
+  const handleMerchantBind = async (promo: Promo) => {
+    setLoadingAction({ id: promo.id, action: 'merchant' });
+    try {
+      await simulateLoading(); // Tambah delay biar loading keliatan
+      
+      if (onMerchantBind) {
+        await onMerchantBind(promo);
+      } else {
+        router.push(`/promo-management/merchant-bind?promoId=${promo.id}`);
+      }
+    } finally {
+      setLoadingAction({ id: null, action: null });
+    }
+  };
+
+  const handleBinBind = async (promo: Promo) => {
+    setLoadingAction({ id: promo.id, action: 'bin' });
+    try {
+      await simulateLoading(); // Tambah delay biar loading keliatan
+      
+      if (onBinBind) {
+        await onBinBind(promo);
+      } else {
+        router.push(`/promo-management/bin-bind?promoId=${promo.id}`);
+      }
+    } finally {
+      setLoadingAction({ id: null, action: null });
+    }
+  };
+
+  const handleEdit = async (promo: Promo) => {
+    setLoadingAction({ id: promo.id, action: 'edit' });
+    try {
+      await simulateLoading(); // Tambah delay biar loading keliatan
+      
+      if (onEdit) {
+        await onEdit(promo);
+      }
+    } finally {
+      setLoadingAction({ id: null, action: null });
+    }
+  };
+
+  const handleStatusChange = async (promoId: number, isActive: boolean) => {
+    setLoadingStatus(promoId);
+    try {
+      await simulateLoading(); // Tambah delay biar loading keliatan
+      
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+  
+      if (!token) {
+        throw new Error("Token not found");
+      }
+  
+      const res = await fetch(`/api/promo/activate/${promoId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isActive }),
+      });
+  
+      const data = await res.json();
+      
+      if (!res.ok) {
+        console.error("Error details:", data);
+        throw new Error(data.message || `Request failed with status ${res.status}`);
+      }
+  
+      if (onStatusChange) {
+        await onStatusChange(promoId, isActive);
+      }
+      
+      alert(`Status promo berhasil diubah ke ${isActive ? 'active' : 'inactive'}`);
+    } catch (err: any) {
+      console.error("Gagal update status:", err);
+      alert(`Error: ${err.message}\nCek console untuk detail`);
+    } finally {
+      setLoadingStatus(null);
     }
   };
 
@@ -89,7 +160,8 @@ export default function PromoTable({
             <th className="px-4 py-3">Channel</th>
             <th className="px-4 py-3">Valid From</th>
             <th className="px-4 py-3">Valid To</th>
-            <th className="px-4 py-3 text-center">Action</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3 text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -106,6 +178,7 @@ export default function PromoTable({
                 channelType = "-",
                 validFrom,
                 validTo,
+                isActive = false,
               } = promo;
 
               const formattedValue =
@@ -114,9 +187,12 @@ export default function PromoTable({
                   : `Rp${promoValue.toLocaleString("id-ID")}`;
 
               const isOpen = openDropdownId === id;
+              const isLoadingStatus = loadingStatus === id;
+              const isLoadingAction = loadingAction.id === id;
+              const currentAction = loadingAction.action;
 
               return (
-                <tr key={id} className="border-t">
+                <tr key={id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">{name}</td>
                   <td className="px-4 py-3">{promoType}</td>
                   <td className="px-4 py-3">{formattedValue}</td>
@@ -132,66 +208,87 @@ export default function PromoTable({
                   <td className="px-4 py-3">{channelType}</td>
                   <td className="px-4 py-3">{formatDate(validFrom)}</td>
                   <td className="px-4 py-3">{formatDate(validTo)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-center relative">
-                    <div className="inline-block text-left">
+                    <div className="flex gap-2 justify-center">
                       <button
-                        className="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-1"
-                        onClick={() => toggleDropdown(id)}
+                        onClick={() => handleEdit(promo)}
+                        className="text-blue-600 hover:underline flex items-center gap-1 min-w-[60px] justify-center"
+                        disabled={isLoadingAction}
                       >
-                        Settings
-                        <ChevronDownIcon className="w-4 h-4" />
+                        {isLoadingAction && currentAction === 'edit' ? (
+                          <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                        ) : 'Edit'}
                       </button>
 
-                      {isOpen && (
-                        <div className="absolute right-0 mt-2 z-10 bg-white shadow-md border rounded-md text-sm w-48">
-                          <button
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleMerchantBind(promo);
-                              setOpenDropdownId(null);
-                            }}
-                          >
-                            Merchant Binding
-                          </button>
-                          
-                          <button
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleBinBind(promo);
-                              setOpenDropdownId(null);
-                            }}
-                          >
-                            BIN Binding
-                          </button>
-
-                          <button
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              onEdit?.(promo);
-                              setOpenDropdownId(null);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              onDelete?.(id);
-                              setOpenDropdownId(null);
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
+                      <div className="relative">
+                        <button
+                          onClick={() => toggleDropdown(id)}
+                          className="flex items-center gap-1 text-gray-600 hover:text-black"
+                          disabled={isLoadingAction}
+                        >
+                          More <ChevronDownIcon className="w-4 h-4" />
+                        </button>
+                        {isOpen && (
+                          <div className="absolute right-0 mt-2 z-10 bg-white shadow-md border rounded-md text-sm w-48">
+                            <button
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleMerchantBind(promo);
+                                setOpenDropdownId(null);
+                              }}
+                              disabled={isLoadingAction}
+                            >
+                              {isLoadingAction && currentAction === 'merchant' ? (
+                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                              ) : null}
+                              Merchant Binding
+                            </button>
+                            <button
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleBinBind(promo);
+                                setOpenDropdownId(null);
+                              }}
+                              disabled={isLoadingAction}
+                            >
+                              {isLoadingAction && currentAction === 'bin' ? (
+                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                              ) : null}
+                              BIN Binding
+                            </button>
+                            <button
+                              className={`w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 ${
+                                isActive ? 'text-red-500' : 'text-green-500'
+                              }`}
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                await handleStatusChange(id, !isActive);
+                                setOpenDropdownId(null);
+                              }}
+                              disabled={isLoadingStatus}
+                            >
+                              {isLoadingStatus ? (
+                                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                              ) : null}
+                              {isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -199,7 +296,7 @@ export default function PromoTable({
             })
           ) : (
             <tr>
-              <td colSpan={10} className="text-center text-gray-400 py-4">
+              <td colSpan={11} className="text-center text-gray-400 py-4">
                 No data available
               </td>
             </tr>
