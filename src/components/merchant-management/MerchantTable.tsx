@@ -27,8 +27,6 @@ function formatDate(dateStr?: string) {
 }
 
 export default function MerchantTable({ data, onMerchantUnBind }: Props) {
-  const router = useRouter();
-
   return (
     <div className="overflow-auto border rounded-xl shadow-sm">
       <table className="w-full text-sm text-left text-gray-700">

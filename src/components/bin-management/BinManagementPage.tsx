@@ -7,13 +7,14 @@ import Button from "@/components/ui/button/Button";
 
 export type Bin = {
     id: number;
+    binIds?: number;
     binNumber?: number;
     promoId?: number;
     promoName?: string;
     createdAt?: string;
   };
   
-export default function MerchantManagementPage() {
+export default function BinManagementPage() {
   const [binList, setBinList] = useState<Bin[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");

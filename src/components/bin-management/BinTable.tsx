@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 export type Bin = {
     id: number;
+    binIds?: number;
     binNumber?: number;
     promoId?: number;
     promoName?: string;
