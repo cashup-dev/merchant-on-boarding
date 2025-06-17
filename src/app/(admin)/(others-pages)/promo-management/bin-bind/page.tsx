@@ -1,10 +1,10 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BinBindingForm from "@/components/promo-management/BinBindingForm";
 import { toast } from "sonner";
 
-export default function BindMerchantPage() {
+function BindMerchantPageComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const promoId = searchParams.get("promoId");
@@ -12,7 +12,9 @@ export default function BindMerchantPage() {
   if (!promoId) {
     return (
       <div className="p-6">
-        <h1 className="text-xl font-bold text-red-500">Promo ID tidak ditemukan</h1>
+        <h1 className="text-xl font-bold text-red-500">
+          Promo ID tidak ditemukan
+        </h1>
       </div>
     );
   }
@@ -28,5 +30,13 @@ export default function BindMerchantPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function BindMerchantPage() {
+  return (
+    <Suspense>
+      <BindMerchantPageComponent />
+    </Suspense>
   );
 }

@@ -4,9 +4,10 @@ import { apiServer } from "../../../../../../lib/apiServer";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     // Debugging: Log semua headers yang masuk
     const headers = {
       authorization: request.headers.get("Authorization"),
@@ -15,7 +16,7 @@ export async function POST(
     };
     console.log('📢 Request Headers:', headers);
 
-    const { id } = params;
+    const { id } = resolvedParams;
     const { isActive } = await request.json();
 
     // Cara lebih robust untuk ambil token

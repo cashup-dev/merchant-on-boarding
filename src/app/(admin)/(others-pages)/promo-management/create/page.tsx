@@ -4,11 +4,6 @@ import CreatePromoManagementForm from "@/components/promo-management/CreatePromo
 
 export default function CreatePromoPage() {
   return (
-    <CreatePromoManagementForm
-      mode="create"
-      onSuccess={() => {
-        window.location.href = "/promo-management";
-      }}
-    />
+    <CreatePromoManagementForm/>
   );
 }

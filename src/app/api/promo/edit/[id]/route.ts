@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiServer } from "../../../../../../lib/apiServer";// pastikan path ini sesuai struktur lo
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const body = await req.json();
 
   try {

@@ -34,6 +34,7 @@ export default function SelectInputs() {
           <Label>Select Input</Label>
          <div className="relative">
            <Select
+            value={options[0].value} // Set default value
             options={options}
             placeholder="Select Option"
             onChange={handleSelectChange}

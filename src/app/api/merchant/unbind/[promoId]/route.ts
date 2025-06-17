@@ -4,9 +4,10 @@ import { apiServer } from "../../../../../../lib/apiServer";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { promoId: string } }
+  { params }: { params: Promise<{ promoId: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const token = (await cookies()).get("token")?.value;
     if (!token) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -14,7 +15,7 @@ export async function DELETE(
 
     const body = await req.json();
 
-    const res = await apiServer.delete(`/merchant-bind/${params.promoId}`, {
+    const res = await apiServer.delete(`/merchant-bind/${resolvedParams.promoId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

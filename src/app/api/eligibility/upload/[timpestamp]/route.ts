@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { apiServer } from "../../../../../../lib/apiServer";
 import FormDataNode from "form-data";
 
-export async function POST(req: Request, { params }: { params: { timestamp: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ timestamp: string }> }) {
   try {
+
+    const paramsResolved = await params;
+
     const formData = await req.formData();
     const csvFile = formData.get("csvFile") as File;
 
@@ -18,7 +21,7 @@ export async function POST(req: Request, { params }: { params: { timestamp: stri
     });
 
     const uploadRes = await apiServer.post(
-      `/promo/upload-eligibility/${params.timestamp}`,
+      `/promo/upload-eligibility/${paramsResolved.timestamp}`,
       form,
       {
         headers: form.getHeaders(), // penting!

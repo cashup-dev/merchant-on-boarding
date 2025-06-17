@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import EditPromoForm from "@/components/promo-management/EditPromoForm";
 
-export default function EditPromoPage() {
+function EditPromoPageComponent() {
   const searchParams = useSearchParams();
   const [promoData, setPromoData] = useState<any>(null);
 
@@ -29,5 +29,13 @@ export default function EditPromoPage() {
         window.location.href = "/promo-management";
       }}
     />
+  );
+}
+
+export default function EditPromoPage() {
+  return (
+    <Suspense>
+      <EditPromoPageComponent />
+    </Suspense>
   );
 }
