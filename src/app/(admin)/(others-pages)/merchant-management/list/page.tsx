@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import MerchantTable, { Merchant } from "@/components/merchant-management/MerchantTable";
 import NoData from "@/components/merchant-management/NoData";
-import { toast } from "sonner"; // ✅ ganti ke sonner
+import { toast } from "sonner";
 
 export default function MerchantManagementPage() {
   const [merchantList, setMerchantList] = useState<Merchant[]>([]);
@@ -44,7 +44,7 @@ export default function MerchantManagementPage() {
     fetchMerchants();
   }, []);
 
-  const handleMerchantUnBinding = useCallback(async (merchant: Merchant) => {
+  const handleMerchantUnBinding = useCallback((merchant: Merchant) => {
     if (!merchant?.promoId || !merchant?.merchantId) {
       toast.error("Data tidak lengkap", {
         description: "Merchant ID atau Promo ID tidak ditemukan.",
@@ -52,52 +52,62 @@ export default function MerchantManagementPage() {
       return;
     }
 
-    const confirmed = confirm(
-      `Yakin ingin unbind merchant "${merchant.merchantName}" dari promo "${merchant.promoName}"?`
-    );
-    if (!confirmed) return;
+    const promoName = merchant.promoName || "-";
+    const merchantName = merchant.merchantName || "-";
 
-    const toastId = toast.loading("Unbinding merchant...");
+    toast("🗑️ Konfirmasi Unbind Merchant", {
+      id: `confirm-unbind-${merchant.merchantId}`,
+      description: `Apakah kamu yakin ingin menghapus merchant **${merchantName}** dari promo **"${promoName}"**?`,
+      action: {
+        label: "✅ Unbind Sekarang",
+        onClick: async () => {
+          const toastId = toast.loading("🚧 Sedang melakukan unbind...");
 
-    try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
+          try {
+            const token = document.cookie
+              .split("; ")
+              .find((row) => row.startsWith("token="))
+              ?.split("=")[1];
 
-      const res = await fetch(`/api/merchant/unbind/${merchant.promoId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
+            const res = await fetch(`/api/merchant/unbind/${merchant.promoId}`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: token ? `Bearer ${token}` : "",
+              },
+              body: JSON.stringify({
+                merchantIds: [String(merchant.merchantId)],
+              }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Gagal unbind merchant");
+
+            toast.success("✅ Unbind Berhasil", {
+              description: `Merchant ${merchantName} berhasil dihapus dari promo.`,
+              id: toastId,
+            });
+
+            setTimeout(() => {
+              fetchMerchants();
+            }, 500);
+          } catch (err: any) {
+            toast.error("❌ Gagal Unbind", {
+              description: err.message || "Terjadi kesalahan teknis.",
+              id: toastId,
+            });
+          }
         },
-        body: JSON.stringify({
-          merchantIds: [merchant.merchantId.toString()],
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Gagal unbind merchant");
-
-      toast.success("Merchant berhasil di-unbind", {
-        description: `Merchant ${merchant.merchantName} telah di-unbind.`,
-        id: toastId,
-      });
-
-      fetchMerchants(); // Refresh list
-    } catch (err: any) {
-      console.error("❌ Unbind gagal:", err);
-      toast.error("Unbind gagal", {
-        description: err.message || "Terjadi kesalahan saat unbind",
-        id: toastId,
-      });
-    }
+      },
+      duration: 10000,
+      dismissible: false,
+    });
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold">Merchant Management</h1>
+        <h1 className="text-xl font-semibold">Merchant</h1>
       </div>
 
       {loading ? (

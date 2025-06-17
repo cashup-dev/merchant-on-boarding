@@ -69,12 +69,12 @@ const navItems: NavItem[] = [
     path: "/promo-management",
   },
   {
-    name: "Merchant Binding",
+    name: "Merchant",
     icon: <Store />,
     path: "/merchant-management",
   },
   {
-    name: "BIN Binding",
+    name: "BIN",
     icon: <CreditCard />,
     path: "/bin-management",
   },

@@ -33,8 +33,8 @@ export default function CreatePromoManagementForm() {
 
   const channelTypeOptions = [
     { value: "QRIS", label: "QRIS" },
-    { value: "EDCREADER", label: "EDC Reader" },
-    { value: "PAYMENT_LINK", label: "Payment Link" },
+    { value: "CARD", label: "Card" },
+    { value: "ALL", label: "All" },
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

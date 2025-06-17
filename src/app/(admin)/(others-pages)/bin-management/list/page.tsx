@@ -53,57 +53,66 @@ export default function BinManagementPage() {
     fetchBins();
   }, []);
 
-  const handleBinUnBinding = useCallback(async (bin: Bin) => {
-    console.log("🧪 BIN UNBIND DEBUG:", bin);
-
-    if (typeof bin.promoId !== "number" || typeof bin.binIds !== "number") {
+  const handleBinUnBinding = useCallback((bin: Bin) => {
+    if (typeof bin.promoId !== "number" || typeof bin.binNumber !== "string") {
       toast.error("Data tidak lengkap", {
         description: "BIN ID atau Promo ID tidak ditemukan.",
       });
       return;
     }
-
-    const confirmed = confirm(
-      `Yakin ingin unbind BIN "${bin.binNumber}" dari promo "${bin.promoName}"?`
-    );
-    if (!confirmed) return;
-
-    const toastId = toast.loading("Unbinding BIN...");
-
-    try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-
-      const res = await fetch(`/api/bin/unbind/${bin.promoId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
+  
+    const promoName = bin.promoName || "-";
+    const binNumber = bin.binNumber || "-";
+  
+    toast("🗑️ Konfirmasi Unbind BIN", {
+      id: `confirm-unbind-${bin.binIds}`,
+      description: `Apakah kamu yakin ingin menghapus BIN **${binNumber}** dari promo **"${promoName}"**?`,
+      action: {
+        label: "✅ Unbind Sekarang",
+        onClick: async () => {
+          const toastId = toast.loading("🚧 Sedang melakukan unbind...");
+  
+          try {
+            const token = document.cookie
+              .split("; ")
+              .find((row) => row.startsWith("token="))
+              ?.split("=")[1];
+  
+            const res = await fetch(`/api/bin/unbind/${bin.promoId}`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: token ? `Bearer ${token}` : "",
+              },
+              body: JSON.stringify({
+                binNumbers: [String(bin.binNumber)],
+              }),
+            });
+  
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Gagal unbind BIN");
+  
+            toast.success("✅ Unbind Berhasil", {
+              description: `BIN ${binNumber} berhasil dihapus dari promo.`,
+              id: toastId,
+            });
+  
+            setTimeout(() => {
+              fetchBins();
+            }, 500);
+          } catch (err: any) {
+            toast.error("❌ Gagal Unbind", {
+              description: err.message || "Terjadi kesalahan teknis.",
+              id: toastId,
+            });
+          }
         },
-        body: JSON.stringify({
-          binIds: [String(bin.binIds)],
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Gagal unbind BIN");
-
-      toast.success("BIN berhasil di-unbind", {
-        description: `BIN ${bin.binNumber} telah di-unbind.`,
-        id: toastId,
-      });
-
-      fetchBins(); // Refresh list
-    } catch (err: any) {
-      console.error("❌ Unbind gagal:", err);
-      toast.error("Unbind gagal", {
-        description: err.message || "Terjadi kesalahan saat unbind",
-        id: toastId,
-      });
-    }
+      },
+      duration: 10000,
+      dismissible: false,
+    });
   }, []);
+  
 
   return (
     <div className="space-y-6 p-6">
