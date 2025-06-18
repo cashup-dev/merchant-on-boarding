@@ -7,6 +7,6 @@ GlobalPipeline() {
   buildArgs = [
     JWT_SECRET : "burungkakaasdasdasdasdasdasdasdasdasdasdasdtua",
     NODE_ENV: "production",
-    PROMO_ENGINE_API: "https://sword-dopleganger.cashlez.com/"
+    PROMO_ENGINE_API: "localhost:8088/"
   ]
 }
