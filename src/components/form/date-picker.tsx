@@ -14,6 +14,8 @@ type PropsType = {
   label?: string;
   placeholder?: string;
   defaultValue?: string; // ✅ Tambahin ini
+  minDate?: Date | string;
+  maxDate?: Date | string;
 };
 
 export default function DatePicker({
@@ -23,16 +25,31 @@ export default function DatePicker({
   label,
   defaultDate,
   placeholder,
+  minDate,
+  maxDate,
 }: PropsType) {
   useEffect(() => {
-    const flatPickr = flatpickr(`#${id}`, {
+    //const flatPickr = flatpickr(`#${id}`, {
+    const config: flatpickr.Options.Options = {
       mode: mode || "single",
       static: true,
       monthSelectorType: "static",
       dateFormat: "Y-m-d",
       defaultDate,
       onChange,
-    });
+    };
+    
+     // Handle minDate
+    if (minDate) {
+      config.minDate = minDate === "today" ? new Date() : minDate;
+    }
+
+    // Handle maxDate
+    if (maxDate) {
+      config.maxDate = maxDate;
+    }
+
+    const flatPickr = flatpickr(`#${id}`, config);
 
     return () => {
       if (!Array.isArray(flatPickr)) {
