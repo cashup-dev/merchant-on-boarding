@@ -52,7 +52,16 @@ export default function CreatePromoManagementForm() {
   };
 
   const handleDateChange = (field: "validFrom" | "validTo", value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    const newFormData = {...formData, [field]: value}
+
+    if(field === "validFrom" && newFormData.validTo && new Date(value) > new Date(newFormData.validTo)){
+      newFormData.validTo = value;
+    }else if(field === "validTo" && newFormData.validFrom && new Date(value) < new Date(newFormData.validFrom)){
+      newFormData.validFrom = value
+    }
+
+    //setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData(newFormData);
   };
 
   const validateForm = () => {
@@ -74,20 +83,28 @@ export default function CreatePromoManagementForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!validateForm()) {
       toast.warning("⚠️ Harap lengkapi semua field yang wajib diisi.");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-
+  
+    // Validasi date range (pastikan validFrom <= validTo)
+    if (formData.validFrom && formData.validTo && new Date(formData.validFrom) > new Date(formData.validTo)) {
+      toast.error("❌ Invalid date range", {
+        description: "Tanggal mulai tidak boleh setelah tanggal akhir.",
+      });
+      return;
+    }
+  
     setIsSubmitting(true);
-
+  
     const token = document.cookie
       .split("; ")
       .find((row) => row.startsWith("token="))
       ?.split("=")[1];
-
+  
     try {
       const res = await fetch("/api/promo/create", {
         method: "POST",
@@ -97,15 +114,15 @@ export default function CreatePromoManagementForm() {
         },
         body: JSON.stringify(formData),
       });
-
+  
       const data = await res.json();
-
+  
       if (!res.ok) throw new Error(data.message || "Gagal submit promo");
-
+  
       toast.success("✅ Promo berhasil dibuat!", {
         description: "Promo kamu telah disimpan ke dalam sistem.",
       });
-
+  
       setTimeout(() => {
         router.push("/promo-management/list");
       }, 1200);
@@ -117,6 +134,7 @@ export default function CreatePromoManagementForm() {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <ComponentCard title="Create Promo">
@@ -220,6 +238,7 @@ export default function CreatePromoManagementForm() {
             placeholder="Select start date"
             defaultValue={formData.validFrom}
             onChange={(dates, str) => handleDateChange("validFrom", str)}
+            maxDate={formData.validTo || undefined} // Tidak boleh lebih dari validTo
           />
           {formErrors.validFrom && <p className="text-red-500 text-sm">{formErrors.validFrom}</p>}
         </div>
@@ -231,6 +250,7 @@ export default function CreatePromoManagementForm() {
             placeholder="Select end date"
             defaultValue={formData.validTo}
             onChange={(dates, str) => handleDateChange("validTo", str)}
+            minDate={formData.validFrom || undefined} // Tidak boleh kurang dari validFrom
           />
           {formErrors.validTo && <p className="text-red-500 text-sm">{formErrors.validTo}</p>}
         </div>
