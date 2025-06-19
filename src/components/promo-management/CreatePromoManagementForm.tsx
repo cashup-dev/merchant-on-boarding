@@ -26,6 +26,8 @@ export default function CreatePromoManagementForm() {
     validTo: "",
   });
 
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
   const promoTypeOptions = [
     { value: "PERCENTAGE", label: "Percentage" },
     { value: "FIXED", label: "Fixed Amount" },
@@ -53,8 +55,32 @@ export default function CreatePromoManagementForm() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) errors.name = "Promo name is required";
+    if (!formData.promoType) errors.promoType = "Promo type is required";
+    if (!formData.promoValue) errors.promoValue = "Promo value is required";
+    if (!formData.minTransaction) errors.minTransaction = "Min transaction is required";
+    if (!formData.maxTransaction) errors.maxTransaction = "Max transaction is required";
+    if (!formData.maxSubsidy) errors.maxSubsidy = "Max subsidy is required";
+    if (!formData.channelType) errors.channelType = "Channel type is required";
+    if (!formData.validFrom) errors.validFrom = "Valid from date is required";
+    if (!formData.validTo) errors.validTo = "Valid to date is required";
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.warning("⚠️ Harap lengkapi semua field yang wajib diisi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const token = document.cookie
@@ -104,6 +130,7 @@ export default function CreatePromoManagementForm() {
             value={formData.name}
             onChange={handleInputChange}
           />
+          {formErrors.name && <p className="text-red-500 text-sm">{formErrors.name}</p>}
         </div>
 
         <div>
@@ -119,6 +146,7 @@ export default function CreatePromoManagementForm() {
               <ChevronDownIcon />
             </span>
           </div>
+          {formErrors.promoType && <p className="text-red-500 text-sm">{formErrors.promoType}</p>}
         </div>
 
         <div>
@@ -130,6 +158,7 @@ export default function CreatePromoManagementForm() {
             value={formData.promoValue}
             onChange={handleInputChange}
           />
+          {formErrors.promoValue && <p className="text-red-500 text-sm">{formErrors.promoValue}</p>}
         </div>
 
         <div>
@@ -141,6 +170,7 @@ export default function CreatePromoManagementForm() {
             value={formData.minTransaction}
             onChange={handleInputChange}
           />
+          {formErrors.minTransaction && <p className="text-red-500 text-sm">{formErrors.minTransaction}</p>}
         </div>
 
         <div>
@@ -152,6 +182,7 @@ export default function CreatePromoManagementForm() {
             value={formData.maxTransaction}
             onChange={handleInputChange}
           />
+          {formErrors.maxTransaction && <p className="text-red-500 text-sm">{formErrors.maxTransaction}</p>}
         </div>
 
         <div>
@@ -163,6 +194,7 @@ export default function CreatePromoManagementForm() {
             value={formData.maxSubsidy}
             onChange={handleInputChange}
           />
+          {formErrors.maxSubsidy && <p className="text-red-500 text-sm">{formErrors.maxSubsidy}</p>}
         </div>
 
         <div>
@@ -178,6 +210,7 @@ export default function CreatePromoManagementForm() {
               <ChevronDownIcon />
             </span>
           </div>
+          {formErrors.channelType && <p className="text-red-500 text-sm">{formErrors.channelType}</p>}
         </div>
 
         <div>
@@ -188,6 +221,7 @@ export default function CreatePromoManagementForm() {
             defaultValue={formData.validFrom}
             onChange={(dates, str) => handleDateChange("validFrom", str)}
           />
+          {formErrors.validFrom && <p className="text-red-500 text-sm">{formErrors.validFrom}</p>}
         </div>
 
         <div>
@@ -198,21 +232,20 @@ export default function CreatePromoManagementForm() {
             defaultValue={formData.validTo}
             onChange={(dates, str) => handleDateChange("validTo", str)}
           />
+          {formErrors.validTo && <p className="text-red-500 text-sm">{formErrors.validTo}</p>}
         </div>
 
         <div className="col-span-full">
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-  {isSubmitting ? (
-    <div className="flex items-center justify-center gap-2">
-      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-      Creating...
-    </div>
-  ) : (
-    "Create Promo"
-  )}
-</Button>
-
-
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Creating...
+              </div>
+            ) : (
+              "Create Promo"
+            )}
+          </Button>
         </div>
       </form>
     </ComponentCard>
