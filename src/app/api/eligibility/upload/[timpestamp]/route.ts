@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { apiServer } from "../../../../../../lib/apiServer";
 import FormDataNode from "form-data";
 
-export async function POST(req: Request, { params }: { params: { batchId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ batchId: string }> }) {
   try {
-    const { batchId } = params;
+    const { batchId } = await params;
     const decodedBatchId = decodeURIComponent(batchId);
     console.log('Batch ID received:', decodedBatchId);
 
