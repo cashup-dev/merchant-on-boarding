@@ -114,12 +114,6 @@ export default function TopMerchants() {
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Merchant ID
-              </TableCell>
-              <TableCell
-                isHeader
-                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
                 Merchant Name
               </TableCell>
               <TableCell
@@ -141,9 +135,6 @@ export default function TopMerchants() {
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
             {merchants.map((merchant, index) => (
               <TableRow key={merchant.merchantId}>
-                <TableCell className="py-[1.11rem] text-gray-800 text-theme-sm dark:text-white/90">
-                  {merchant.merchantId}
-                </TableCell>
                 <TableCell className="py-[1.11rem] font-medium text-gray-800 text-theme-sm dark:text-white/90">
                   {merchant.merchantName}
                 </TableCell>
