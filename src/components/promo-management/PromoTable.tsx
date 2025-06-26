@@ -10,9 +10,11 @@ type Promo = {
   name?: string;
   promoType?: string;
   promoValue?: number;
+  usagePerDay?: number;
   minTransaction?: number;
   maxTransaction?: number;
   maxSubsidy?: number;
+  finalPromoAmount?: number;
   channelType?: string;
   validFrom?: string;
   validTo?: string;
@@ -142,6 +144,8 @@ export default function PromoTable({
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Type</th>
             <th className="px-4 py-3">Value</th>
+            <th className="px-4 py-3">Usage Per Day</th>
+            <th className="px-4 py-3">Final Promo Amount</th>
             <th className="px-4 py-3">Min Tx</th>
             <th className="px-4 py-3">Max Tx</th>
             <th className="px-4 py-3">Max Subsidy</th>
@@ -160,6 +164,8 @@ export default function PromoTable({
                 name = "-",
                 promoType = "-",
                 promoValue = 0,
+                finalPromoAmount = 0,
+                usagePerDay = 0,
                 minTransaction = 0,
                 maxTransaction = 0,
                 maxSubsidy = 0,
@@ -184,6 +190,10 @@ export default function PromoTable({
                   <td className="px-4 py-3">{name}</td>
                   <td className="px-4 py-3">{promoType}</td>
                   <td className="px-4 py-3">{formattedValue}</td>
+                  <td className="px-4 py-3">{usagePerDay}</td>
+                  <td className="px-4 py-3">
+                    Rp{finalPromoAmount.toLocaleString("id-ID")}
+                  </td>
                   <td className="px-4 py-3">
                     Rp{minTransaction.toLocaleString("id-ID")}
                   </td>

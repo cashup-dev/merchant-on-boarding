@@ -35,7 +35,7 @@ export default function MerchantManagementPage() {
       });
 
       const data = await res.json();
-      console.log("🎯 Raw Response", data); 
+      // console.log("🎯 Raw Response", data); 
       if (!res.ok) throw new Error(data.message || "Request failed");
 
       setMerchantList(data.data || []);
@@ -52,7 +52,7 @@ export default function MerchantManagementPage() {
   }, []);
 
   const handleMerchantUnBinding = useCallback((merchant: Merchant) => {
-    console.log("🔄 Navigating to merchant binding with promo:", merchant.promoId);
+    // console.log("🔄 Navigating to merchant binding with promo:", merchant.promoId);
     router.push(`/promo-management/merchant-bind?promoId=${merchant.promoId}`);
   }, [router]);
 

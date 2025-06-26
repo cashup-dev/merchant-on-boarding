@@ -10,6 +10,8 @@ export type Promo = {
   name?: string;
   promoType?: string;
   promoValue?: number;
+  usagePerDay?: number;
+  finalPromoAmount?: number;
   minTransaction?: number;
   maxTransaction?: number;
   maxSubsidy?: number;

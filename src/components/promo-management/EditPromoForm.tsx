@@ -11,6 +11,8 @@ type EditPromoFormProps = {
     id: number;
     promoValue: number;
     maxSubsidy: number;
+    finalPromoAmount: number;
+    usagePerDay: number;
     validTo: string;
   };
   onSuccess?: () => void;
@@ -19,6 +21,8 @@ type EditPromoFormProps = {
 export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormProps) {
   const [promoValue, setPromoValue] = useState(0);
   const [maxSubsidy, setMaxSubsidy] = useState(0);
+  const [finalPromoAmount, setFinalPromoAmount] = useState(0);
+  const [usagePerDay, setUsagePerDay] = useState(0);
   const [validTo, setValidTo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,6 +30,8 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
     if (promoData) {
       setPromoValue(promoData.promoValue || 0);
       setMaxSubsidy(promoData.maxSubsidy || 0);
+      setFinalPromoAmount(promoData.finalPromoAmount || 0);
+      setUsagePerDay(promoData.usagePerDay || 0);
       setValidTo(promoData.validTo || "");
     }
   }, [promoData]);
@@ -44,6 +50,16 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
       return;
     }
   
+    if (!usagePerDay && usagePerDay !== 0) {
+      toast.error("❌ Penggunaan per hari wajib diisi");
+      return;
+    }
+  
+    if (!finalPromoAmount && finalPromoAmount !== 0) {
+      toast.error("❌ Nilai Promo Akhir wajib diisi");
+      return;
+    }
+  
     if (!validTo) {
       toast.error("❌ Tanggal Berlaku wajib diisi");
       return;
@@ -52,6 +68,8 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
     if (
       promoValue === promoData.promoValue &&
       maxSubsidy === promoData.maxSubsidy &&
+      usagePerDay === promoData.usagePerDay &&
+      finalPromoAmount === promoData.finalPromoAmount &&
       validTo === promoData.validTo
     ) {
       toast.warning("⚠️ Tidak ada perubahan data untuk disimpan.");
@@ -74,11 +92,14 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
         body: JSON.stringify({
           promoValue,
           maxSubsidy,
+          finalPromoAmount,
+          usagePerDay,
           validTo,
         }),
       });
   
       const data = await res.json();
+      // console.log("Response dari server:", data); // Juga bisa log response dari server
   
       if (!res.ok) throw new Error(data.message || "Failed to update");
   
@@ -88,6 +109,7 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
   
       onSuccess?.();
     } catch (err: any) {
+      console.error("Error saat update promo:", err); // Log error jika terjadi
       toast.error("❌ Gagal update promo", {
         description: err.message || "Terjadi kesalahan server.",
       });
@@ -117,6 +139,28 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
             type="number"
             value={maxSubsidy}
             onChange={(e) => setMaxSubsidy(parseFloat(e.target.value))}
+            className="w-full border px-3 py-2 rounded"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label>Final Promo Amount</Label>
+          <input
+            type="number"
+            value={finalPromoAmount}
+            onChange={(e) => setFinalPromoAmount(parseFloat(e.target.value))}
+            className="w-full border px-3 py-2 rounded"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label>Usage Per Day</Label>
+          <input
+            type="number"
+            value={usagePerDay}
+            onChange={(e) => setUsagePerDay(parseFloat(e.target.value))}
             className="w-full border px-3 py-2 rounded"
             disabled={isSubmitting}
           />

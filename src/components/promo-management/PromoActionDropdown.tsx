@@ -32,7 +32,7 @@ export default function PromoActionDropdown({ promo }: { promo: any }) {
 
           <button
             onClick={() => {
-              console.log("➡️ Navigate to merchant-bind page");
+              // console.log("➡️ Navigate to merchant-bind page");
               router.push(`/promo-management/merchant-bind?promoId=${promo.id}`);
               setOpen(false);
             }}
@@ -43,7 +43,7 @@ export default function PromoActionDropdown({ promo }: { promo: any }) {
 
           <button
             onClick={() => {
-              console.log("💳 BIN binding clicked");
+              // console.log("💳 BIN binding clicked");
               // router.push(`/promo-management/bin-bind?promoId=${promo.id}`); // if available
               setOpen(false);
             }}
@@ -55,7 +55,7 @@ export default function PromoActionDropdown({ promo }: { promo: any }) {
           <button
             onClick={() => {
               // Implement delete logic here or show modal
-              console.log("🗑️ Delete clicked for ID:", promo.id);
+              // console.log("🗑️ Delete clicked for ID:", promo.id);
               setOpen(false);
             }}
             className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50"

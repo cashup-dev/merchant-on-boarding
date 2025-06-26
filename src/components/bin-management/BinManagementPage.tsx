@@ -35,7 +35,7 @@ export default function BinManagementPage() {
       });
 
       const data = await res.json();
-      console.log("🎯 Raw Response", data); 
+      // console.log("🎯 Raw Response", data); 
       if (!res.ok) throw new Error(data.message || "Request failed");
 
       setBinList(data.data || []);
@@ -52,7 +52,7 @@ export default function BinManagementPage() {
   }, []);
 
   const handleBinUnBinding = useCallback((bin: Bin) => {
-    console.log("🔄 Navigating to merchant binding with promo:", bin.promoId);
+    // console.log("🔄 Navigating to merchant binding with promo:", bin.promoId);
     router.push(`/promo-management/bin-bind?promoId=${bin.promoId}`);
   }, [router]);
 binList

@@ -26,7 +26,7 @@ export async function POST(
         ?.split("=")[1] || null;
     }
 
-    console.log('🔑 Extracted Token:', token); // Debug
+    // console.log('🔑 Extracted Token:', token); // Debug
 
     if (!token) {
       return NextResponse.json(

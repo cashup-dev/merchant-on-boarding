@@ -25,7 +25,7 @@ export default function PromoManagementPage() {
       });
 
       const data = await res.json();
-      console.log("🔥 Full response:", data);
+      // console.log("🔥 Full response:", data);
 
       if (!res.ok) throw new Error(data.message || "Request failed");
 

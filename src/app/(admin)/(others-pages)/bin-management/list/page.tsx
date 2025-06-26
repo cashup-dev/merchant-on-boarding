@@ -26,7 +26,7 @@ export default function BinManagementPage() {
       });
 
       const data = await res.json();
-      console.log("🎯 Raw Response", data);
+      // console.log("🎯 Raw Response", data);
 
       if (!res.ok) throw new Error(data.message || "Request failed");
 

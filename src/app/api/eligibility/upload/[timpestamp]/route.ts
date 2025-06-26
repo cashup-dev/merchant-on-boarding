@@ -6,7 +6,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ batchId
   try {
     const { batchId } = await params;
     const decodedBatchId = decodeURIComponent(batchId);
-    console.log('Batch ID received:', decodedBatchId);
+    // console.log('Batch ID received:', decodedBatchId);
 
     const formData = await req.formData();
     const csvFile = formData.get("csvFile") as File;

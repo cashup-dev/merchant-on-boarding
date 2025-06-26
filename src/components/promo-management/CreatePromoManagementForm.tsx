@@ -18,9 +18,11 @@ export default function CreatePromoManagementForm() {
     name: "",
     promoType: "",
     promoValue: 0,
+    usagePerDay: 0,
     minTransaction: 0,
     maxTransaction: 0,
     maxSubsidy: 0,
+    finalPromoAmount: 0,
     channelType: "",
     validFrom: "",
     validTo: "",
@@ -70,9 +72,11 @@ export default function CreatePromoManagementForm() {
     if (!formData.name.trim()) errors.name = "Promo name is required";
     if (!formData.promoType) errors.promoType = "Promo type is required";
     if (!formData.promoValue) errors.promoValue = "Promo value is required";
+    if (!formData.usagePerDay) errors.usagePerDay = "Usage per day is required";
     if (!formData.minTransaction) errors.minTransaction = "Min transaction is required";
     if (!formData.maxTransaction) errors.maxTransaction = "Max transaction is required";
     if (!formData.maxSubsidy) errors.maxSubsidy = "Max subsidy is required";
+    if (!formData.finalPromoAmount) errors.finalPromoAmount = "Final promo amount is required";
     if (!formData.channelType) errors.channelType = "Channel type is required";
     if (!formData.validFrom) errors.validFrom = "Valid from date is required";
     if (!formData.validTo) errors.validTo = "Valid to date is required";
@@ -179,6 +183,31 @@ export default function CreatePromoManagementForm() {
           {formErrors.promoValue && <p className="text-red-500 text-sm">{formErrors.promoValue}</p>}
         </div>
 
+        <div>
+          <Label>Usage Per Day</Label>
+          <Input
+            type="number"
+            name="usagePerDay"
+            placeholder="Enter usage per day"
+            value={formData.usagePerDay}
+            onChange={handleInputChange}
+          />
+          {formErrors.usagePerDay && <p className="text-red-500 text-sm">{formErrors.usagePerDay}</p>}
+        </div>
+
+
+        <div>
+          <Label>Final Promo Amount</Label>
+          <Input
+            type="number"
+            name="finalPromoAmount"
+            placeholder="Enter final promo amount"
+            value={formData.finalPromoAmount}
+            onChange={handleInputChange}
+          />
+          {formErrors.finalPromoAmount && <p className="text-red-500 text-sm">{formErrors.finalPromoAmount}</p>}
+        </div>
+        
         <div>
           <Label>Min Transaction</Label>
           <Input

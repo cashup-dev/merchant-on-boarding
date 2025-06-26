@@ -33,7 +33,7 @@ export default function EligibilityManagementPage() {
     setUploading(true);
     try {
       const batchId = generateBatchId();
-      console.log('Generated Batch ID:', batchId);
+      // console.log('Generated Batch ID:', batchId);
       
       const formData = new FormData();
       formData.append("csvFile", file);
