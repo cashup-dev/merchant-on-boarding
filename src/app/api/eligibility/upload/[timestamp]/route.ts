@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { apiServer } from "../../../../../../lib/apiServer";
 import FormDataNode from "form-data";
 
-export async function POST(req: Request, { params }: { params: Promise<{ batchId: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{timestamp: string }> }) {
   try {
-    const { batchId } = await params;
-    const decodedBatchId = decodeURIComponent(batchId);
-    // console.log('Batch ID received:', decodedBatchId);
+    const timestamp = (await params).timestamp;
 
     const formData = await req.formData();
     const csvFile = formData.get("csvFile") as File;
@@ -20,7 +18,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ batchId
     });
 
     const uploadRes = await apiServer.post(
-      `/promo/upload-eligibility/${encodeURIComponent(decodedBatchId)}`,
+      `/promo/upload-eligibility/${encodeURIComponent(timestamp)}`,
       form,
       { headers: form.getHeaders() }
     );
@@ -29,12 +27,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ batchId
       if (Array.isArray(data)) {
         return data.map(item => ({
           ...item,
-          batchId: item.batchId === "undefined" ? decodedBatchId : item.batchId
+          batchId: item.batchId === "undefined" ? timestamp : item.batchId
         }));
       }
       return {
         ...data,
-        batchId: data.batchId === "undefined" ? decodedBatchId : data.batchId
+        batchId: data.batchId === "undefined" ? timestamp : data.batchId
       };
     };
 
