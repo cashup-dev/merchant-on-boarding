@@ -16,7 +16,7 @@ export default function CreatePromoManagementForm() {
 
   const [formData, setFormData] = useState({
     name: "",
-    promoType: "",
+    promoType: "FIXED",
     promoValue: 0,
     usagePerDay: 0,
     minTransaction: 0,
@@ -71,12 +71,12 @@ export default function CreatePromoManagementForm() {
 
     if (!formData.name.trim()) errors.name = "Promo name is required";
     if (!formData.promoType) errors.promoType = "Promo type is required";
-    if (!formData.promoValue) errors.promoValue = "Promo value is required";
+    if (!formData.promoValue && formData.promoValue != 0) errors.promoValue = "Promo value is required";
     if (!formData.usagePerDay) errors.usagePerDay = "Usage per day is required";
-    if (!formData.minTransaction) errors.minTransaction = "Min transaction is required";
-    if (!formData.maxTransaction) errors.maxTransaction = "Max transaction is required";
+    if (!formData.minTransaction && formData.minTransaction != 0 ) errors.minTransaction = "Min transaction is required";
+    if (!formData.maxTransaction && formData.maxTransaction != 0) errors.maxTransaction = "Max transaction is required";
     if (!formData.maxSubsidy) errors.maxSubsidy = "Max subsidy is required";
-    if (!formData.finalPromoAmount) errors.finalPromoAmount = "Final promo amount is required";
+    if (!formData.finalPromoAmount && formData.finalPromoAmount != 0) errors.finalPromoAmount = "Final promo amount is required";
     if (!formData.channelType) errors.channelType = "Channel type is required";
     if (!formData.validFrom) errors.validFrom = "Valid from date is required";
     if (!formData.validTo) errors.validTo = "Valid to date is required";
