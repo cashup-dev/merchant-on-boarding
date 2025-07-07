@@ -179,8 +179,12 @@ export default function EditPromoForm({ promoData, onSuccess }: EditPromoFormPro
           onChange={(selectedDates) => {
             const selected = selectedDates[0];
             if (selected instanceof Date && !isNaN(selected.getTime())) {
-              const formatted = selected.toISOString().split("T")[0]; // Format YYYY-MM-DD
-              setValidTo(formatted);
+              const year = selected.getFullYear();
+              const month = String(selected.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+              const day = String(selected.getDate()).padStart(2, '0');
+              const formattedDate = `${year}-${month}-${day}`;
+              
+              setValidTo(formattedDate);
             }
           }}
           minDate="today"
