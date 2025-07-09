@@ -1,8 +1,5 @@
-import { sign } from 'jsonwebtoken';
-// file: middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { json } from 'stream/consumers';
 
 const protectedRoutes = ['/', '/profile'] // Rute yang perlu proteksi
 const authRoutes = ['/signin', '/signup'] // Rute autentikasi
@@ -25,7 +22,6 @@ export default async function middleware(request: NextRequest) {
       // const isValid = await verifyToken(accessToken)
       // if (!isValid) throw new Error('Invalid token')
     } catch (err) {
-      // Token tidak valid
       const signinUrl = new URL('/signin', request.url)
       signinUrl.searchParams.set('error', 'session_expired')
       const response = NextResponse.redirect(signinUrl)

@@ -4,7 +4,8 @@ export interface UserData {
   id: number;
   username: string;
   role: string;
-  partnerId: number;
+  partnerId?: number;
+  partnerName?: string;
 }
 
 // Fungsi ini sekarang jadi async karena akan melakukan fetch

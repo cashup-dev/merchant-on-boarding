@@ -2,22 +2,22 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtDecode } from 'jwt-decode';
 
-// Updated to match your actual token structure
 interface TokenPayload {
   sub: string;    // username
   id: number;     // user ID
   roles: Array<{ authority: string }>;  // roles array
   iat: number;    // issued at
   exp: number;    // expiration time
-  // Note: partnerId is not in your actual token
+  partnerId?: number;
+  partnerName?: string;
 }
 
-// Updated user data interface
 export interface UserData {
   id: number;
   username: string;
-  roles: Array<{ authority: string }>;  // roles array
-  // Removed partnerId since it's not in your token
+  roles: Array<{ authority: string }>;
+  partnerId?: number;
+  partnerName?: string; 
 }
 
 export async function GET() {
@@ -57,6 +57,8 @@ export async function GET() {
       id: decodedToken.id,
       username: decodedToken.sub,
       roles: decodedToken.roles,  // Assign roles as array of objects with authority property
+      partnerId: decodedToken.partnerId, 
+      partnerName:  decodedToken.partnerName// Optional, if you want to include it
     };
 
     // console.log('User Data:', user);

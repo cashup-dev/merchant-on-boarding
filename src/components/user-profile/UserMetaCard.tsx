@@ -8,6 +8,8 @@ export default function UserMetaCard() {
     id: number;
     username: string;
     roles: Array<{ authority: string }>; // roles array
+    partnerId?: number;
+    partnerName?: string; // Optional, if you want to include it
   } | null>(null);
 
   useEffect(() => {
@@ -19,7 +21,9 @@ export default function UserMetaCard() {
           username: userData.username,
           roles: userData.roles.map(
             (role: { authority: any }) => role.authority
-          ), // Convert roles to array of strings
+          ),
+          partnerId: userData.partnerId,
+          partnerName: userData.partnerName
         });
       } else {
         setUser(null);
@@ -48,6 +52,11 @@ export default function UserMetaCard() {
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {user ? user.roles.join(", ") : "User Role"}
+                </p>
+              </div>
+              <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {user ? user.partnerName : "Partner"}
                 </p>
               </div>
             </div>

@@ -5,12 +5,9 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  BoxCubeIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  PieChartIcon,
-  PlugInIcon,
 } from "../icons/index";
 import { Percent, Store, CreditCard, TicketCheck } from 'lucide-react';
 
@@ -56,7 +53,7 @@ const navItems: NavItem[] = [
 
 // Komponen Sidebar Utama
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleSidebar } = useSidebar();
   const pathname = usePathname();
 
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
@@ -137,6 +134,9 @@ const AppSidebar: React.FC = () => {
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
+                onClick={() => {
+                  isExpanded && toggleSidebar();
+                }}
               >
                 <span className={`${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
                   {nav.icon}
