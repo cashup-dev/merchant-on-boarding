@@ -62,6 +62,9 @@ const AppSidebar: React.FC = () => {
 
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
+  const closeSidebar = () => {
+  isExpanded && toggleSidebar();
+}
   // Efek untuk membuka submenu yang aktif berdasarkan path URL
   useEffect(() => {
     let submenuMatched = false;
@@ -134,9 +137,7 @@ const AppSidebar: React.FC = () => {
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
-                onClick={() => {
-                  isExpanded && toggleSidebar();
-                }}
+                onClick={closeSidebar}
               >
                 <span className={`${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
                   {nav.icon}
@@ -163,6 +164,7 @@ const AppSidebar: React.FC = () => {
                       className={`menu-dropdown-item ${
                         isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
                       }`}
+                      onClick={closeSidebar}
                     >
                       {subItem.name}
                       {/* Badge 'new' atau 'pro' bisa ditambahkan di sini jika perlu */}
