@@ -1,5 +1,24 @@
+import { jwtDecode } from 'jwt-decode'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+
+interface TokenPayload {
+  sub: string;    // username
+  id: number;     // user ID
+  roles: Array<{ authority: string }>;  // roles array
+  iat: number;    // issued at
+  exp: number;    // expiration time
+  partnerId?: number;
+  partnerName?: string;
+}
+
+export interface UserData {
+  id: number;
+  username: string;
+  roles: Array<{ authority: string }>;
+  partnerId?: number;
+  partnerName?: string; 
+}
 
 const protectedRoutes = [
   '/profile',
@@ -8,8 +27,14 @@ const protectedRoutes = [
   '/merchant-management',
   '/promo-management',
   '/usage-history'
-] // Rute yang perlu proteksi
-const authRoutes = ['/signin', '/signup'] // Rute autentikasi
+]
+
+const adminOnlyRoutes = [
+  '/promo-management/merchant-bind',
+  '/promo-management/bin-bind',
+  '/promo-management/edit',
+]
+const authRoutes = ['/signin', '/signup']
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -18,15 +43,42 @@ export default async function middleware(request: NextRequest) {
   if (pathname === '/' || protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (!accessToken) {
       const signinUrl = new URL('/signin', request.url)
-    //   signinUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(signinUrl)
     }
 
     try {
-      // Verifikasi token (gunakan library JWT atau API route)
-      // Contoh sederhana, sebaiknya panggil API route untuk verifikasi
-      // const isValid = await verifyToken(accessToken)
-      // if (!isValid) throw new Error('Invalid token')
+          if (!accessToken) {
+            return NextResponse.json(
+              { message: 'Authentication token not found.' },
+              { status: 401 }
+            );
+          }
+          const decodedToken = jwtDecode<TokenPayload>(accessToken);
+
+          const currentTime = Math.floor(Date.now() / 1000);
+          if (decodedToken.exp < currentTime) {
+            (await cookieStore).delete('token');
+            return NextResponse.json(
+              { message: 'Token has expired.' },
+              { status: 401 }
+            );
+          }
+
+          const user: UserData = {
+            id: decodedToken.id,
+            username: decodedToken.sub,
+            roles: decodedToken.roles,  // Assign roles as array of objects with authority property
+            partnerId: decodedToken.partnerId, 
+            partnerName:  decodedToken.partnerName// Optional, if you want to include it
+          };
+
+          if (adminOnlyRoutes.includes(pathname) && !user.roles.some(role => role.authority === 'ADMIN')) {
+            return NextResponse.json(
+              { message: 'Access denied. Admins only.' },
+              { status: 403 }
+            );
+          }
+      
     } catch (err) {
       const signinUrl = new URL('/signin', request.url)
       signinUrl.searchParams.set('error', 'session_expired')
