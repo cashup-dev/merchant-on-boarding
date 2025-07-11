@@ -24,6 +24,7 @@ export default function UsageHistoryTable({ data }: { data: any[] }) {
             <th className="px-4 py-2">Subsidi</th>
             <th className="px-4 py-2">Final Amount</th>
             <th className="px-4 py-2">Waktu Transaksi</th>
+            <th className="px-4 py-2">Promo Transaction Id</th>
           </tr>
         </thead>
         <tbody>
@@ -45,6 +46,7 @@ export default function UsageHistoryTable({ data }: { data: any[] }) {
                 <td className="px-4 py-2">{formatCurrency(item.subsidyApplied)}</td>
                 <td className="px-4 py-2 font-medium">{formatCurrency(item.finalAmount)}</td>
                 <td className="px-4 py-2">{item.usedAt}</td>
+                <td className="px-4 py-2">{item.promoTransactionId}</td>
               </tr>
             ))
           )}
