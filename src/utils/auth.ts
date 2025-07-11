@@ -1,22 +1,36 @@
-// Buat file terpisah src/lib/auth.ts
-export const getToken = async () => {
-    // Coba dari berbagai sumber
-    if (typeof window === "undefined") return null;
-    
-    // 1. Cek cookies
-    const cookieToken = document.cookie
-      .split("; ")
-      .find(row => row.startsWith("token="))
-      ?.split("=")[1];
+// lib/auth.ts (diubah)
+export interface UserData {
+  roles: any;
+  id: number;
+  username: string;
+  role: string;
+  partnerId?: number;
+  partnerName?: string;
+}
+
+// Fungsi ini sekarang jadi async karena akan melakukan fetch
+export const getCurrentUser = async (): Promise<UserData | null> => {
+  // Client-side onlyi
+  if (typeof window === 'undefined') {
+    return null;
+  }
   
-    // 2. Cek localStorage
-    const lsToken = localStorage.getItem("token");
-  
-    // 3. Cek sessionStorage
-    const ssToken = sessionStorage.getItem("token");
-  
-    const token = cookieToken || lsToken || ssToken;
-  
-    // Verifikasi token minimal length
-    return token && token.length > 30 ? token : null;
-  };
+  try {
+    // Panggil API endpoint /api/auth/me
+    // Browser akan OTOMATIS menyertakan httpOnly cookie 'token'
+    const response = await fetch('/api/auth/me');
+    const responseData = await response.json();
+    // console.log(responseData);
+    if (!response.ok) {
+      // Kalau statusnya 401 atau error lain, berarti user tidak valid
+      console.log('Failed to fetch user data, user likely not logged in.');
+      return null;
+    }
+
+    return responseData.user as UserData;
+
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return null;
+  }
+};

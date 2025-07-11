@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { getCurrentUser } from "../../../lib/auth";
+import { getCurrentUser } from "../../utils/auth";
 
 export default function UserMetaCard() {
   const [user, setUser] = useState<{

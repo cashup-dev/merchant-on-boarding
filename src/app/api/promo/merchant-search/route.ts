@@ -1,7 +1,7 @@
 // src/app/api/promo/merchant-search/route.ts
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { apiServer } from "../../../../../lib/apiServer"; // sesuaikan path
+import { apiServer } from "../../../../utils/apiServer"; // sesuaikan path
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
