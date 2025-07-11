@@ -57,7 +57,7 @@ export default async function middleware(request: NextRequest) {
 
           const currentTime = Math.floor(Date.now() / 1000);
           if (decodedToken.exp < currentTime) {
-            (await cookieStore).delete('token');
+            request.cookies.delete('token');
             return NextResponse.json(
               { message: 'Token has expired.' },
               { status: 401 }
