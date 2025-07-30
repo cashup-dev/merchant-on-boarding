@@ -117,7 +117,7 @@ export default function EligibilityManagementPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold">Eligibility Management</h1>
         <Button onClick={handleUpload} disabled={uploading}>
-          {uploading ? "Mengupload..." : "📤 Upload Eligibility CSV"}
+          {uploading ? "Mengupload..." : "📤 Upload Eligibility Data"}
         </Button>
       </div>
 
