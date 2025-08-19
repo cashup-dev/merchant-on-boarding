@@ -32,24 +32,28 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "List", path: "/promo-management", pro: false },
       { name: "Usage History", path: "/usage-history/list", pro: false },
+      { name: "Merchant", path: "/merchant-management", pro: false },
+      { name: "BIN", path: "/bin-management", pro: false },
     ],
   },
   {
-    name: "Merchant",
-    icon: <Store />,
-    path: "/merchant-management",
-  },
-  {
-    name: "BIN",
-    icon: <CreditCard />,
-    path: "/bin-management",
+    icon: <CreditCard />, // bisa pake icon lain biar beda
+    name: "Installment Management",
+    subItems: [
+      { name: "List", path: "/installment-management", pro: false },
+      { name: "Usage History", path: "/installment-usage-history/list", pro: false },
+      { name: "Merchant", path: "/installment-merchant-management", pro: false },
+      { name: "BIN", path: "/installment-bin-management", pro: false },
+    ],
   },
   {
     name: "Eligibility Management",
     icon: <TicketCheck />,
     path: "/eligibility-management",
-  }
+  },
 ];
+
+
 
 // Komponen Sidebar Utama
 const AppSidebar: React.FC = () => {
