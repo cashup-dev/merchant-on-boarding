@@ -5,25 +5,29 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
-// Tipe data disesuaikan dengan response API installment
 type Installment = {
   id: number;
   name?: string;
   minTransaction?: number;
-  tenorIdDurations?: number[];
+  // DIUBAH: Disesuaikan dengan nama properti dari API
+  tenorDurations?: number[];
   isActive?: boolean;
 };
 
+// DIUBAH: Menambahkan onMerchantBind dan onBinBind
 type Props = {
   data: Installment[];
   onEdit?: (installment: Installment) => void;
-  // onMerchantBind & onBinBind dihapus karena tidak relevan
+  onMerchantBind?: (installment: Installment) => void;
+  onBinBind?: (installment: Installment) => void;
   onStatusChange?: (installmentId: number, isActive: boolean) => Promise<void>;
 };
 
 export default function InstallmentTable({
   data,
   onEdit,
+  onMerchantBind, // Baru
+  onBinBind,      // Baru
   onStatusChange,
 }: Props) {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -45,6 +49,32 @@ export default function InstallmentTable({
     return new Promise((resolve) => setTimeout(resolve, 800));
   };
 
+  // --- FUNGSI BARU ---
+  const handleMerchantBind = async (installment: Installment) => {
+    setLoadingAction({ id: installment.id, action: 'merchant' });
+    try {
+      await simulateLoading();
+      if (onMerchantBind) {
+        onMerchantBind(installment);
+      }
+    } finally {
+      setLoadingAction({ id: null, action: null });
+    }
+  };
+
+  const handleBinBind = async (installment: Installment) => {
+    setLoadingAction({ id: installment.id, action: 'bin' });
+    try {
+      await simulateLoading();
+      if (onBinBind) {
+        onBinBind(installment);
+      }
+    } finally {
+      setLoadingAction({ id: null, action: null });
+    }
+  };
+  // --- END FUNGSI BARU ---
+
   const handleEdit = async (installment: Installment) => {
     setLoadingAction({ id: installment.id, action: "edit" });
     try {
@@ -60,11 +90,12 @@ export default function InstallmentTable({
   const handleStatusChange = async (installmentId: number, isActive: boolean) => {
     setLoadingStatus(installmentId);
     try {
-      // Endpoint API diubah ke endpoint untuk installment
+      const token = document.cookie.split("; ").find(row => row.startsWith("token="))?.split("=")[1];
       const res = await fetch(`/api/installment/activate/${installmentId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ""
         },
         body: JSON.stringify({ isActive }),
       });
@@ -78,7 +109,6 @@ export default function InstallmentTable({
         await onStatusChange(installmentId, isActive);
       }
       
-      // Pesan notifikasi disesuaikan
       toast.success(`Status installment berhasil diubah ke ${isActive ? "active" : "inactive"}`);
     } catch (err: any) {
       console.error("🔥 Full error:", err);
@@ -92,7 +122,6 @@ export default function InstallmentTable({
     <div className="overflow-auto border rounded-xl shadow-sm">
       <table className="w-full text-sm text-left text-gray-700">
         <thead className="bg-gray-100 text-xs uppercase text-gray-600">
-          {/* Kolom tabel disesuaikan dengan data installment */}
           <tr>
             <th className="px-4 py-3">Name</th>
             <th className="px-4 py-3">Min Transaction</th>
@@ -108,7 +137,8 @@ export default function InstallmentTable({
                 id,
                 name = "-",
                 minTransaction = 0,
-                tenorIdDurations = [],
+                // DIUBAH: Disesuaikan dengan nama properti dari API
+                tenorDurations = [],
                 isActive = false,
               } = installment;
 
@@ -123,7 +153,8 @@ export default function InstallmentTable({
                   <td className="px-4 py-3">
                     Rp{minTransaction.toLocaleString("id-ID")}
                   </td>
-                  <td className="px-4 py-3">{tenorIdDurations.join(", ")}</td>
+                  {/* DIUBAH: Menggunakan variabel yang benar */}
+                  <td className="px-4 py-3">{tenorDurations.join(", ")}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
@@ -160,24 +191,44 @@ export default function InstallmentTable({
                           </button>
                           {isOpen && (
                             <div className="absolute right-0 mt-2 z-10 bg-white shadow-md border rounded-md text-sm w-48">
-                              {/* Tombol Merchant Bind dan BIN Bind dihapus */}
+                              {/* --- TOMBOL BARU DITAMBAHKAN --- */}
+                              <button
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMerchantBind(installment);
+                                  setOpenDropdownId(null);
+                                }}
+                                disabled={isLoadingAction}
+                              >
+                                {isLoadingAction && currentAction === 'merchant' && <ArrowPathIcon className="w-4 h-4 animate-spin" />}
+                                Merchant Binding
+                              </button>
+                              <button
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBinBind(installment);
+                                  setOpenDropdownId(null);
+                                }}
+                                disabled={isLoadingAction}
+                              >
+                                {isLoadingAction && currentAction === 'bin' && <ArrowPathIcon className="w-4 h-4 animate-spin" />}
+                                BIN Binding
+                              </button>
+                              {/* --- END TOMBOL BARU --- */}
                               <button
                                 className={`w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 ${
-                                  isActive
-                                    ? "text-red-500"
-                                    : "text-green-500"
+                                  isActive ? "text-red-500" : "text-green-500"
                                 }`}
                                 onClick={async (e) => {
-                                  e.preventDefault();
                                   e.stopPropagation();
                                   await handleStatusChange(id, !isActive);
                                   setOpenDropdownId(null);
                                 }}
                                 disabled={isLoadingStatus}
                               >
-                                {isLoadingStatus ? (
-                                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
-                                ) : null}
+                                {isLoadingStatus && <ArrowPathIcon className="w-4 h-4 animate-spin" />}
                                 {isActive ? "Deactivate" : "Activate"}
                               </button>
                             </div>
@@ -191,8 +242,7 @@ export default function InstallmentTable({
             })
           ) : (
             <tr>
-              {/* ColSpan disesuaikan dengan jumlah kolom */}
-              <td colSpan={isAdmin ? 6 : 5} className="text-center text-gray-400 py-4">
+              <td colSpan={isAdmin ? 5 : 4} className="text-center text-gray-400 py-4">
                 No data available
               </td>
             </tr>

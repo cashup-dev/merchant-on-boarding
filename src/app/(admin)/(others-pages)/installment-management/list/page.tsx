@@ -1,78 +1,101 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import InstallmentTable from "@/components/installment-management/InstallmentTable"; // DIUBAH
-import Button from "@/components/ui/button/Button";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import InstallmentTable from "@/components/installment-management/InstallmentTable";
+import Button from "@/components/ui/button/Button";
 
-export default function InstallmentManagementPage() { // DIUBAH
-  const [installmentList, setInstallmentList] = useState([]); // DIUBAH
+export type Installment = {
+  id: number;
+  name?: string;
+  minTransaction?: number;
+  tenorDurations?: number[];
+  isActive?: boolean;
+};
+
+export default function InstallmentManagementPage() {
+  const [installmentList, setInstallmentList] = useState<Installment[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
-  const { isAdmin } = useAuth();
 
-  const fetchData = async () => {
+  const fetchInstallments = useCallback(async () => {
     setLoading(true);
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("token="))
-      ?.split("=")[1];
-
     try {
-      // Endpoint API diubah untuk mengambil data installment
-      const res = await fetch("/api/installment/list", { // DIUBAH
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+
+      const res = await fetch("/api/installment/list", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
         },
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Request failed");
 
-      // Sesuaikan dengan struktur data dari API installment Anda
-      setInstallmentList(data.data.data); // DIUBAH
+      setInstallmentList(data.data?.data || []); 
+      setErrorMsg("");
     } catch (err: any) {
+      console.error("❌ Failed to fetch installments", err);
       setErrorMsg(err.message || "Gagal ambil data");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, []);
 
+  useEffect(() => {
+    fetchInstallments();
+  }, [fetchInstallments]);
+
   const handleCreate = () => {
-    // Navigasi ke halaman pembuatan installment
-    router.push("/installment-management/create"); // DIUBAH
+    router.push("/installment-management/create");
   };
 
-  const handleEdit = (installment: any) => { // DIUBAH
+  const handleEdit = (installment: Installment) => {
     const encoded = encodeURIComponent(JSON.stringify(installment));
-    // Navigasi ke halaman edit installment
-    router.push(`/installment-management/edit?data=${encoded}`); // DIUBAH
+    router.push(`/installment-management/edit?data=${encoded}`);
   };
+
+  const handleStatusChange = async (installmentId: number, isActive: boolean) => {
+    await fetchInstallments(); 
+  };
+
+  // --- FUNGSI INI YANG HILANG ---
+  const handleMerchantBinding = useCallback((installment: Installment) => {
+    router.push(`/installment-management/merchant-bind?installmentId=${installment.id}`);
+  }, [router]);
+
+  const handleBinBinding = useCallback((installment: Installment) => {
+    router.push(`/installment-management/bin-bind?installmentId=${installment.id}`);
+  }, [router]);
+  // --- END ---
 
   return (
-    <div className="space-y-6">
-      {isAdmin && (
-        <div className="flex justify-between items-center">
-          {/* Judul halaman diubah */}
-          <h1 className="text-xl font-semibold">Installment Management</h1> 
-          {/* Teks tombol diubah */}
-          <Button onClick={handleCreate}>+ Create Installment</Button>
-        </div>
-      )}
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Installment Management</h1>
+        <Button onClick={handleCreate}>➕ Add Installment</Button>
+      </div>
 
       {loading ? (
         <p>Loading...</p>
       ) : errorMsg ? (
-        <p className="text-red-500">{errorMsg}</p>
+        <p className="text-red-500 text-center py-10">{errorMsg}</p>
+      ) : installmentList.length > 0 ? (
+        // --- PROPS INI YANG PERLU DITAMBAHKAN ---
+        <InstallmentTable
+          data={installmentList}
+          onEdit={handleEdit}
+          onStatusChange={handleStatusChange}
+          onMerchantBind={handleMerchantBinding}
+          onBinBind={handleBinBinding}
+        />
       ) : (
-        // Menggunakan komponen tabel untuk installment
-        <InstallmentTable data={installmentList} onEdit={handleEdit} /> // DIUBAH
+        <div className="text-center py-10 text-gray-500">
+            <p>No installment data found.</p>
+        </div>
       )}
     </div>
   );
