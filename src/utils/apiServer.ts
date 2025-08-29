@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 // const BASE_URL = 'https://promo-en.nephren.xyz';
 
-const BASE_URL = 'https://seashell.cashlez.com/';
+const BASE_URL = 'https://seashell.cashlez.com';
 
 // const BASE_URL = process.env.PROMO_ENGINE_API;
 
