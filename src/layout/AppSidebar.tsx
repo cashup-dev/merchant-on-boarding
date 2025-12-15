@@ -4,12 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import {
-  ChevronDownIcon,
-  GridIcon,
-  HorizontaLDots,
-} from "../icons/index";
-import { Percent, Store, CreditCard, TicketCheck } from 'lucide-react';
+import { ChevronDownIcon, GridIcon, HorizontaLDots } from "../icons/index";
+import { Store } from "lucide-react";
 
 // Tipe untuk item navigasi
 type NavItem = {
@@ -27,25 +23,9 @@ const navItems: NavItem[] = [
     path: "/",
   },
   {
-    icon: <Percent />,
-    name: "Promo Management",
-    subItems: [
-      { name: "List", path: "/promo-management", pro: false },
-      { name: "Usage History", path: "/usage-history/list", pro: false },
-      { name: "Merchant", path: "/merchant-management", pro: false },
-      { name: "BIN", path: "/bin-management", pro: false },
-      { name: "Eligibility Management", path: "/eligibility-management", pro: false },
-    ],
-  },
-  {
-    icon: <CreditCard />, // bisa pake icon lain biar beda
-    name: "Installment Management",
-    subItems: [
-      { name: "List", path: "/installment-management", pro: false },
-      { name: "Usage History", path: "/installment-usage-history/list", pro: false },
-      { name: "Merchant", path: "/installment-merchant-management", pro: false },
-      { name: "BIN", path: "/installment-bin-management", pro: false },
-    ],
+    name: "Products",
+    icon: <Store />,
+    path: "/products",
   },
 ];
 
@@ -207,7 +187,7 @@ const AppSidebar: React.FC = () => {
                 width={32}
                 height={32}
               />
-              <span className="text-blue-400 text-2xl font-semibold">cashUP <span className="text-zinc-400">Promo</span></span>
+              <span className="text-blue-400 text-2xl font-semibold">cashUP <span className="text-zinc-400">Backoffice</span></span>
             </div>
           ) : (
             <Image

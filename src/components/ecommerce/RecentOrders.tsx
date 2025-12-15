@@ -8,47 +8,50 @@ import {
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import { useEffect, useState } from "react";
-import { Star } from "lucide-react";
 
-interface Merchant {
-  merchantId: number;
-  merchantName: string;
-  count: number;
+interface ProductRow {
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+  status: string;
+  updatedAt?: string;
 }
 
-export default function TopMerchants() {
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
+export default function RecentProducts() {
+  const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTopMerchants = async () => {
+    const fetchRecentProducts = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/promo/stats');
+        const res = await fetch("/api/products");
         const json = await res.json();
         
-        if (!res.ok) throw new Error(json.message || 'Failed to fetch merchant data');
+        if (!res.ok) throw new Error(json.message || "Failed to fetch product data");
         
-        // Convert the object to array
-        const topMerchants = json.data.data.top5Merchants;
-        const merchantsArray = Object.values(topMerchants) as Merchant[];
-        
-        // Sort by count descending and take top 5
-        const sortedMerchants = merchantsArray
-          .sort((a, b) => b.count - a.count)
+        const fetched = (json.data || []) as ProductRow[];
+
+        const sorted = [...fetched]
+          .sort((a, b) => {
+            const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return timeB - timeA;
+          })
           .slice(0, 5);
-        
-        setMerchants(sortedMerchants);
+
+        setProducts(sorted);
       } catch (err: any) {
         setError(err.message);
-        console.error('Failed to fetch top merchants:', err);
+        console.error("Failed to fetch products:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTopMerchants();
+    fetchRecentProducts();
   }, []);
 
   if (loading) {
@@ -56,7 +59,7 @@ export default function TopMerchants() {
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
         <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Top 5 Merchant ⭐
+            Latest Products
           </h2>
         </div>
         <div className="space-y-4">
@@ -77,7 +80,7 @@ export default function TopMerchants() {
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
         <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Top 5 Merchant ⭐
+            Latest Products
           </h2>
         </div>
         <div className="text-red-500 p-4">{error}</div>
@@ -85,15 +88,15 @@ export default function TopMerchants() {
     );
   }
 
-  if (merchants.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
         <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Top 5 Merchant ⭐
+            Latest Products
           </h2>
         </div>
-        <div className="text-gray-500 p-4">No merchant data available</div>
+        <div className="text-gray-500 p-4">No product data available</div>
       </div>
     );
   }
@@ -102,7 +105,7 @@ export default function TopMerchants() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Top 5 Merchant ⭐
+          Latest Products
         </h2>
       </div>
       <div className="max-w-full overflow-x-auto">
@@ -113,39 +116,44 @@ export default function TopMerchants() {
               <TableCell
                 isHeader
                 className="py-3 pl-5 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                Ranking
+                #
               </TableCell>
               <TableCell
                 isHeader
                 className="py-3 pl-10 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Merchant Name
+                Product
               </TableCell>
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400 pr-10"
               >
-                Transaction Count
+                Price
+              </TableCell>
+              <TableCell
+                isHeader
+                className="py-3 font-medium text-gray-500 text-end text-theme-xs dark:text-gray-400 pr-10"
+              >
+                Stock
               </TableCell>
             </TableRow>
           </TableHeader>
 
           {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {merchants.map((merchant, index) => (
-              <TableRow key={merchant.merchantId}>
+            {products.map((product, index) => (
+              <TableRow key={product.id}>
                 <TableCell className="py-[1.11rem] pl-5">
-                  <Badge
-                    size="sm"
-                  >
-                    #{index + 1}
-                  </Badge>
+                  <Badge size="sm">#{index + 1}</Badge>
                 </TableCell>
                 <TableCell className="py-[1.11rem] pl-10 font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                  {merchant.merchantName}
+                  {product.name}
                 </TableCell>
                 <TableCell className="py-[1.11rem] text-gray-500 text-theme-sm dark:text-gray-400 text-end pr-12">
-                  {merchant.count.toLocaleString()}
+                  Rp{product.price.toLocaleString("id-ID")}
+                </TableCell>
+                <TableCell className="py-[1.11rem] text-gray-500 text-theme-sm dark:text-gray-400 text-end pr-12">
+                  {product.stock.toLocaleString("id-ID")}
                 </TableCell>
               </TableRow>
             ))}

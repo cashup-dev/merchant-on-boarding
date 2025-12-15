@@ -1,25 +1,17 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Badge from "../ui/badge/Badge";
-import { 
-  ArrowDownIcon, 
-  ArrowUpIcon, 
-  BoxIconLine, 
-  GroupIcon, 
-  CheckCircleIcon,
-} from "@/icons";
-import { Activity, Tag, X } from "lucide-react";
+import { CheckCircleIcon } from "@/icons";
+import { Activity, Package, ShieldX } from "lucide-react";
 
-interface PromoStats {
-  totalActivePromos: number;
-  successfulTransactions: number;
-  failedTransactions: number;
-  totalTransactions: number;
-  successRate: number;
-}
+type ProductStats = {
+  totalProducts: number;
+  activeProducts: number;
+  inactiveProducts: number;
+  lowStock: number;
+};
 
 export const EcommerceMetrics = () => {
-  const [stats, setStats] = useState<PromoStats | null>(null);
+  const [stats, setStats] = useState<ProductStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,15 +19,26 @@ export const EcommerceMetrics = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/promo/stats');
+        const res = await fetch("/api/products");
         const json = await res.json();
         
-        if (!res.ok) throw new Error(json.message || 'Failed to fetch stats');
+        if (!res.ok) throw new Error(json.message || "Failed to fetch products");
         
-        setStats(json.data.data);
+        const products = json.data || [];
+        const totalProducts = products.length;
+        const activeProducts = products.filter((p: any) => p.status === "active").length;
+        const inactiveProducts = products.filter((p: any) => p.status === "inactive").length;
+        const lowStock = products.filter((p: any) => Number(p.stock) < 20).length;
+
+        setStats({
+          totalProducts,
+          activeProducts,
+          inactiveProducts,
+          lowStock,
+        });
       } catch (err: any) {
         setError(err.message);
-        console.error('Failed to fetch promo stats:', err);
+        console.error("Failed to fetch product stats:", err);
       } finally {
         setLoading(false);
       }
@@ -89,22 +92,22 @@ export const EcommerceMetrics = () => {
       {/* Active Promos Card */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-          <Tag className="text-amber-400 size-6 dark:text-white/90" />
+          <Package className="text-amber-400 size-6 dark:text-white/90" />
         </div>
 
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Active Promos
+              Total Products
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {stats.totalActivePromos.toLocaleString()}
+              {stats.totalProducts.toLocaleString()}
             </h4>
           </div>
         </div>
       </div>
 
-      {/* Successful Transactions Card */}
+      {/* Active Products Card */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <CheckCircleIcon className="text-green-600 size-6 dark:text-white/90" />
@@ -112,33 +115,33 @@ export const EcommerceMetrics = () => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Successful Transaction
+              Active Products
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {stats.successfulTransactions.toLocaleString()}
+              {stats.activeProducts.toLocaleString()}
             </h4>
           </div>
         </div>
       </div>
 
-      {/* Failed Transactions Card */}
+      {/* Inactive Products Card */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-          <X className="text-red-400 size-6 dark:text-white/90" />
+          <ShieldX className="text-red-400 size-6 dark:text-white/90" />
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Failed Transactions
+              Inactive Products
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {stats.failedTransactions.toLocaleString()}
+              {stats.inactiveProducts.toLocaleString()}
             </h4>
           </div>
         </div>
       </div>
 
-      {/* Total Transactions Card */}
+      {/* Low Stock Card */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <Activity className="text-blue-800 size-6 dark:text-white/90" />
@@ -146,10 +149,10 @@ export const EcommerceMetrics = () => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Total Transactions
+              Low Stock (&lt; 20)
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {stats.totalTransactions.toLocaleString()}
+              {stats.lowStock.toLocaleString()}
             </h4>
           </div>
         </div>

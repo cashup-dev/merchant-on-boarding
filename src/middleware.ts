@@ -4,20 +4,11 @@ import { UserData } from './types/auth'
 import { getUserDataFromToken } from './utils/auth'
 
 const protectedRoutes = [
-  '/profile',
-  '/bin-management',
-  '/eligibility-management',
-  '/merchant-management',
-  '/promo-management',
-  '/usage-history'
+  // '/profile',
+  // '/products'
 ]
 
-const adminOnlyRoutes = [
-  '/promo-management/merchant-bind',
-  '/promo-management/bin-bind',
-  '/promo-management/edit',
-  '/promo-management/create',
-]
+const adminOnlyRoutes: string[] = []
 const authRoutes = ['/signin', '/signup']
 
 export default async function middleware(request: NextRequest) {
@@ -67,16 +58,8 @@ export const config = {
     '/signin',
     '/signup',
     '/profile',
-    '/bin-management',
-    '/eligibility-management',
-    '/merchant-management',
-    '/promo-management',
-    '/usage-history',
     '/profile/:path*',
-    '/bin-management/:path*',
-    '/eligibility-management/:path*',
-    '/merchant-management/:path*',
-    '/promo-management/:path*',
-    '/usage-history/:path*'
+    '/products',
+    '/products/:path*',
   ],
 }

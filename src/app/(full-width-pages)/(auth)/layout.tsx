@@ -29,10 +29,10 @@ export default function AuthLayout({
                     alt="Logo"
                   />
 
-                  <span className="text-blue-400 text-4xl font-semibold">cash<span className="text-green-600">UP</span> <span className="text-zinc-400">Promo Eng.</span></span>
+                  <span className="text-blue-400 text-4xl font-semibold">cash<span className="text-green-600">UP</span> <span className="text-zinc-400">Backoffice</span></span>
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  cashUP Promo is a platform that helps you manage your promotions and campaigns effectively. 
+                  cashUP Backoffice membantu Anda mengelola data operasional dengan contoh fitur CRUD yang siap dikembangkan lebih lanjut.
                 </p>
               </div>
             </div>
