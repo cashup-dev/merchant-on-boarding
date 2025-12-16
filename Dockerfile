@@ -1,40 +1,41 @@
 FROM node:20-alpine AS base
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Install deps using the available lockfile
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm install --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-
-# Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
 
-ARG JWT_SECRET
-ARG NODE_ENV
-ARG PROMO_ENGINE_API
+# Build-time env for NextAuth/Keycloak
+ARG NEXTAUTH_URL
+ARG NEXTAUTH_SECRET
+ARG KEYCLOAK_ISSUER
+ARG KEYCLOAK_CLIENT_ID
+ARG KEYCLOAK_CLIENT_SECRET
+ARG BACKOFFICE_API
+ARG NODE_ENV=production
 
-ENV JWT_SECRET=$JWT_SECRET
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV KEYCLOAK_ISSUER=$KEYCLOAK_ISSUER
+ENV KEYCLOAK_CLIENT_ID=$KEYCLOAK_CLIENT_ID
+ENV KEYCLOAK_CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET
+ENV BACKOFFICE_API=$BACKOFFICE_API
 ENV NODE_ENV=$NODE_ENV
-ENV PROMO_ENGINE_API=$PROMO_ENGINE_API
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
@@ -43,26 +44,22 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-# Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 
-ARG JWT_SECRET
-ARG NODE_ENV
-ARG PROMO_ENGINE_API
+# Runtime env
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV KEYCLOAK_ISSUER=$KEYCLOAK_ISSUER
+ENV KEYCLOAK_CLIENT_ID=$KEYCLOAK_CLIENT_ID
+ENV KEYCLOAK_CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET
+ENV BACKOFFICE_API=$BACKOFFICE_API
 
-ENV JWT_SECRET=$JWT_SECRET
-ENV NODE_ENV=$NODE_ENV
-ENV PROMO_ENGINE_API=$PROMO_ENGINE_API
-
-# Copy only the necessary files
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-# Expose the app on port 3000
 EXPOSE 3000
-
-# Start the app
 CMD ["npm", "start"]

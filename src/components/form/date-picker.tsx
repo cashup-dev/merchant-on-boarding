@@ -56,7 +56,7 @@ export default function DatePicker({
         flatPickr.destroy();
       }
     };
-  }, [mode, onChange, id, defaultDate]);
+  }, [mode, onChange, id, defaultDate, minDate, maxDate]);
 
   return (
     <div>
