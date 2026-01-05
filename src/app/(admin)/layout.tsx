@@ -7,6 +7,9 @@ import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import React from "react";
 
+// Force SSR for admin pages to avoid prerender fetch issues
+export const dynamic = "force-dynamic";
+
 export default function AdminLayout({
   children,
 }: {

@@ -1,54 +1,34 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { getCurrentUser } from "../../utils/auth";
+import { signOut, useSession } from "next-auth/react";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<{
-    id: number;
-    username: string;
-    partnerName?: string;
-    roles: Array<{ authority: string }>; // roles array
-  } | null>(null);
+  const { data: session } = useSession();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const userData = await getCurrentUser();
-      if (userData) {
-        setUser({
-          id: userData.id,
-          username: userData.username,
-          roles: userData.roles.map(
-            (role: { authority: any }) => role.authority
-          ),
-          partnerName: userData.partnerName,
-        });
-      } else {
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  // console.log("User data:", user);
-  function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+  const toggleDropdown = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsOpen((prev) => !prev);
-  }
+  };
 
-  function closeDropdown() {
-    setIsOpen(false);
-  }
+  const closeDropdown = () => setIsOpen(false);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    });
-
-    window.location.href = "/signin"; // Redirect ke halaman signin
+    await signOut({ callbackUrl: "/signin" });
   };
+
+  const username =
+    (session as any)?.preferred_username ||
+    session?.user?.name ||
+    session?.user?.email ||
+    "User";
+
+  const roles = ((session as any)?.roles as string[] | undefined) ?? [];
+  const primaryRole = roles.length > 0 ? roles[0] : "User Role";
+  const email = session?.user?.email || "";
 
   return (
     <div className="relative">
@@ -56,17 +36,8 @@ export default function UserDropdown() {
         onClick={toggleDropdown}
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
-        {/* <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
-            width={44}
-            height={44}
-            src="/images/user/owner.jpg"
-            alt="User"
-          />
-        </span> */}
-
         <span className="block mr-1 font-medium text-theme-sm">
-          Hi, {user?.username}!
+          Hi, {username}!
         </span>
 
         <svg
@@ -96,19 +67,12 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.username || "Random User"}
+            {username}
           </span>
-          <span className="mt-0.5  text-theme-xs text-gray-500 dark:text-gray-400 flex ">
-            <p className="lowercase">
-              {typeof user?.roles?.[0] === "string"
-              ? user.roles[0]
-              : user?.roles?.[0]?.authority || "User Role"}
-            </p>
+          <span className="mt-0.5 text-theme-xs text-gray-500 dark:text-gray-400 flex">
+            <p className="lowercase">{primaryRole}</p>
             <span className="mx-1">|</span>
-            <p>
-              {user?.partnerName ? `${user.partnerName}` : ""}
-            </p>
-            
+            <p>{email}</p>
           </span>
         </div>
 
@@ -139,6 +103,7 @@ export default function UserDropdown() {
             </DropdownItem>
           </li>
         </ul>
+
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"

@@ -1,28 +1,29 @@
 import { NextResponse } from "next/server";
-import type { Product } from "../route";
-
-// Reuse the in-memory list defined in the parent route module.
-import { products } from "../route";
+import type { Product } from "../data";
+import { products } from "../data";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   return updateProduct(request, params, "put");
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   return updateProduct(request, params, "patch");
 }
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const productId = Number(params.id);
+  const { id } = await context.params;
+  const productId = Number(id);
   if (Number.isNaN(productId)) {
     return NextResponse.json({ message: "Invalid product id" }, { status: 400 });
   }

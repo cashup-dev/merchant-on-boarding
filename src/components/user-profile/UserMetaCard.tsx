@@ -17,7 +17,7 @@ export default function UserMetaCard() {
       const userData = await getCurrentUser();
       if (userData) {
         setUser({
-          id: userData.id,
+          id: typeof userData.id === 'number' ? userData.id : 0,
           username: userData.username,
           roles: userData.roles.map(
             (role: { authority: any }) => role.authority

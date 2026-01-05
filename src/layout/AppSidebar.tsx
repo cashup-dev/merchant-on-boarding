@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
 
 // Komponen Sidebar Utama
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleSidebar } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
 
   const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
@@ -43,9 +43,6 @@ const AppSidebar: React.FC = () => {
 
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
-  const closeSidebar = () => {
-  isExpanded && toggleSidebar();
-}
   // Efek untuk membuka submenu yang aktif berdasarkan path URL
   useEffect(() => {
     let submenuMatched = false;
@@ -118,7 +115,6 @@ const AppSidebar: React.FC = () => {
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
-                onClick={closeSidebar}
               >
                 <span className={`${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
                   {nav.icon}
@@ -145,7 +141,6 @@ const AppSidebar: React.FC = () => {
                       className={`menu-dropdown-item ${
                         isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
                       }`}
-                      onClick={closeSidebar}
                     >
                       {subItem.name}
                       {/* Badge 'new' atau 'pro' bisa ditambahkan di sini jika perlu */}
@@ -169,16 +164,16 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
+      <div className={`py-8 mx-auto flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <div className="flex items-center gap-2">
+            <div className="">
               <Image
-                className="dark:hidden"
-                src="/images/logo/logo.png" // Pastikan path logo benar
+                className="dark:hidden m-auto"
+                src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
                 alt="Logo"
-                width={32}
-                height={32}
+                width={220}
+                height={50}
               />
               <Image
                 className="hidden dark:block"
@@ -187,11 +182,11 @@ const AppSidebar: React.FC = () => {
                 width={32}
                 height={32}
               />
-              <span className="text-blue-400 text-2xl font-semibold">cashUP <span className="text-zinc-400">Backoffice</span></span>
+              {/* <span className="text-blue-400 text-2xl font-semibold">cashUP <span className="text-zinc-400">Backoffice</span></span> */}
             </div>
           ) : (
             <Image
-              src="/images/logo/logo.png" // Pastikan path logo benar
+              src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
               alt="Logo"
               width={32}
               height={32}

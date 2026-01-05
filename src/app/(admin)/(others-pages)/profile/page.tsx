@@ -4,6 +4,9 @@ import UserMetaCard from "@/components/user-profile/UserMetaCard";
 import { Metadata } from "next";
 import React from "react";
 
+// Hindari prerender supaya tidak error pada saat build (auth + URL env)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Next.js Profile | TailAdmin - Next.js Dashboard Template",
   description:
