@@ -10,6 +10,9 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+// Disable static prerender to avoid build-time URL/env issues
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
