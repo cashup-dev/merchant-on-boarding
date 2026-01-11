@@ -3,11 +3,9 @@
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { signOut, useSession } from "next-auth/react";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: session } = useSession();
 
   const toggleDropdown = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -16,19 +14,9 @@ export default function UserDropdown() {
 
   const closeDropdown = () => setIsOpen(false);
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: "/signin" });
-  };
-
-  const username =
-    (session as any)?.preferred_username ||
-    session?.user?.name ||
-    session?.user?.email ||
-    "User";
-
-  const roles = ((session as any)?.roles as string[] | undefined) ?? [];
-  const primaryRole = roles.length > 0 ? roles[0] : "User Role";
-  const email = session?.user?.email || "";
+  const username = "Guest User";
+  const primaryRole = "Merchant Ops";
+  const email = "guest@softpos.local";
 
   return (
     <div className="relative">
@@ -104,8 +92,10 @@ export default function UserDropdown() {
           </li>
         </ul>
 
-        <button
-          onClick={handleLogout}
+        <DropdownItem
+          onItemClick={closeDropdown}
+          tag="a"
+          href="/signin"
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <svg
@@ -123,8 +113,8 @@ export default function UserDropdown() {
               fill=""
             />
           </svg>
-          Sign out
-        </button>
+          Switch account
+        </DropdownItem>
       </Dropdown>
     </div>
   );

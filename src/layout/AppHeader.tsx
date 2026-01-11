@@ -8,12 +8,13 @@ import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
-  // Update date and time every second
+  // Update date and time every second (client-only to avoid hydration mismatch)
   useEffect(() => {
+    setCurrentDateTime(new Date());
     const timer = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
@@ -116,10 +117,9 @@ const AppHeader: React.FC = () => {
             className="lg:hidden flex items-center gap-2 text-2xl font-semibold"
           >
             <Image
-              width={32}
+              width={100}
               height={32}
-              className="dark:hidden"
-              src="/images/logo/logo.png"
+              src="/images/logo/cashup-logo.svg"
               alt="Logo"
             />
             <Image
@@ -129,9 +129,6 @@ const AppHeader: React.FC = () => {
               src="/images/logo/logo.png"
               alt="Logo"
             />
-            <span className="text-blue-400">
-              cashUP <span className="text-zinc-400">Promo</span>
-            </span>
           </Link>
 
           <button
@@ -197,10 +194,10 @@ const AppHeader: React.FC = () => {
           {/* Date and Time Display */}
           <div className="hidden lg:flex flex-col items-end mr-4">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
-              {formatDate(currentDateTime)}
+              {currentDateTime ? formatDate(currentDateTime) : "\u2014"}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {formatTime(currentDateTime)}
+              {currentDateTime ? formatTime(currentDateTime) : "\u2014"}
             </span>
           </div>
 

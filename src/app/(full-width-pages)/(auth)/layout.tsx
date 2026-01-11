@@ -1,5 +1,7 @@
 import GridShape from "@/components/common/GridShape";
+import PartnerMarquee from "@/components/common/PartnerMarquee";
 import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
+import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
 
 import { ThemeProvider } from "@/context/ThemeContext";
 import Image from "next/image";
@@ -14,26 +16,28 @@ export default function AuthLayout({
   return (
     <div className="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
       <ThemeProvider>
-        <div className="relative flex lg:flex-row w-full h-screen justify-center flex-col  dark:bg-gray-900 sm:p-0">
+        <div className="relative flex lg:flex-row-reverse w-full h-screen justify-center flex-col  dark:bg-gray-900 sm:p-0">
           {children}
-          <div className="lg:w-1/2 w-full h-full bg-brand-950 dark:bg-white/5 lg:grid items-center hidden">
-            <div className="relative items-center justify-center  flex z-1">
+          <div className="lg:w-1/2 w-full h-full bg-zinc-50 dark:bg-white/5 lg:flex items-center hidden">
+            <div className="relative flex h-full w-full items-center justify-center">
               {/* <!-- ===== Common Grid Shape Start ===== --> */}
-              <GridShape />
-              <div className="flex flex-col items-center max-w-xs">
-                <Link href="/" className="mb-4 flex items-center gap-5">
-                  <Image
-                    width={100}
-                    height={100}
-                    src="/images/logo/logo.png"
-                    alt="Logo"
-                  />
-
-                  <span className="text-blue-400 text-4xl font-semibold">cash<span className="text-green-600">UP</span> <span className="text-zinc-400">Backoffice</span></span>
-                </Link>
-                <p className="text-center text-gray-400 dark:text-white/60">
-                  cashUP Backoffice membantu Anda mengelola data operasional dengan contoh fitur CRUD yang siap dikembangkan lebih lanjut.
-                </p>
+              {/* <GridShape /> */}
+              <BackgroundRippleEffect />
+              <div className="relative z-10 w-full items-center">
+                <div className="px-10">
+                  <Link href="/" className="mb-5 flex  items-center gap-5">
+                    <Image
+                      width={200} 
+                      height={100}
+                      src="/images/logo/cashup-logo.svg"
+                      alt="Logo"
+                    />
+                  </Link>
+                <div className="mb-10 bg-gradient-to-r from-zinc-600 via-[#1f9136]  to-[#1f9136] bg-clip-text text-xl text-transparent">
+                  Mitra utama anda dalam solusi pembayaran
+                </div>
+                </div>
+                <PartnerMarquee />
               </div>
             </div>
           </div>

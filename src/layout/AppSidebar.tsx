@@ -4,178 +4,50 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import { ChevronDownIcon, GridIcon, HorizontaLDots } from "../icons/index";
+import { HorizontaLDots } from "../icons/index";
 import { Store, Users, Calendar, FileText, CreditCard } from "lucide-react";
 
-// Tipe untuk item navigasi
-type NavItem = {
-  name: string;
-  icon: React.ReactNode;
-  path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+type TimelineStep = {
+  title: string;
+  description: string;
+  href: string;
 };
 
-// Daftar item menu utama
-const navItems: NavItem[] = [
+const onboardingSteps: TimelineStep[] = [
   {
-    name: "Dashboard",
-    icon: <GridIcon />,
-    path: "/",
+    title: "Pemilik/Perwakilan Bisnis",
+    description: "Data pemilik & perwakilan",
+    href: "/business-representative-information",
   },
   {
-    name: "Merchant",
-    icon: <Store className="w-5 h-5" />,
-    subItems: [
-      { name: "Merchants", path: "/merchants" },
-      { name: "Partners", path: "/partners" },
-    ],
+    title: "Informasi Merchant/Badan Usaha",
+    description: "Profil usaha & dokumen",
+    href: "/business-entity",
   },
   {
-    name: "Event",
-    icon: <Calendar className="w-5 h-5" />,
-    subItems: [
-      { name: "Events", path: "/events" },
-    ],
-  },
-  {
-    name: "Docsite",
-    icon: <FileText className="w-5 h-5" />,
-    subItems: [
-      { name: "Post", path: "/post" },
-      { name: "Category", path: "/category" },
-    ],
-  },
-  {
-    name: "Transactions",
-    icon: <CreditCard className="w-5 h-5" />,
-    path: "/transactions",
+    title: "Terms & Finish",
+    description: "Syarat & submit",
+    href: "/terms-and-finish",
   },
 ];
 
-
-
+const gradientStyle = {
+  background: "linear-gradient(135deg, #186229 0%, #212c63 100%)",
+};
 
 // Komponen Sidebar Utama
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-
-  const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
-  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const isActive = useCallback((path: string) => path === pathname, [pathname]);
-
-  // Efek untuk membuka submenu yang aktif berdasarkan path URL
-  useEffect(() => {
-    let submenuMatched = false;
-    navItems.forEach((nav, index) => {
-      if (nav.subItems) {
-        nav.subItems.forEach((subItem) => {
-          if (isActive(subItem.path)) {
-            setOpenSubmenu(index);
-            submenuMatched = true;
-          }
-        });
-      }
-    });
-
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
-  }, [pathname, isActive]);
-
-  // Efek untuk menghitung dan mengatur tinggi submenu saat dibuka
-  useEffect(() => {
-    if (openSubmenu !== null) {
-      const key = `${openSubmenu}`;
-      if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
-          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
-        }));
-      }
-    }
-  }, [openSubmenu]);
-
-  // Fungsi untuk toggle buka/tutup submenu
-  const handleSubmenuToggle = (index: number) => {
-    setOpenSubmenu((prevOpenSubmenu) => (prevOpenSubmenu === index ? null : index));
-  };
-  
-  // Fungsi untuk render item menu
-  const renderMenuItems = (items: NavItem[]) => (
-    <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => (
-        <li key={nav.name}>
-          {nav.subItems ? (
-            <button
-              onClick={() => handleSubmenuToggle(index)}
-              className={`menu-item group ${
-                openSubmenu === index ? "menu-item-active" : "menu-item-inactive"
-              } cursor-pointer ${
-                !isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
-              }`}
-            >
-              <span className={`${openSubmenu === index ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
-                {nav.icon}
-              </span>
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <span className="menu-item-text">{nav.name}</span>
-              )}
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                    openSubmenu === index ? "rotate-180 text-brand-500" : ""
-                  }`}
-                />
-              )}
-            </button>
-          ) : (
-            nav.path && (
-              <Link
-                href={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                }`}
-              >
-                <span className={`${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">{nav.name}</span>
-                )}
-              </Link>
-            )
-          )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
-            <div
-              ref={(el) => { subMenuRefs.current[index] = el; }}
-              className="overflow-hidden transition-all duration-300"
-              style={{
-                height: openSubmenu === index ? `${subMenuHeight[index] || 0}px` : "0px",
-              }}
-            >
-              <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
-                    <Link
-                      href={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
-                      }`}
-                    >
-                      {subItem.name}
-                      {/* Badge 'new' atau 'pro' bisa ditambahkan di sini jika perlu */}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
+  const isOnboardingRoute = [
+    "/business-representative-information",
+    "/business-entity",
+    "/terms-and-finish",
+  ].some((path) => pathname.startsWith(path));
+  const showSidebarContent = isExpanded || isHovered || isMobileOpen;
+  const activeOnboardingIndex = Math.max(
+    0,
+    onboardingSteps.findIndex((step) => pathname.startsWith(step.href)),
   );
 
   return (
@@ -192,18 +64,18 @@ const AppSidebar: React.FC = () => {
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="">
               <Image
-                className="dark:hidden m-auto"
+                className="sm:hidden"
+                src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
+                alt="Logo"
+                width={150}
+                height={50}
+              />
+              <Image
+                className="m-auto hidden sm:inline-flex"
                 src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
                 alt="Logo"
                 width={220}
                 height={50}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo.png" // Pastikan path logo benar
-                alt="Logo"
-                width={32}
-                height={32}
               />
               {/* <span className="text-blue-400 text-2xl font-semibold">cashUP <span className="text-zinc-400">Backoffice</span></span> */}
             </div>
@@ -225,9 +97,97 @@ const AppSidebar: React.FC = () => {
                   !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? "Menu" : <HorizontaLDots />}
+                {showSidebarContent ? (isOnboardingRoute ? "Onboarding" : "Menu") : <HorizontaLDots />}
               </h2>
-              {renderMenuItems(navItems)}
+              {isOnboardingRoute ? (
+                <div>
+                  {showSidebarContent && (
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
+                      Progress
+                    </p>
+                  )}
+                  <div className={showSidebarContent ? "mt-4" : ""}>
+                    <div className="relative">
+                      {showSidebarContent && (
+                        <div className="pointer-events-none absolute left-[11px] top-1 h-[calc(100%-8px)] w-[2px] rounded-full bg-gradient-to-b from-[#186229] via-[#1b4f4a] to-[#212c63] opacity-35" />
+                      )}
+                      <ul className="space-y-7">
+                        {onboardingSteps.map((step, index) => {
+                          const isComplete = index < activeOnboardingIndex;
+                          const isCurrent = index === activeOnboardingIndex;
+                          const labelColor = isCurrent
+                            ? "text-gray-900"
+                            : isComplete
+                            ? "text-gray-700"
+                            : "text-gray-400";
+
+                          return (
+                            <li key={step.href} className="relative">
+                              <Link
+                                href={step.href}
+                                aria-current={isCurrent ? "step" : undefined}
+                                className={`group flex items-start ${showSidebarContent ? "gap-4" : "justify-center"}`}
+                              >
+                                <div className="mt-0.5 flex h-6 w-6 items-center justify-center">
+                                  {isComplete ? (
+                                    <span
+                                      className="flex h-full w-full items-center justify-center rounded-full text-white shadow-sm"
+                                      style={gradientStyle}
+                                    >
+                                      <svg
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-3.5 w-3.5"
+                                      >
+                                        <path
+                                          d="M13.2 4.4L6.6 11l-3.8-3.8"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
+                                    </span>
+                                  ) : isCurrent ? (
+                                    <span
+                                      className="flex h-full w-full items-center justify-center rounded-full p-[2px] shadow-sm"
+                                      style={gradientStyle}
+                                    >
+                                      <span className="flex h-full w-full items-center justify-center rounded-full bg-white">
+                                        <span
+                                          className="h-2.5 w-2.5 rounded-full"
+                                          style={gradientStyle}
+                                        />
+                                      </span>
+                                    </span>
+                                  ) : (
+                                    <span className="h-full w-full rounded-full border border-gray-200 bg-white shadow-xs" />
+                                  )}
+                                </div>
+                                {showSidebarContent && (
+                                  <div className="space-y-1">
+                                    <p
+                                      className={`text-sm font-semibold transition-colors ${labelColor} group-hover:text-gray-900`}
+                                    >
+                                      {step.title}
+                                    </p>
+                                    <p className="text-xs text-gray-400 group-hover:text-gray-500">
+                                      {step.description}
+                                    </p>
+                                  </div>
+                                )}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                  ""
+              )}
             </div>
             
             {/* DIV UNTUK "OTHERS" TELAH DIHAPUS DARI SINI */}
