@@ -132,11 +132,9 @@ const AppSidebar: React.FC = () => {
                   )}
                   <div className={showSidebarContent ? "mt-4" : ""}>
                     <div className="relative">
-                      {showSidebarContent && (
-                        <div className="pointer-events-none absolute left-[11px] top-1 h-[calc(100%-8px)] w-[2px] rounded-full bg-gradient-to-b from-[#186229] via-[#1b4f4a] to-[#212c63] opacity-35" />
-                      )}
                       <ul className="space-y-7">
                         {onboardingSteps.map((step, index) => {
+                          const isLast = index === onboardingSteps.length - 1;
                           const isComplete = index < activeOnboardingIndex;
                           const isCurrent = index === activeOnboardingIndex;
                           const labelColor = isCurrent
@@ -147,13 +145,16 @@ const AppSidebar: React.FC = () => {
 
                           return (
                             <li key={step.href} className="relative">
+                              {showSidebarContent && !isLast && (
+                                <span className="pointer-events-none absolute left-[11px] top-7 h-[calc(100%+16px)] w-[2px] rounded-full bg-gradient-to-b from-[#186229] via-[#1b4f4a] to-[#212c63] opacity-35" />
+                              )}
                               <Link
                                 href={step.href}
                                 aria-current={isCurrent ? "step" : undefined}
                                 className={`group flex items-start ${showSidebarContent ? "gap-4" : "justify-center"}`}
                               >
                                 <div className="mt-0.5 flex h-6 w-6 items-center justify-center">
-                                  {isComplete ? (
+                                  {isComplete || (isCurrent && isLast) ? (
                                     <span
                                       className="flex h-full w-full items-center justify-center rounded-full text-white shadow-sm"
                                       style={gradientStyle}

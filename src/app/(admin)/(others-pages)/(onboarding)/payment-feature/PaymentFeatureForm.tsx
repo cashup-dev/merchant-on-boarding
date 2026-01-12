@@ -12,11 +12,11 @@ type FeatureCard = {
 
 const featureOptions: FeatureCard[] = [
   {
-    id: "POS",
-    title: "Payment",
-    description: "Menyediakan ragam metode pembayaran online untuk pelanggan Anda.",
+    id: "cashlez",
+    title: "Cashlez",
+    description: "Lorem ipsum dolor sit.",
     detail: "Metode tersedia: VA, transfer bank, e-wallet, QRIS, kartu.",
-    badges: ["VA", "BNI", "BRI", "BCA", "QRIS", "+9"],
+    badges: ["VA", "BNI", "BRI", "+9"],
   },
   {
     id: "czlink",
