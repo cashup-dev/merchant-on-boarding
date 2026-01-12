@@ -4,20 +4,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import React, { useState } from "react";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 export default function SignInForm() {
+  const router = useRouter();
   const [isChecked, setIsChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem("signupEmail") ?? "";
+    const storedPassword = sessionStorage.getItem("signupPassword") ?? "";
+    setEmail(storedEmail);
+    setPassword(storedPassword);
+  }, []);
+
+  const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsLoading(true);
-    toast.message("Template mode", {
-      description: "Sign-in belum dihubungkan ke backend.",
-    });
-    setIsLoading(false);
+    sessionStorage.removeItem("signupEmail");
+    sessionStorage.removeItem("signupPassword");
+    router.push("/business-type");
   };
 
   return (
@@ -44,6 +53,8 @@ export default function SignInForm() {
                   id="signin-email"
                   name="email"
                   placeholder="nama@bisnis.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                 />
               </div>
               <div>
@@ -55,6 +66,8 @@ export default function SignInForm() {
                   id="signin-password"
                   name="password"
                   placeholder="********"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                 />
               </div>
               <div className="flex items-center justify-between">

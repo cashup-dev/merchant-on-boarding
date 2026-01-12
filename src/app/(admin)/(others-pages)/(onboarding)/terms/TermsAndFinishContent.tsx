@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useMemo, useRef, useState } from "react";
 
 type Clause = {
@@ -91,6 +92,7 @@ const clauses: Clause[] = [
 ];
 
 export default function TermsAndFinishContent() {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -155,6 +157,11 @@ export default function TermsAndFinishContent() {
         <button
           type="button"
           disabled={!accepted}
+          onClick={() => {
+            if (accepted) {
+              router.push("/in-review");
+            }
+          }}
           className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition ${
             accepted ? "bg-teal-500 hover:bg-teal-600" : "cursor-not-allowed bg-gray-200 text-gray-400"
           }`}

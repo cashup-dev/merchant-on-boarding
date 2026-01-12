@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 type FeatureCard = {
@@ -35,10 +36,18 @@ const featureOptions: FeatureCard[] = [
 ];
 
 export default function PaymentFeatureForm() {
+  const router = useRouter();
   const [selected, setSelected] = useState<string>("payment");
 
   return (
-    <form id="payment-feature-form" className="mt-8 space-y-6">
+    <form
+      id="payment-feature-form"
+      className="mt-8 space-y-6"
+      onSubmit={(event) => {
+        event.preventDefault();
+        router.push("/business-entity");
+      }}
+    >
       <div className="grid gap-4 lg:grid-cols-2">
         {featureOptions.map((feature) => {
           const isActive = selected === feature.id;

@@ -1,9 +1,11 @@
 "use client";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function BusinessTypeForm() {
+  const router = useRouter();
   const [businessType, setBusinessType] = useState<string>("individual");
   const [companyType, setCompanyType] = useState<string>("pt");
 
@@ -11,6 +13,10 @@ export default function BusinessTypeForm() {
     <form
       id="business-type-form"
       className="mt-8"
+      onSubmit={(event) => {
+        event.preventDefault();
+        router.push("/payment-feature");
+      }}
       onReset={() => {
         setBusinessType("individual");
         setCompanyType("pt");

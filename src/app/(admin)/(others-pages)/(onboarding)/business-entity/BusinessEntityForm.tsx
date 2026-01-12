@@ -4,9 +4,11 @@ import UploadPreviewField from "@/components/form/UploadPreviewField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 
 export default function BusinessEntityForm() {
+  const router = useRouter();
   const [activeStep, setActiveStep] = useState<"business" | "address" | "bank">("business");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -198,6 +200,10 @@ export default function BusinessEntityForm() {
         }
         if (activeStep === "address" && isAddressStepValid) {
           setActiveStep("bank");
+          return;
+        }
+        if (activeStep === "bank" && isBankStepValid) {
+          router.push("/terms");
         }
       }}
     >
