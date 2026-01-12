@@ -15,19 +15,39 @@ type TimelineStep = {
 
 const onboardingSteps: TimelineStep[] = [
   {
-    title: "Pemilik/Perwakilan Bisnis",
-    description: "Data pemilik & perwakilan",
-    href: "/business-representative-information",
+    title: "Tipe Bisnis",
+    description: "Individu atau perusahaan",
+    href: "/business-type",
   },
+  {
+    title: "Fitur Pembayaran",
+    description: "Pilih layanan cashUP",
+    href: "/payment-feature",
+  },
+  // {
+  //   title: "Pemilik/Perwakilan Bisnis",
+  //   description: "Data pemilik & perwakilan",
+  //   href: "/business-representative-information",
+  // },
   {
     title: "Informasi Merchant/Badan Usaha",
     description: "Profil usaha & dokumen",
     href: "/business-entity",
   },
   {
-    title: "Terms & Finish",
-    description: "Syarat & submit",
-    href: "/terms-and-finish",
+    title: "Terms",
+    description: "Syarat & persetujuan",
+    href: "/terms",
+  },
+  {
+    title: "In Review",
+    description: "Proses verifikasi",
+    href: "/in-review",
+  },
+  {
+    title: "Finish",
+    description: "Mulai dengan cashUP",
+    href: "/finish",
   },
 ];
 
@@ -40,9 +60,13 @@ const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
   const isOnboardingRoute = [
+    "/business-type",
+    "/payment-feature",
     "/business-representative-information",
     "/business-entity",
-    "/terms-and-finish",
+    "/terms",
+    "/in-review",
+    "/finish",
   ].some((path) => pathname.startsWith(path));
   const showSidebarContent = isExpanded || isHovered || isMobileOpen;
   const activeOnboardingIndex = Math.max(
@@ -63,7 +87,7 @@ const AppSidebar: React.FC = () => {
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="">
-              <Image
+            <Image
                 className="sm:hidden"
                 src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
                 alt="Logo"

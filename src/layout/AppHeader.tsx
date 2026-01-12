@@ -4,7 +4,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
-import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+// import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -203,10 +203,10 @@ const AppHeader: React.FC = () => {
 
           <div className="flex items-center gap-2 2xsm:gap-3">
             {/* Message/Chat Icon */}
-            <button className="relative flex items-center justify-center w-10 h-10 text-gray-500 hover:bg-gray-100 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
+            {/* <button className="relative flex items-center justify-center w-10 h-10 text-gray-500 hover:bg-gray-100 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">
               <ChatBubbleLeftRightIcon className="w-6 h-6" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            </button> */}
           </div>
           {/* <!-- User Area --> */}
           <UserDropdown />
