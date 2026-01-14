@@ -3,12 +3,16 @@
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
-export default function LanguageToggle() {
+type Props = {
+  className?: string;
+};
+
+export default function LanguageToggle({ className }: Props) {
   const { i18n } = useTranslation();
   const isId = i18n.language?.startsWith("id");
 
   return (
-    <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+    <div className={`flex items-center gap-2 ${className ?? ""}`}>
       <Button
         type="button"
         size="sm"

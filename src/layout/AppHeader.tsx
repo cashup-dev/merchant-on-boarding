@@ -113,7 +113,7 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link
-            href="/"
+            href="/dashboard"
             className="lg:hidden flex items-center gap-2 text-2xl font-semibold"
           >
             <Image

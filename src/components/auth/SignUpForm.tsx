@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function SignUpForm() {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,48 +25,48 @@ export default function SignUpForm() {
             <div className="flex flex-col gap-6">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white/90">
-                  Buat akun Anda
+                  {t("signup.register.title")}
                 </h2>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Lengkapi data di bawah untuk melanjutkan proses onboarding.
+                  {t("signup.register.subtitle")}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="fullName">
-                    Nama lengkap
+                    {t("signup.register.fields.fullName.label")}
                   </Label>
                   <Input
                     id="fullName"
                     name="fullName"
-                    placeholder="Nama sesuai KTP"
+                    placeholder={t("signup.register.fields.fullName.placeholder")}
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
                   />
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="businessName">
-                    Nama usaha
+                    {t("signup.register.fields.businessName.label")}
                   </Label>
                   <Input
                     id="businessName"
                     name="businessName"
-                    placeholder="Nama usaha"
+                    placeholder={t("signup.register.fields.businessName.placeholder")}
                     value={businessName}
                     onChange={(event) => setBusinessName(event.target.value)}
                   />
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="email">
-                    Email
+                    {t("signup.register.fields.email.label")}
                   </Label>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="nama@bisnis.com"
+                      placeholder={t("signup.register.fields.email.placeholder")}
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                     />
@@ -87,13 +89,13 @@ export default function SignUpForm() {
                 </div> */}
                 <div className="sm:col-span-2">
                   <Label htmlFor="phoneNumber">
-                    Nomor telepon
+                    {t("signup.register.fields.phoneNumber.label")}
                   </Label>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Input
                       id="phoneNumber"
                       name="phoneNumber"
-                      placeholder="+62 812 3456 7890"
+                      placeholder={t("signup.register.fields.phoneNumber.placeholder")}
                       value={phoneNumber}
                       onChange={(event) => setPhoneNumber(event.target.value)}
                     />
@@ -104,13 +106,13 @@ export default function SignUpForm() {
                 </div>
                 <div>
                   <Label htmlFor="password">
-                    Password
+                    {t("signup.register.fields.password.label")}
                   </Label>
                   <Input
                     id="password"
                     name="password"
                     type="password"
-                    placeholder="Masukan password"
+                    placeholder={t("signup.register.fields.password.placeholder")}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                   />
@@ -118,13 +120,13 @@ export default function SignUpForm() {
                 
                 <div>
                   <Label htmlFor="confirmPassword">
-                    Konfirmasi password
+                    {t("signup.register.fields.confirmPassword.label")}
                   </Label>
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
-                    placeholder="Konfirmasi password"
+                    placeholder={t("signup.register.fields.confirmPassword.placeholder")}
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                   />
@@ -132,12 +134,15 @@ export default function SignUpForm() {
                 
                 <div className="sm:col-span-2">
                   <Label htmlFor="referralCode">
-                    Referral code<span className="ml-2 text-xs text-gray-400">(opsional)</span>
+                    {t("signup.register.fields.referral.label")}
+                    <span className="ml-2 text-xs text-gray-400">
+                      {t("signup.register.fields.referral.optional")}
+                    </span>
                   </Label>
                   <Input
                     id="referralCode"
                     name="referralCode"
-                    placeholder="Masukkan referral code"
+                    placeholder={t("signup.register.fields.referral.placeholder")}
                     value={referralCode}
                     onChange={(event) => setReferralCode(event.target.value)}
                   />
@@ -146,12 +151,12 @@ export default function SignUpForm() {
 
               <div className="flex flex-col gap-4">
                 <Button type="button" size="lg" className="w-full rounded-full">
-                  Selanjutnya
+                  {t("signup.register.actions.next")}
                 </Button>
                 <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                  Memiliki Akun ?{" "}
+                  {t("signup.register.actions.haveAccount")}{" "}
                   <Link href="/signin" className="font-medium text-brand-500 hover:text-brand-600">
-                    Masuk
+                    {t("signup.register.actions.signIn")}
                   </Link>
                 </p>
               </div>

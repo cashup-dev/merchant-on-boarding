@@ -3,8 +3,10 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useSidebar } from "../context/SidebarContext";
 import { HorizontaLDots } from "../icons/index";
+import LanguageToggle from "@/components/i18n/LanguageToggle";
 import { Store, Users, Calendar, FileText, CreditCard } from "lucide-react";
 
 type TimelineStep = {
@@ -15,38 +17,38 @@ type TimelineStep = {
 
 const onboardingSteps: TimelineStep[] = [
   {
-    title: "Tipe Bisnis",
-    description: "Individu atau perusahaan",
+    title: "sidebar.onboarding.steps.businessType.title",
+    description: "sidebar.onboarding.steps.businessType.description",
     href: "/business-type",
   },
   {
-    title: "Fitur Pembayaran",
-    description: "Pilih layanan cashUP",
+    title: "sidebar.onboarding.steps.paymentFeature.title",
+    description: "sidebar.onboarding.steps.paymentFeature.description",
     href: "/payment-feature",
   },
   // {
-  //   title: "Pemilik/Perwakilan Bisnis",
-  //   description: "Data pemilik & perwakilan",
+  //   title: "sidebar.onboarding.steps.representative.title",
+  //   description: "sidebar.onboarding.steps.representative.description",
   //   href: "/business-representative-information",
   // },
   {
-    title: "Informasi Merchant/Badan Usaha",
-    description: "Profil usaha & dokumen",
+    title: "sidebar.onboarding.steps.businessEntity.title",
+    description: "sidebar.onboarding.steps.businessEntity.description",
     href: "/business-entity",
   },
   {
-    title: "Terms",
-    description: "Syarat & persetujuan",
+    title: "sidebar.onboarding.steps.terms.title",
+    description: "sidebar.onboarding.steps.terms.description",
     href: "/terms",
   },
   {
-    title: "In Review",
-    description: "Proses verifikasi",
+    title: "sidebar.onboarding.steps.inReview.title",
+    description: "sidebar.onboarding.steps.inReview.description",
     href: "/in-review",
   },
   {
-    title: "Finish",
-    description: "Mulai dengan cashUP",
+    title: "sidebar.onboarding.steps.finish.title",
+    description: "sidebar.onboarding.steps.finish.description",
     href: "/finish",
   },
 ];
@@ -57,6 +59,7 @@ const gradientStyle = {
 
 // Komponen Sidebar Utama
 const AppSidebar: React.FC = () => {
+  const { t } = useTranslation();
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
   const isOnboardingRoute = [
@@ -84,7 +87,7 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className={`py-8 mx-auto flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-        <Link href="/">
+        <Link href="/dashboard">
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="">
             <Image
@@ -121,13 +124,17 @@ const AppSidebar: React.FC = () => {
                   !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                 }`}
               >
-                {showSidebarContent ? (isOnboardingRoute ? "Onboarding" : "Menu") : <HorizontaLDots />}
+              {showSidebarContent
+                ? isOnboardingRoute
+                  ? t("sidebar.sections.onboarding")
+                  : t("sidebar.sections.menu")
+                : <HorizontaLDots />}
               </h2>
               {isOnboardingRoute ? (
                 <div>
                   {showSidebarContent && (
                     <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                      Progress
+                      {t("sidebar.onboarding.progress")}
                     </p>
                   )}
                   <div className={showSidebarContent ? "mt-4" : ""}>
@@ -195,10 +202,10 @@ const AppSidebar: React.FC = () => {
                                     <p
                                       className={`text-sm font-semibold transition-colors ${labelColor} group-hover:text-gray-900`}
                                     >
-                                      {step.title}
+                                      {t(step.title)}
                                     </p>
                                     <p className="text-xs text-gray-400 group-hover:text-gray-500">
-                                      {step.description}
+                                      {t(step.description)}
                                     </p>
                                   </div>
                                 )}
@@ -220,6 +227,14 @@ const AppSidebar: React.FC = () => {
           </div>
         </nav>
       </div>
+      {showSidebarContent && (
+        <div className="mt-auto border-t border-gray-200 px-4 pb-6 pt-4 dark:border-gray-800">
+          <p className="mb-3 text-xs font-semibold uppercase text-gray-400">
+            {t("sidebar.sections.language")}
+          </p>
+          <LanguageToggle />
+        </div>
+      )}
     </aside>
   );
 };

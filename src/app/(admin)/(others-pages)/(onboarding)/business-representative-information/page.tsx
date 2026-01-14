@@ -18,24 +18,24 @@ export default function BusinessRepresentativeInformationPage() {
             Lengkapi data pemilik atau pengurus yang bertanggung jawab atas bisnis.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            type="reset"
-            form="business-representative-form"
-            className="text-sm font-semibold text-gray-500 transition hover:text-gray-800"
-          >
-            Clear all
-          </button>
-          <button
-            type="submit"
-            form="business-representative-form"
-            className="inline-flex items-center justify-center rounded-xl bg-teal-100 px-6 py-2.5 text-sm font-semibold text-green-950 transition hover:bg-teal-200"
-          >
-            Submit
-          </button>
-        </div>
       </div>
       <BusinessRepresentativeInformationForm />
+      <div className="mt-6 flex items-center justify-end gap-4">
+        <button
+          type="reset"
+          form="business-representative-form"
+          className="text-sm font-semibold text-gray-500 transition hover:text-gray-800"
+        >
+          Clear all
+        </button>
+        <button
+          type="submit"
+          form="business-representative-form"
+          className="inline-flex items-center justify-center rounded-xl bg-teal-100 px-6 py-2.5 text-sm font-semibold text-green-950 transition hover:bg-teal-200"
+        >
+          Submit
+        </button>
+      </div>
     </section>
   );
 }

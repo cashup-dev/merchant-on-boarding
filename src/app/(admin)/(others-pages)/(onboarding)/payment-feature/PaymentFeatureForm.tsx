@@ -1,40 +1,42 @@
-"use client";
+// "use client";
 
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type FeatureCard = {
   id: string;
-  title: string;
-  description: string;
-  detail: string;
+  titleKey: string;
+  descriptionKey: string;
+  detailKey: string;
   badges?: string[];
 };
 
 const featureOptions: FeatureCard[] = [
   {
     id: "cashlez",
-    title: "Cashlez",
-    description: "Lorem ipsum dolor sit.",
-    detail: "Metode tersedia: VA, transfer bank, e-wallet, QRIS, kartu.",
+    titleKey: "onboarding.paymentFeature.options.cashlez.title",
+    descriptionKey: "onboarding.paymentFeature.options.cashlez.description",
+    detailKey: "onboarding.paymentFeature.options.cashlez.detail",
     badges: ["VA", "BNI", "BRI", "+9"],
   },
   {
     id: "czlink",
-    title: "Cashlez Link",
-    description: "Kirim pembayaran melalui Link",
-    detail: "lorem ipsum dolor sit amet",
+    titleKey: "onboarding.paymentFeature.options.czlink.title",
+    descriptionKey: "onboarding.paymentFeature.options.czlink.description",
+    detailKey: "onboarding.paymentFeature.options.czlink.detail",
     badges: ["VA", "QRIS"],
   },
   {
     id: "Softpos",
-    title: "Cashlez Link",
-    description: "Kirim pembayaran melalui Link",
-    detail: "lorem ipsum dolor sit amet",
+    titleKey: "onboarding.paymentFeature.options.softpos.title",
+    descriptionKey: "onboarding.paymentFeature.options.softpos.description",
+    detailKey: "onboarding.paymentFeature.options.softpos.detail",
     badges: ["VA", "QRIS"],
   },
 ];
 
 export default function PaymentFeatureForm() {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<string>("payment");
 
   return (
@@ -55,8 +57,8 @@ export default function PaymentFeatureForm() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-base font-semibold text-gray-900">{feature.title}</p>
-                  <p className="mt-1 text-sm text-gray-500">{feature.description}</p>
+                  <p className="text-base font-semibold text-gray-900">{t(feature.titleKey)}</p>
+                  <p className="mt-1 text-sm text-gray-500">{t(feature.descriptionKey)}</p>
                 </div>
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full border ${
@@ -66,7 +68,7 @@ export default function PaymentFeatureForm() {
                   {isActive ? "v" : ""}
                 </span>
               </div>
-              <div className="text-sm text-gray-500">{feature.detail}</div>
+              <div className="text-sm text-gray-500">{t(feature.detailKey)}</div>
               {feature.badges && (
                 <div className="flex flex-wrap items-center gap-2">
                   {feature.badges.map((badge) => (
@@ -85,7 +87,7 @@ export default function PaymentFeatureForm() {
       </div>
 
       <p className="text-sm text-gray-500">
-        Semua fitur dapat digunakan dalam 1-3 hari setelah tim cashUP menyetujui permintaan Anda.
+        {t("onboarding.paymentFeature.note")}
       </p>
 
     </form>
