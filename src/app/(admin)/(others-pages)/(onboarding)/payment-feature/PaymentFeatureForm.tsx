@@ -26,13 +26,6 @@ const featureOptions: FeatureCard[] = [
     detailKey: "onboarding.paymentFeature.options.czlink.detail",
     badges: ["VA", "QRIS"],
   },
-  {
-    id: "Softpos",
-    titleKey: "onboarding.paymentFeature.options.softpos.title",
-    descriptionKey: "onboarding.paymentFeature.options.softpos.description",
-    detailKey: "onboarding.paymentFeature.options.softpos.detail",
-    badges: ["VA", "QRIS"],
-  },
 ];
 
 export default function PaymentFeatureForm() {
@@ -65,7 +58,7 @@ export default function PaymentFeatureForm() {
                     isActive ? "border-teal-400 bg-teal-400 text-white" : "border-gray-300"
                   }`}
                 >
-                  {isActive ? "v" : ""}
+                  {isActive ? "✓" : ""}
                 </span>
               </div>
               <div className="text-sm text-gray-500">{t(feature.detailKey)}</div>

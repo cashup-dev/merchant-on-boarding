@@ -15,6 +15,12 @@ type TimelineStep = {
   href: string;
 };
 
+type MenuItem = {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+};
+
 const onboardingSteps: TimelineStep[] = [
   {
     title: "sidebar.onboarding.steps.businessType.title",
@@ -25,6 +31,11 @@ const onboardingSteps: TimelineStep[] = [
     title: "sidebar.onboarding.steps.paymentFeature.title",
     description: "sidebar.onboarding.steps.paymentFeature.description",
     href: "/payment-feature",
+  },
+  {
+    title: "sidebar.onboarding.steps.edcInformation.title",
+    description: "sidebar.onboarding.steps.edcInformation.description",
+    href: "/edc-information",
   },
   // {
   //   title: "sidebar.onboarding.steps.representative.title",
@@ -53,6 +64,14 @@ const onboardingSteps: TimelineStep[] = [
   },
 ];
 
+const menuItems: MenuItem[] = [
+  {
+    label: "sidebar.menu.salesMerchants",
+    href: "/sales/merchants",
+    icon: Users,
+  },
+];
+
 const gradientStyle = {
   background: "linear-gradient(135deg, #186229 0%, #212c63 100%)",
 };
@@ -65,6 +84,7 @@ const AppSidebar: React.FC = () => {
   const isOnboardingRoute = [
     "/business-type",
     "/payment-feature",
+    "/edc-information",
     "/business-representative-information",
     "/business-entity",
     "/terms",
@@ -218,7 +238,29 @@ const AppSidebar: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                  ""
+                <ul className="space-y-2">
+                  {menuItems.map((item) => {
+                    const isActive = pathname.startsWith(item.href);
+                    const Icon = item.icon;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={`flex items-center rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+                            showSidebarContent ? "gap-3" : "justify-center"
+                          } ${
+                            isActive
+                              ? "bg-blue-50 text-blue-600"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          }`}
+                        >
+                          <Icon className="h-5 w-5 shrink-0" />
+                          {showSidebarContent && <span>{t(item.label)}</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
             

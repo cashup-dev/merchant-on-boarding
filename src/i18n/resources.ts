@@ -96,10 +96,10 @@ export const resources = {
             submit: "Submit",
           },
         },
-        paymentFeature: {
-          title: "Fitur Pembayaran",
-          subtitle: "Pilih produk atau fitur pembayaran cashUP yang ingin digunakan.",
-          note: "Semua fitur dapat digunakan dalam 1-3 hari setelah tim cashUP menyetujui permintaan Anda.",
+          paymentFeature: {
+            title: "Fitur Pembayaran",
+            subtitle: "Pilih produk atau fitur pembayaran cashUP yang ingin digunakan.",
+            note: "Semua fitur dapat digunakan dalam 1-3 hari setelah tim cashUP menyetujui permintaan Anda.",
           options: {
             cashlez: {
               title: "Cashlez",
@@ -117,14 +117,72 @@ export const resources = {
               detail: "Lorem ipsum dolor sit amet",
             },
           },
-          actions: {
-            previous: "Previous",
-            submit: "Submit",
+            actions: {
+              previous: "Previous",
+              submit: "Submit",
+            },
           },
-        },
-        businessEntity: {
-          title: "Informasi Merchant/Badan Usaha",
-          subtitle: "Isi data usaha dan dokumen pendukung untuk proses verifikasi.",
+          edcInformation: {
+            title: "Informasi EDC",
+            subtitle: "Lengkapi kebutuhan EDC untuk merchant Anda.",
+            fields: {
+              edcType: {
+                label: "Tipe EDC",
+                placeholder: "Pilih tipe EDC",
+                options: {
+                  t6d: "T6D",
+                  topwiseT1Plus: "Topwise T1 Plus",
+                  topwiseQ1: "Topwise Q1",
+                  centerm: "Centerm",
+                  soundboxNewlandVb90s: "Soundbox Newland VB90S",
+                  soundboxNewlandVb80p: "Soundbox Newland VB80P",
+                },
+              },
+              edcCount: {
+                label: "Jumlah EDC",
+                placeholder: "Masukkan jumlah EDC",
+              },
+            },
+            shippingAddress: {
+              title: "Alamat Pengiriman",
+              subtitle: "Pastikan alamat ini dapat menerima pengiriman perangkat EDC.",
+              streetName: {
+                label: "Nama Jalan",
+                placeholder: "Nama jalan dan nomor",
+              },
+              rt: {
+                label: "RT",
+                placeholder: "RT",
+              },
+              rw: {
+                label: "RW",
+                placeholder: "RW",
+              },
+              province: {
+                label: "Provinsi",
+                placeholder: "Masukkan provinsi",
+              },
+              city: {
+                label: "Kota/Kabupaten",
+                placeholder: "Masukkan kota/kabupaten",
+              },
+              district: {
+                label: "Kecamatan",
+                placeholder: "Masukkan kecamatan",
+              },
+              subDistrict: {
+                label: "Kelurahan",
+                placeholder: "Masukkan kelurahan",
+              },
+              postalCode: {
+                label: "Kode Pos",
+                placeholder: "Masukkan kode pos",
+              },
+            },
+          },
+          businessEntity: {
+            title: "Informasi Merchant/Badan Usaha",
+            subtitle: "Isi data usaha dan dokumen pendukung untuk proses verifikasi.",
           steps: {
             business: "Informasi Bisnis",
             address: "Alamat Bisnis",
@@ -341,27 +399,35 @@ export const resources = {
           cta: "Buka cashPortal",
         },
       },
-      sidebar: {
-        sections: {
-          menu: "Menu",
-          onboarding: "Onboarding",
-          language: "Bahasa",
-        },
-        onboarding: {
-          progress: "Progress",
-          steps: {
+        sidebar: {
+          sections: {
+            menu: "Menu",
+            onboarding: "Onboarding",
+            language: "Bahasa",
+          },
+          menu: {
+            dashboard: "Dashboard",
+            salesMerchants: "Sales Merchants",
+          },
+          onboarding: {
+            progress: "Progress",
+            steps: {
             businessType: {
               title: "Tipe Bisnis",
               description: "Individu atau perusahaan",
             },
-            paymentFeature: {
-              title: "Fitur Pembayaran",
-              description: "Pilih layanan cashUP",
-            },
-            representative: {
-              title: "Pemilik/Perwakilan Bisnis",
-              description: "Data pemilik & perwakilan",
-            },
+              paymentFeature: {
+                title: "Fitur Pembayaran",
+                description: "Pilih layanan cashUP",
+              },
+              edcInformation: {
+                title: "Informasi EDC",
+                description: "Data mesin EDC merchant",
+              },
+              representative: {
+                title: "Pemilik/Perwakilan Bisnis",
+                description: "Data pemilik & perwakilan",
+              },
             businessEntity: {
               title: "Informasi Merchant/Badan Usaha",
               description: "Profil usaha & dokumen",
@@ -480,10 +546,10 @@ export const resources = {
             submit: "Submit",
           },
         },
-        paymentFeature: {
-          title: "Payment Features",
-          subtitle: "Choose the cashUP payment products or features you want to use.",
-          note: "All features can be used within 1-3 days after the cashUP team approves your request.",
+          paymentFeature: {
+            title: "Payment Features",
+            subtitle: "Choose the cashUP payment products or features you want to use.",
+            note: "All features can be used within 1-3 days after the cashUP team approves your request.",
           options: {
             cashlez: {
               title: "Cashlez",
@@ -501,14 +567,72 @@ export const resources = {
               detail: "Lorem ipsum dolor sit amet",
             },
           },
-          actions: {
-            previous: "Previous",
-            submit: "Submit",
+            actions: {
+              previous: "Previous",
+              submit: "Submit",
+            },
           },
-        },
-        businessEntity: {
-          title: "Merchant/Business Entity Information",
-          subtitle: "Fill in business data and supporting documents for verification.",
+          edcInformation: {
+            title: "EDC Information",
+            subtitle: "Provide the EDC requirements for this merchant.",
+            fields: {
+              edcType: {
+                label: "EDC Type",
+                placeholder: "Select EDC type",
+                options: {
+                  t6d: "T6D",
+                  topwiseT1Plus: "Topwise T1 Plus",
+                  topwiseQ1: "Topwise Q1",
+                  centerm: "Centerm",
+                  soundboxNewlandVb90s: "Soundbox Newland VB90S",
+                  soundboxNewlandVb80p: "Soundbox Newland VB80P",
+                },
+              },
+              edcCount: {
+                label: "EDC Quantity",
+                placeholder: "Enter number of EDC units",
+              },
+            },
+            shippingAddress: {
+              title: "Shipping Address",
+              subtitle: "Make sure this address can receive the EDC shipment.",
+              streetName: {
+                label: "Street Name",
+                placeholder: "Street name and number",
+              },
+              rt: {
+                label: "RT",
+                placeholder: "RT",
+              },
+              rw: {
+                label: "RW",
+                placeholder: "RW",
+              },
+              province: {
+                label: "Province",
+                placeholder: "Enter province",
+              },
+              city: {
+                label: "City/Regency",
+                placeholder: "Enter city or regency",
+              },
+              district: {
+                label: "District",
+                placeholder: "Enter district",
+              },
+              subDistrict: {
+                label: "Sub-district",
+                placeholder: "Enter sub-district",
+              },
+              postalCode: {
+                label: "Postal Code",
+                placeholder: "Enter postal code",
+              },
+            },
+          },
+          businessEntity: {
+            title: "Merchant/Business Entity Information",
+            subtitle: "Fill in business data and supporting documents for verification.",
           steps: {
             business: "Business Information",
             address: "Business Address",
@@ -725,27 +849,35 @@ export const resources = {
           cta: "Open cashPortal",
         },
       },
-      sidebar: {
-        sections: {
-          menu: "Menu",
-          onboarding: "Onboarding",
-          language: "Language",
-        },
-        onboarding: {
-          progress: "Progress",
-          steps: {
+        sidebar: {
+          sections: {
+            menu: "Menu",
+            onboarding: "Onboarding",
+            language: "Language",
+          },
+          menu: {
+            dashboard: "Dashboard",
+            salesMerchants: "Sales Merchants",
+          },
+          onboarding: {
+            progress: "Progress",
+            steps: {
             businessType: {
               title: "Business Type",
               description: "Individual or company",
             },
-            paymentFeature: {
-              title: "Payment Features",
-              description: "Choose cashUP services",
-            },
-            representative: {
-              title: "Business Representative",
-              description: "Owner & representative data",
-            },
+              paymentFeature: {
+                title: "Payment Features",
+                description: "Choose cashUP services",
+              },
+              edcInformation: {
+                title: "EDC Information",
+                description: "Merchant EDC details",
+              },
+              representative: {
+                title: "Business Representative",
+                description: "Owner & representative data",
+              },
             businessEntity: {
               title: "Merchant/Business Entity",
               description: "Business profile & documents",
