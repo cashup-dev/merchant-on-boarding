@@ -1,14 +1,22 @@
 "use client";
 
 import UploadPreviewField from "@/components/form/UploadPreviewField";
+import TableUpload from "@/components/table-upload";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, ChevronRight } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
+import { useOnboardingStore } from "@/store/onboardingStore";
+import type { FileWithPreview } from "@/hooks/use-file-upload";
 
 export default function BusinessEntityForm() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const businessType = useOnboardingStore((state) => state.businessType);
+  const storedBusinessEntity = useOnboardingStore((state) => state.businessEntity);
+  const setBusinessEntity = useOnboardingStore((state) => state.setBusinessEntity);
   const [activeStep, setActiveStep] = useState<"business" | "address" | "bank">("business");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -40,6 +48,14 @@ export default function BusinessEntityForm() {
   const [ownerName, setOwnerName] = useState("");
   const [ownerNik, setOwnerNik] = useState("");
   const [ownerNpwp, setOwnerNpwp] = useState("");
+  const [ownerJobTitle, setOwnerJobTitle] = useState("");
+  const [nibNumber, setNibNumber] = useState("");
+  const [nibFile, setNibFile] = useState<FileWithPreview | null>(null);
+  const [deedEstablishmentFile, setDeedEstablishmentFile] = useState<FileWithPreview | null>(null);
+  const [skMenkumhamEstablishmentFile, setSkMenkumhamEstablishmentFile] = useState<FileWithPreview | null>(null);
+  const [deedAmendmentFile, setDeedAmendmentFile] = useState<FileWithPreview | null>(null);
+  const [skMenkumhamAmendmentFile, setSkMenkumhamAmendmentFile] = useState<FileWithPreview | null>(null);
+  const [pseLicenseFile, setPseLicenseFile] = useState<FileWithPreview | null>(null);
   const [bankName, setBankName] = useState("");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [bankAccountName, setBankAccountName] = useState("");
@@ -49,6 +65,37 @@ export default function BusinessEntityForm() {
   const [bankBookPreview, setBankBookPreview] = useState("");
   const [bankMutationPreview, setBankMutationPreview] = useState("");
   const [bankSkuPreview, setBankSkuPreview] = useState("");
+
+  useEffect(() => {
+    if (!storedBusinessEntity) {
+      return;
+    }
+    setBrandName(storedBusinessEntity.business.brandName);
+    setLegalName(storedBusinessEntity.business.legalName);
+    setBusinessDescription(storedBusinessEntity.business.description);
+    setBusinessCategory(storedBusinessEntity.business.category);
+    setEstablishedYear(storedBusinessEntity.business.establishedYear);
+    setEmployeeCount(storedBusinessEntity.business.employeeCount);
+    setMonthlyVolume(storedBusinessEntity.business.monthlyVolume);
+    setSocialType(storedBusinessEntity.business.socialType);
+    setSocialLink(storedBusinessEntity.business.socialLink);
+    setAddressDetail(storedBusinessEntity.address.addressDetail);
+    setRt(storedBusinessEntity.address.rt);
+    setRw(storedBusinessEntity.address.rw);
+    setProvince(storedBusinessEntity.address.province);
+    setCity(storedBusinessEntity.address.city);
+    setDistrict(storedBusinessEntity.address.district);
+    setSubDistrict(storedBusinessEntity.address.subDistrict);
+    setPostalCode(storedBusinessEntity.address.postalCode);
+    setOwnerName(storedBusinessEntity.bank.ownerName);
+    setOwnerNik(storedBusinessEntity.bank.ownerNik);
+    setOwnerNpwp(storedBusinessEntity.bank.ownerNpwp);
+    setOwnerJobTitle(storedBusinessEntity.bank.jobTitle ?? "");
+    setNibNumber(storedBusinessEntity.legalDocuments?.nibNumber ?? "");
+    setBankName(storedBusinessEntity.bank.bankName);
+    setBankAccountNumber(storedBusinessEntity.bank.accountNumber);
+    setBankAccountName(storedBusinessEntity.bank.accountName);
+  }, [storedBusinessEntity]);
 
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -158,13 +205,24 @@ export default function BusinessEntityForm() {
     rw.trim().length > 0 &&
     postalCode.trim().length > 0;
 
+  const isCompany = businessType === "company";
+  const hasCompanyDocuments = !isCompany
+    ? true
+    : nibNumber.trim().length > 0 &&
+      !!nibFile &&
+      !!deedEstablishmentFile &&
+      !!skMenkumhamEstablishmentFile &&
+      !!pseLicenseFile;
+
   const isBankStepValid =
     ownerName.trim().length > 0 &&
     ownerNik.trim().length > 0 &&
     ownerNpwp.trim().length > 0 &&
+    ownerJobTitle.trim().length > 0 &&
     bankName !== "" &&
     bankAccountNumber.trim().length > 0 &&
-    bankAccountName.trim().length > 0;
+    bankAccountName.trim().length > 0 &&
+    hasCompanyDocuments;
 
   return (
     <form
@@ -202,6 +260,14 @@ export default function BusinessEntityForm() {
         setOwnerName("");
         setOwnerNik("");
         setOwnerNpwp("");
+        setOwnerJobTitle("");
+        setNibNumber("");
+        setNibFile(null);
+        setDeedEstablishmentFile(null);
+        setSkMenkumhamEstablishmentFile(null);
+        setDeedAmendmentFile(null);
+        setSkMenkumhamAmendmentFile(null);
+        setPseLicenseFile(null);
         setBankName("");
         setBankAccountNumber("");
         setBankAccountName("");
@@ -220,6 +286,61 @@ export default function BusinessEntityForm() {
         }
         if (activeStep === "address" && isAddressStepValid) {
           setActiveStep("bank");
+          return;
+        }
+        if (activeStep === "bank" && isBankStepValid) {
+          setBusinessEntity({
+            business: {
+              brandName,
+              legalName,
+              description: businessDescription,
+              category: businessCategory,
+              establishedYear,
+              employeeCount,
+              monthlyVolume,
+              socialType,
+              socialLink,
+              logoFileName: logoFile?.name ?? "",
+            },
+            address: {
+              addressDetail,
+              rt,
+              rw,
+              province,
+              city,
+              district,
+              subDistrict,
+              postalCode,
+              insideOfficeFileName: insideOfficeFile?.name ?? "",
+              outsideOfficeFileName: outsideOfficeFile?.name ?? "",
+            },
+            bank: {
+              ownerName,
+              ownerNik,
+              ownerNpwp,
+              jobTitle: ownerJobTitle,
+              bankName,
+              accountNumber: bankAccountNumber,
+              accountName: bankAccountName,
+              ownerKtpFileName: ownerKtpFile?.name ?? "",
+              ownerNpwpFileName: ownerNpwpFile?.name ?? "",
+              bankBookFileName: bankBookFile?.name ?? "",
+              bankMutationFileName: bankMutationFile?.name ?? "",
+              bankSkuFileName: bankSkuFile?.name ?? "",
+            },
+            legalDocuments: isCompany
+              ? {
+                  nibNumber,
+                  nibFileName: nibFile?.file.name ?? "",
+                  deedEstablishmentFileName: deedEstablishmentFile?.file.name ?? "",
+                  skMenkumhamEstablishmentFileName: skMenkumhamEstablishmentFile?.file.name ?? "",
+                  deedAmendmentFileName: deedAmendmentFile?.file.name ?? "",
+                  skMenkumhamAmendmentFileName: skMenkumhamAmendmentFile?.file.name ?? "",
+                  pseLicenseFileName: pseLicenseFile?.file.name ?? "",
+                }
+              : undefined,
+          });
+          router.push("/terms");
         }
       }}
     >
@@ -754,7 +875,7 @@ export default function BusinessEntityForm() {
                   {t("onboarding.businessEntity.bank.ownerSection.nik.helper")}
                 </p>
               </div>
-              <div className="md:col-span-2">
+              <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerNpwp">
                   {t("onboarding.businessEntity.bank.ownerSection.npwp.label")}
                   <span className="ml-2 text-xs text-red-500">
@@ -775,8 +896,160 @@ export default function BusinessEntityForm() {
                   {t("onboarding.businessEntity.bank.ownerSection.npwp.helper")}
                 </p>
               </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerJobTitle">
+                  {t("onboarding.businessEntity.bank.ownerSection.jobTitle.label")}
+                  <span className="ml-2 text-xs text-red-500">
+                    {t("onboarding.businessEntity.common.required")}
+                  </span>
+                </label>
+                <input
+                  id="ownerJobTitle"
+                  name="ownerJobTitle"
+                  type="text"
+                  value={ownerJobTitle}
+                  onChange={(event) => setOwnerJobTitle(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  required
+                />
+              </div>
             </div>
           </div>
+
+          {isCompany && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t("onboarding.businessEntity.bank.legalDocuments.title")}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {t("onboarding.businessEntity.bank.legalDocuments.note")}
+                </p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-gray-700" htmlFor="nibNumber">
+                    {t("onboarding.businessEntity.bank.legalDocuments.nibNumber.label")}
+                    <span className="ml-2 text-xs text-red-500">
+                      {t("onboarding.businessEntity.common.required")}
+                    </span>
+                  </label>
+                  <input
+                    id="nibNumber"
+                    name="nibNumber"
+                    type="text"
+                    value={nibNumber}
+                    onChange={(event) => setNibNumber(event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                    required
+                  />
+                </div>
+                <div />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("onboarding.businessEntity.bank.legalDocuments.nibDocument.label")}
+                    <span className="ml-2 text-xs text-red-500">
+                      {t("onboarding.businessEntity.common.required")}
+                    </span>
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept="application/pdf"
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={(files) => setNibFile(files[0] ?? null)}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("onboarding.businessEntity.bank.legalDocuments.deedEstablishment.label")}
+                    <span className="ml-2 text-xs text-red-500">
+                      {t("onboarding.businessEntity.common.required")}
+                    </span>
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept="application/pdf"
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={(files) => setDeedEstablishmentFile(files[0] ?? null)}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("onboarding.businessEntity.bank.legalDocuments.skMenkumhamEstablishment.label")}
+                    <span className="ml-2 text-xs text-red-500">
+                      {t("onboarding.businessEntity.common.required")}
+                    </span>
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept="application/pdf"
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={(files) => setSkMenkumhamEstablishmentFile(files[0] ?? null)}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("onboarding.businessEntity.bank.legalDocuments.deedAmendment.label")}
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept="application/pdf"
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={(files) => setDeedAmendmentFile(files[0] ?? null)}
+                    className="mt-2"
+                  />
+                  <p className="mt-2 text-xs text-gray-400">
+                    {t("onboarding.businessEntity.bank.legalDocuments.deedAmendment.helper")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("onboarding.businessEntity.bank.legalDocuments.skMenkumhamAmendment.label")}
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept="application/pdf"
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={(files) => setSkMenkumhamAmendmentFile(files[0] ?? null)}
+                    className="mt-2"
+                  />
+                  <p className="mt-2 text-xs text-gray-400">
+                    {t("onboarding.businessEntity.bank.legalDocuments.skMenkumhamAmendment.helper")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("onboarding.businessEntity.bank.legalDocuments.pseLicense.label")}
+                    <span className="ml-2 text-xs text-red-500">
+                      {t("onboarding.businessEntity.common.required")}
+                    </span>
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept="application/pdf"
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={(files) => setPseLicenseFile(files[0] ?? null)}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">

@@ -4,6 +4,7 @@ import { Store, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
+import { Tabs } from "@/components/ui/tabs";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -56,6 +57,55 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
     { id: "transactions" as TabType, label: "Transactions" },
   ];
 
+  const merchantInfoRows = [
+    { label: "Name", value: merchantData.name },
+    { label: "Type", value: merchantData.type },
+    { label: "Classification", value: merchantData.classification },
+    { label: "ID #", value: merchantData.idNumber },
+    { label: "Tax #", value: merchantData.taxNumber },
+    { label: "Family Certificate #", value: merchantData.familyCertificate },
+    { label: "Address", value: merchantData.address },
+    { label: "Phone", value: merchantData.phone },
+  ];
+
+  const registrationRows = [
+    { label: "Type", value: merchantData.type },
+    {
+      label: "Status",
+      value: (
+        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400">
+          {merchantData.registrationStatus}
+        </span>
+      ),
+    },
+    {
+      label: "Document Completeness",
+      value: (
+        <span className="inline-flex items-center gap-1 text-sm text-gray-900 dark:text-white">
+          <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          {merchantData.documentCompleteness}
+        </span>
+      ),
+    },
+  ];
+
+  const registrationDocuments = [
+    { label: "KTP (WNI) / Passport (WNA)", value: "-" },
+    { label: "NPWP Perusahaan", value: "-" },
+    { label: "SIUP", value: "-" },
+    { label: "TDP", value: "-" },
+    { label: "SITU/SKDU", value: "-" },
+    { label: "Akta Perusahaan", value: "-" },
+    { label: "Foto Perusahaan", value: "-" },
+    { label: "Surat Kuasa", value: "-" },
+  ];
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
@@ -92,207 +142,91 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
 
       {/* Tabs and Content */}
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-800">
-          <div className="flex overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
-                  activeTab === tab.id
-                    ? "border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500"
-                    : "border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <Tabs tabs={tabs} value={activeTab} onChange={(id) => setActiveTab(id as TabType)} />
 
         {/* Tab Content */}
         <div className="p-6">
           {/* Information Tab */}
           {activeTab === "information" && (
             <div className="space-y-8">
-              {/* Merchant Information */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
-                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+              <div className="grid gap-10 lg:grid-cols-2">
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                      <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Merchant Information
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Merchant details and application.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Merchant Information
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Merchant details and application.
-                    </p>
+
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {merchantInfoRows.map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          {row.label}
+                        </span>
+                        <span className="text-sm text-gray-900 dark:text-white sm:text-right sm:max-w-[60%]">
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Name
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.name}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Type
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.type}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Classification
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.classification}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      ID #
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.idNumber}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Tax #
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.taxNumber}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Family Certificate #
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.familyCertificate}
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Address
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.address}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Phone
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.phone}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Registration */}
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
-                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Registration
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Merchant registration status.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Type
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {merchantData.type}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Status
-                    </label>
-                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400">
-                      {merchantData.registrationStatus}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Document Completeness
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 text-sm text-gray-900 dark:text-white">
-                        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        {merchantData.documentCompleteness}
-                      </span>
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                      <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Registration
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Merchant registration status.
+                      </p>
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">KTP (WNI) / Passport (WNA)</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">NPWP Perusahaan</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">SIUP</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">TDP</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">SITU/SKDU</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Akta Perusahaan</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Foto Perusahaan</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Surat Kuasa</span>
-                      <span className="text-gray-500 dark:text-gray-500">-</span>
-                    </div>
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {registrationRows.map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          {row.label}
+                        </span>
+                        <span className="text-sm text-gray-900 dark:text-white sm:text-right">
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 border-t border-gray-100 dark:border-gray-800">
+                    {registrationDocuments.map((doc) => (
+                      <div
+                        key={doc.label}
+                        className="flex items-center justify-between py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800"
+                      >
+                        <span>{doc.label}</span>
+                        <span className="text-gray-500 dark:text-gray-500">{doc.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

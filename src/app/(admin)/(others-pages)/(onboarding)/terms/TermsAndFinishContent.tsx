@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Clause = {
   title: string;
@@ -91,6 +92,7 @@ const clauses: Clause[] = [
 ];
 
 export default function TermsAndFinishContent() {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -158,6 +160,11 @@ export default function TermsAndFinishContent() {
           className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition ${
             accepted ? "bg-teal-500 hover:bg-teal-600" : "cursor-not-allowed bg-gray-200 text-gray-400"
           }`}
+          onClick={() => {
+            if (accepted) {
+              router.push("/in-review");
+            }
+          }}
         >
           Kirim
         </button>

@@ -16,7 +16,7 @@ export default function LanguageToggle({ className }: Props) {
       <Button
         type="button"
         size="sm"
-        variant={isId ? "default" : "outline"}
+        variant={isId ? "primary" : "outline"}
         onClick={() => i18n.changeLanguage("id")}
       >
         ID
@@ -24,7 +24,7 @@ export default function LanguageToggle({ className }: Props) {
       <Button
         type="button"
         size="sm"
-        variant={isId ? "outline" : "default"}
+        variant={isId ? "outline" : "primary"}
         onClick={() => i18n.changeLanguage("en")}
       >
         EN

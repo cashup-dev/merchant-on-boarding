@@ -1,7 +1,9 @@
-// "use client";
+"use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
+import { useOnboardingStore } from "@/store/onboardingStore";
 
 type FeatureCard = {
   id: string;
@@ -30,10 +32,27 @@ const featureOptions: FeatureCard[] = [
 
 export default function PaymentFeatureForm() {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<string>("payment");
+  const router = useRouter();
+  const storedPaymentFeature = useOnboardingStore((state) => state.paymentFeature);
+  const setOnboardingPaymentFeature = useOnboardingStore((state) => state.setPaymentFeature);
+  const [selected, setSelected] = useState<string>(storedPaymentFeature || "cashlez");
+
+  useEffect(() => {
+    if (storedPaymentFeature) {
+      setSelected(storedPaymentFeature);
+    }
+  }, [storedPaymentFeature]);
 
   return (
-    <form id="payment-feature-form" className="mt-8 space-y-6">
+    <form
+      id="payment-feature-form"
+      className="mt-8 space-y-6"
+      onSubmit={(event) => {
+        event.preventDefault();
+        setOnboardingPaymentFeature(selected);
+        router.push("/edc-information");
+      }}
+    >
       <div className="grid gap-4 lg:grid-cols-2">
         {featureOptions.map((feature) => {
           const isActive = selected === feature.id;

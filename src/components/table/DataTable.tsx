@@ -2,6 +2,7 @@
 
 import React from "react";
 import { FunnelIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type TableColumn<T> = {
   key: string;
@@ -91,17 +92,18 @@ export default function DataTable<T>({
                   className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800"
                 >
                   <FunnelIcon className="h-4 w-4 text-gray-500" />
-                  <select
-                    value={filter.value}
-                    onChange={(event) => filter.onChange(event.target.value)}
-                    className="bg-transparent text-sm text-gray-700 focus:outline-none dark:text-gray-200"
-                  >
-                    {filter.options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={filter.value} onValueChange={filter.onChange}>
+                    <SelectTrigger className="h-8 border-none bg-transparent px-0 text-sm text-gray-700 shadow-none focus:ring-0 dark:text-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filter.options.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               ))}
               {actions}

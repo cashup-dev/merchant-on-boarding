@@ -1,13 +1,24 @@
 "use client";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
+import { useOnboardingStore } from "@/store/onboardingStore";
 
 export default function BusinessTypeForm() {
   const { t } = useTranslation();
-  const [businessType, setBusinessType] = useState<string>("individual");
-  const [companyType, setCompanyType] = useState<string>("pt");
+  const router = useRouter();
+  const storedBusinessType = useOnboardingStore((state) => state.businessType);
+  const storedCompanyType = useOnboardingStore((state) => state.companyType);
+  const setOnboardingBusinessType = useOnboardingStore((state) => state.setBusinessType);
+  const [businessType, setBusinessType] = useState<string>(storedBusinessType);
+  const [companyType, setCompanyType] = useState<string>(storedCompanyType);
+
+  useEffect(() => {
+    setBusinessType(storedBusinessType);
+    setCompanyType(storedCompanyType);
+  }, [storedBusinessType, storedCompanyType]);
 
   return (
     <form
@@ -16,6 +27,12 @@ export default function BusinessTypeForm() {
       onReset={() => {
         setBusinessType("individual");
         setCompanyType("pt");
+        setOnboardingBusinessType("individual", "pt");
+      }}
+      onSubmit={(event) => {
+        event.preventDefault();
+        setOnboardingBusinessType(businessType, companyType);
+        router.push("/payment-feature");
       }}
     >
       <div className="flex flex-col gap-6">

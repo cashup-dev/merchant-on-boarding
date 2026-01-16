@@ -5,6 +5,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
@@ -246,21 +247,21 @@ export default function ProductsPage() {
             <Table>
               <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
                 <TableRow>
-                  <TableCell isHeader className="py-3 pl-5 text-left text-gray-500 text-theme-xs">
+                  <TableHead className="py-3 pl-5 text-left text-gray-500 text-theme-xs">
                     Produk
-                  </TableCell>
-                  <TableCell isHeader className="py-3 text-left text-gray-500 text-theme-xs">
+                  </TableHead>
+                  <TableHead className="py-3 text-left text-gray-500 text-theme-xs">
                     Harga
-                  </TableCell>
-                  <TableCell isHeader className="py-3 text-left text-gray-500 text-theme-xs">
+                  </TableHead>
+                  <TableHead className="py-3 text-left text-gray-500 text-theme-xs">
                     Stok
-                  </TableCell>
-                  <TableCell isHeader className="py-3 text-left text-gray-500 text-theme-xs">
+                  </TableHead>
+                  <TableHead className="py-3 text-left text-gray-500 text-theme-xs">
                     Status
-                  </TableCell>
-                  <TableCell isHeader className="py-3 text-left text-gray-500 text-theme-xs">
+                  </TableHead>
+                  <TableHead className="py-3 text-left text-gray-500 text-theme-xs">
                     Aksi
-                  </TableCell>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">

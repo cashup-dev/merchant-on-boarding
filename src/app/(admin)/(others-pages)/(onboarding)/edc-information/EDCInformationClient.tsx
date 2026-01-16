@@ -1,25 +1,63 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
+import { useOnboardingStore } from "@/store/onboardingStore";
+import Link from "next/link";
 
 export default function EDCInformationClient() {
   const { t } = useTranslation();
-  const [edcType, setEdcType] = useState("");
-  const [edcCount, setEdcCount] = useState("");
-  const [streetName, setStreetName] = useState("");
-  const [rt, setRt] = useState("");
-  const [rw, setRw] = useState("");
-  const [province, setProvince] = useState("");
-  const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
-  const [subDistrict, setSubDistrict] = useState("");
-  const [postalCode, setPostalCode] = useState("");
+  const router = useRouter();
+  const storedEdcInformation = useOnboardingStore((state) => state.edcInformation);
+  const setEdcInformation = useOnboardingStore((state) => state.setEdcInformation);
+  const [edcType, setEdcType] = useState(storedEdcInformation.edcType);
+  const [edcCount, setEdcCount] = useState(storedEdcInformation.edcCount);
+  const [streetName, setStreetName] = useState(storedEdcInformation.shippingAddress.streetName);
+  const [rt, setRt] = useState(storedEdcInformation.shippingAddress.rt);
+  const [rw, setRw] = useState(storedEdcInformation.shippingAddress.rw);
+  const [province, setProvince] = useState(storedEdcInformation.shippingAddress.province);
+  const [city, setCity] = useState(storedEdcInformation.shippingAddress.city);
+  const [district, setDistrict] = useState(storedEdcInformation.shippingAddress.district);
+  const [subDistrict, setSubDistrict] = useState(storedEdcInformation.shippingAddress.subDistrict);
+  const [postalCode, setPostalCode] = useState(storedEdcInformation.shippingAddress.postalCode);
+
+  useEffect(() => {
+    setEdcType(storedEdcInformation.edcType);
+    setEdcCount(storedEdcInformation.edcCount);
+    setStreetName(storedEdcInformation.shippingAddress.streetName);
+    setRt(storedEdcInformation.shippingAddress.rt);
+    setRw(storedEdcInformation.shippingAddress.rw);
+    setProvince(storedEdcInformation.shippingAddress.province);
+    setCity(storedEdcInformation.shippingAddress.city);
+    setDistrict(storedEdcInformation.shippingAddress.district);
+    setSubDistrict(storedEdcInformation.shippingAddress.subDistrict);
+    setPostalCode(storedEdcInformation.shippingAddress.postalCode);
+  }, [storedEdcInformation]);
 
   return (
     <section className="min-h-[60vh]">
-      <div>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          setEdcInformation({
+            edcType,
+            edcCount,
+            shippingAddress: {
+              streetName,
+              rt,
+              rw,
+              province,
+              city,
+              district,
+              subDistrict,
+              postalCode,
+            },
+          });
+          router.push("/business-entity");
+        }}
+      >
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold text-gray-900">
             {t("onboarding.edcInformation.title")}
@@ -194,7 +232,22 @@ export default function EDCInformationClient() {
             </div>
           </div>
         </div>
-      </div>
+
+        <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href="/payment-feature"
+            className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700"
+          >
+            Back
+          </Link>
+          <button
+            type="submit"
+            className="rounded-xl bg-teal-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-600"
+          >
+            Next
+          </button>
+        </div>
+      </form>
     </section>
   );
 }

@@ -335,27 +335,57 @@ export const resources = {
             ownerSection: {
               title: "Informasi Pemilik/Direktur",
               ktp: {
-                label: "Foto KTP Pemilik Bisnis",
-                previewAlt: "Pratinjau KTP pemilik",
+                label: "Foto KTP",
+                previewAlt: "Pratinjau KTP",
               },
               npwpPhoto: {
-                label: "Foto NPWP Pemilik Bisnis",
-                previewAlt: "Pratinjau NPWP pemilik",
+                label: "Foto NPWP",
+                previewAlt: "Pratinjau NPWP",
               },
               name: {
-                label: "Nama Pemilik Bisnis",
+                label: "Nama",
                 placeholder: "Masukkan nama",
                 helper: "Sesuai KTP",
               },
               nik: {
-                label: "NIK Pemilik Bisnis",
+                label: "NIK/KITAS",
                 placeholder: "123456789101112",
                 helper: "Sesuai Akta Pendirian/Perubahan Perusahaan",
               },
               npwp: {
-                label: "NPWP16 Pemilik Bisnis",
+                label: "NPWP",
                 placeholder: "1414 1414 1414 1414",
                 helper: "Sesuai Akta Pendirian/Perubahan Perusahaan",
+              },
+              jobTitle: {
+                label: "Jabatan",
+              },
+            },
+            legalDocuments: {
+              title: "Dokumen Legal",
+              note: "Format file harus PDF.",
+              nibNumber: {
+                label: "Nomor Induk Berusaha (NIB)",
+              },
+              nibDocument: {
+                label: "Dokumen NIB",
+              },
+              deedEstablishment: {
+                label: "Akta Pendirian Perusahaan",
+              },
+              skMenkumhamEstablishment: {
+                label: "SK Menkumham Akta Pendirian",
+              },
+              deedAmendment: {
+                label: "Akta Perubahan Akhir (opsional)",
+                helper: "Unggah dokumen jika ada perubahan data di Akta Pendirian Perusahaan.",
+              },
+              skMenkumhamAmendment: {
+                label: "SK Menkumham Akta Perubahan Akhir (opsional)",
+                helper: "Dokumen ini wajib jika Anda mengunggah Akta Perubahan Akhir.",
+              },
+              pseLicense: {
+                label: "Izin PSE (Penyelenggaraan Sistem Elektronik)",
               },
             },
             bankSection: {
@@ -785,27 +815,57 @@ export const resources = {
             ownerSection: {
               title: "Owner/Director Information",
               ktp: {
-                label: "Business Owner ID (KTP) Photo",
-                previewAlt: "Owner ID preview",
+                label: "ID (KTP) Photo",
+                previewAlt: "ID preview",
               },
               npwpPhoto: {
-                label: "Business Owner NPWP Photo",
-                previewAlt: "Owner NPWP preview",
+                label: "NPWP Photo",
+                previewAlt: "NPWP preview",
               },
               name: {
-                label: "Business Owner Name",
+                label: "Name",
                 placeholder: "Input name",
                 helper: "As per ID",
               },
               nik: {
-                label: "Business Owner NIK",
+                label: "NIK/KITAS",
                 placeholder: "123456789101112",
                 helper: "As per deed of establishment/amendment",
               },
               npwp: {
-                label: "Business Owner NPWP16",
+                label: "NPWP",
                 placeholder: "1414 1414 1414 1414",
                 helper: "As per deed of establishment/amendment",
+              },
+              jobTitle: {
+                label: "Job Title",
+              },
+            },
+            legalDocuments: {
+              title: "Legal Documents",
+              note: "File format must be PDF.",
+              nibNumber: {
+                label: "Business Registration Number (NIB)",
+              },
+              nibDocument: {
+                label: "NIB Document",
+              },
+              deedEstablishment: {
+                label: "Deed of Establishment",
+              },
+              skMenkumhamEstablishment: {
+                label: "MOLHR Deed Approval Letter",
+              },
+              deedAmendment: {
+                label: "Latest Deed Amendment (optional)",
+                helper: "Upload if there are changes from the Deed of Establishment.",
+              },
+              skMenkumhamAmendment: {
+                label: "MOLHR Amendment Approval Letter (optional)",
+                helper: "Required if you upload the Latest Deed Amendment.",
+              },
+              pseLicense: {
+                label: "PSE License (Electronic System Operator)",
               },
             },
             bankSection: {
