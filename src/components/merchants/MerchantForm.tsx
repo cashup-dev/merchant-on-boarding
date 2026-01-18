@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { Store } from "lucide-react";
 import {
   InformationCircleIcon,
@@ -14,7 +15,13 @@ import {
 
 type TabType = "information" | "documents" | "features" | "mdr";
 
-const MerchantForm: React.FC = () => {
+type MerchantFormProps = {
+  mode?: "create" | "edit";
+  merchantId?: string;
+};
+
+const MerchantForm: React.FC<MerchantFormProps> = ({ mode = "create", merchantId }) => {
+  const isEdit = mode === "edit";
   const [activeTab, setActiveTab] = useState<TabType>("information");
   const [usedForTesting, setUsedForTesting] = useState(false);
 
@@ -68,19 +75,24 @@ const MerchantForm: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Merchant
+                {isEdit ? "Edit Merchant" : "Merchant"}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Register new merchant
+                {isEdit
+                  ? `Update merchant details${merchantId ? ` (${merchantId})` : ""}`
+                  : "Register new merchant"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors dark:text-gray-300 dark:hover:bg-gray-800">
+            <Link
+              href="/merchants"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors dark:text-gray-300 dark:hover:bg-gray-800"
+            >
               Cancel
-            </button>
+            </Link>
             <button className="px-6 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
-              Save
+              {isEdit ? "Update" : "Save"}
             </button>
           </div>
         </div>

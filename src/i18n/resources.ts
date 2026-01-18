@@ -434,10 +434,14 @@ export const resources = {
             menu: "Menu",
             onboarding: "Onboarding",
             language: "Bahasa",
+            accessControl: "Access Control",
           },
           menu: {
             dashboard: "Dashboard",
             salesMerchants: "Sales Merchants",
+            merchants: "Merchants",
+            roles: "Roles",
+            users: "Users",
           },
           onboarding: {
             progress: "Progress",
@@ -914,10 +918,14 @@ export const resources = {
             menu: "Menu",
             onboarding: "Onboarding",
             language: "Language",
+            accessControl: "Access Control",
           },
           menu: {
             dashboard: "Dashboard",
             salesMerchants: "Sales Merchants",
+            merchants: "Merchants",
+            roles: "Roles",
+            users: "Users",
           },
           onboarding: {
             progress: "Progress",

@@ -1,10 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Store, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import { Tabs } from "@/components/ui/tabs";
+import { Fancybox } from "@fancyapps/ui";
+import "@fancyapps/ui/dist/fancybox/fancybox.css";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -35,14 +37,14 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   // Dummy merchant data
   const merchantData = {
     name: "Decoupling Demo",
-    subtitle: "test, Kota Jakarta Selatan, __postal_code__, Dki Jakarta, Indonesia",
+    subtitle: "test, Kota Jakarta Selatan, 12780, Dki Jakarta, Indonesia",
     type: "Business Entity",
     classification: "Retail",
     idNumber: "000000000000000",
     taxNumber: "00.000.000.0-000.000",
     familyCertificate: "000000000000000",
-    address: "test, Kota Jakarta Selatan, __postal_code__, Dki Jakarta, Indonesia",
-    phone: "__phone__",
+    address: "test, Kota Jakarta Selatan, 12780, Dki Jakarta, Indonesia",
+    phone: "0812345678910",
     registrationStatus: "Approved",
     documentCompleteness: "0%",
   };
@@ -61,9 +63,9 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
     { label: "Name", value: merchantData.name },
     { label: "Type", value: merchantData.type },
     { label: "Classification", value: merchantData.classification },
-    { label: "ID #", value: merchantData.idNumber },
-    { label: "Tax #", value: merchantData.taxNumber },
-    { label: "Family Certificate #", value: merchantData.familyCertificate },
+    // { label: "ID #", value: merchantData.idNumber },
+    // { label: "Tax #", value: merchantData.taxNumber },
+    // { label: "Family Certificate #", value: merchantData.familyCertificate },
     { label: "Address", value: merchantData.address },
     { label: "Phone", value: merchantData.phone },
   ];
@@ -96,15 +98,32 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   ];
 
   const registrationDocuments = [
-    { label: "KTP (WNI) / Passport (WNA)", value: "-" },
-    { label: "NPWP Perusahaan", value: "-" },
-    { label: "SIUP", value: "-" },
-    { label: "TDP", value: "-" },
+    { label: "KTP (WNI) / Passport (WNA)", image: "/images/carousel/carousel-01.png" },
+    { label: "NPWP Perusahaan", image: "/images/carousel/carousel-02.png" },
+    { label: "SIUP", image: "/images/carousel/carousel-03.png" },
+    { label: "TDP", image: "/images/carousel/carousel-04.png" },
     { label: "SITU/SKDU", value: "-" },
     { label: "Akta Perusahaan", value: "-" },
     { label: "Foto Perusahaan", value: "-" },
     { label: "Surat Kuasa", value: "-" },
   ];
+
+  useEffect(() => {
+    Fancybox.bind("[data-fancybox='registration-docs']", {
+      Thumbs: false,
+      Toolbar: {
+        display: {
+          left: [],
+          middle: ["zoomIn", "zoomOut", "toggle1to1", "rotateCCW", "rotateCW"],
+          right: ["close"],
+        },
+      },
+    });
+
+    return () => {
+      Fancybox.destroy();
+    };
+  }, []);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -224,7 +243,23 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
                         className="flex items-center justify-between py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800"
                       >
                         <span>{doc.label}</span>
-                        <span className="text-gray-500 dark:text-gray-500">{doc.value}</span>
+                        {doc.image ? (
+                          <a
+                            href={doc.image}
+                            data-fancybox="registration-docs"
+                            data-caption={doc.label}
+                            className="flex flex-col items-end gap-1 text-blue-600 hover:text-blue-700"
+                          >
+                            <img
+                              src={doc.image}
+                              alt={doc.label}
+                              className="h-14 w-24 rounded-md border border-gray-200 object-cover dark:border-gray-800"
+                            />
+                            <span className="text-xs">Enlarge</span>
+                          </a>
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-500">{doc.value}</span>
+                        )}
                       </div>
                     ))}
                   </div>

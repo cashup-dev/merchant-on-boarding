@@ -1,5 +1,6 @@
 "use client";
 import UserDropdown from "@/components/header/UserDropdown";
+import LanguageToggle from "@/components/i18n/LanguageToggle";
 import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +11,7 @@ const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
 
-  const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { isMobileOpen, isExpanded, isHovered, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
   // Update date and time every second (client-only to avoid hydration mismatch)
   useEffect(() => {
@@ -69,8 +70,15 @@ const AppHeader: React.FC = () => {
     }) + ' WIB';
   };
 
+  const headerOffset =
+    isMobileOpen ? "left-0" : isExpanded || isHovered ? "lg:left-[290px]" : "lg:left-[90px]";
+  const headerWidth =
+    isExpanded || isHovered ? "lg:w-[calc(100%-290px)]" : "lg:w-[calc(100%-90px)]";
+
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
+    <header
+      className={`fixed top-0 ${headerOffset} ${headerWidth} right-0 flex w-full bg-white/95 border-gray-200 z-50 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 lg:border-b`}
+    >
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 lg:py-4">
           <button
@@ -207,6 +215,9 @@ const AppHeader: React.FC = () => {
               <ChatBubbleLeftRightIcon className="w-6 h-6" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button> */}
+          </div>
+          <div className="lg:hidden">
+            <LanguageToggle />
           </div>
           {/* <!-- User Area --> */}
           <UserDropdown />

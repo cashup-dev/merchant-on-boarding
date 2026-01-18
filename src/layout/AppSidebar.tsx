@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useSidebar } from "../context/SidebarContext";
 import { HorizontaLDots } from "../icons/index";
 import LanguageToggle from "@/components/i18n/LanguageToggle";
-import { Store, Users, Calendar, FileText, CreditCard } from "lucide-react";
+import { Store, Users, Calendar, FileText, CreditCard, Shield } from "lucide-react";
 
 type TimelineStep = {
   title: string;
@@ -20,6 +20,10 @@ type MenuItem = {
   href: string;
   icon: React.ElementType;
 };
+
+type SidebarItem =
+  | ({ type: "item" } & MenuItem)
+  | { type: "divider"; label: string };
 
 const onboardingSteps: TimelineStep[] = [
   {
@@ -64,10 +68,24 @@ const onboardingSteps: TimelineStep[] = [
   },
 ];
 
-const menuItems: MenuItem[] = [
+const sidebarItems: SidebarItem[] = [
   {
-    label: "sidebar.menu.salesMerchants",
-    href: "/sales/merchants",
+    type: "item",
+    label: "sidebar.menu.merchants",
+    href: "/merchants",
+    icon: Store,
+  },
+  { type: "divider", label: "sidebar.sections.accessControl" },
+  {
+    type: "item",
+    label: "sidebar.menu.roles",
+    href: "/access-control/roles",
+    icon: Shield,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.users",
+    href: "/access-control/users",
     icon: Users,
   },
 ];
@@ -136,8 +154,8 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6">
+      <div className="flex flex-1 flex-col overflow-y-auto pb-4 duration-300 ease-linear no-scrollbar">
+        <nav className="">
           <div className="flex flex-col gap-4">
             <div>
               <h2 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
@@ -239,7 +257,21 @@ const AppSidebar: React.FC = () => {
                 </div>
               ) : (
                 <ul className="space-y-2">
-                  {menuItems.map((item) => {
+                  {sidebarItems.map((item, index) => {
+                    if (item.type === "divider") {
+                      return (
+                        <li key={`${item.label}-${index}`} className="space-y-3 pt-3">
+                          <p
+                            className={`text-xs font-semibold uppercase text-gray-400 ${
+                              showSidebarContent ? "px-3" : "text-center"
+                            }`}
+                          >
+                            {showSidebarContent ? t(item.label) : <HorizontaLDots />}
+                          </p>
+                        </li>
+                      );
+                    }
+
                     const isActive = pathname.startsWith(item.href);
                     const Icon = item.icon;
                     return (
@@ -263,14 +295,11 @@ const AppSidebar: React.FC = () => {
                 </ul>
               )}
             </div>
-            
-            {/* DIV UNTUK "OTHERS" TELAH DIHAPUS DARI SINI */}
-
           </div>
         </nav>
       </div>
       {showSidebarContent && (
-        <div className="mt-auto border-t border-gray-200 px-4 pb-6 pt-4 dark:border-gray-800">
+        <div className="border-t pb-20 pt-4 md:pb-7 md:pt-5 border-gray-200 px-4 dark:border-gray-800">
           <p className="mb-3 text-xs font-semibold uppercase text-gray-400">
             {t("sidebar.sections.language")}
           </p>

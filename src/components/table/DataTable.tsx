@@ -35,6 +35,16 @@ type DataTableProps<T> = {
   filters?: Array<TableFilter>;
   actions?: React.ReactNode;
   emptyMessage?: string;
+  footer?: React.ReactNode;
+  maxBodyHeight?: string;
+  pagination?: {
+    currentPage: number;
+    itemsPerPage: number;
+    totalItems: number;
+    onPageChange: (page: number) => void;
+    onItemsPerPageChange: (itemsPerPage: number) => void;
+    itemsPerPageOptions?: number[];
+  };
 };
 
 export default function DataTable<T>({
@@ -48,13 +58,16 @@ export default function DataTable<T>({
   filters,
   actions,
   emptyMessage = "No data found.",
+  footer,
+  maxBodyHeight,
+  pagination,
 }: DataTableProps<T>) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="border-b border-gray-200 p-6 dark:border-gray-800">
         <div className="flex items-center gap-4">
           {icon ? (
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800">
               {icon}
             </div>
           ) : null}
@@ -68,7 +81,7 @@ export default function DataTable<T>({
       </div>
 
       {(search || (filters && filters.length) || actions) && (
-        <div className="border-b border-gray-200 p-6 dark:border-gray-800">
+        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {search ? (
               <div className="relative w-full lg:w-96">
@@ -78,7 +91,7 @@ export default function DataTable<T>({
                   placeholder={search.placeholder ?? "Search..."}
                   value={search.value}
                   onChange={(event) => search.onChange(event.target.value)}
-                  className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                  className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
                 />
               </div>
             ) : (
@@ -89,7 +102,7 @@ export default function DataTable<T>({
               {filters?.map((filter) => (
                 <div
                   key={filter.label}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800"
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 dark:border-gray-800"
                 >
                   <FunnelIcon className="h-4 w-4 text-gray-500" />
                   <Select value={filter.value} onValueChange={filter.onChange}>
@@ -112,9 +125,16 @@ export default function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50">
+      <div
+        className={`overflow-x-auto ${maxBodyHeight ? "overflow-y-auto" : ""}`}
+        style={maxBodyHeight ? { maxHeight: maxBodyHeight } : undefined}
+      >
+        <table className="min-w-full w-max">
+          <thead
+            className={`border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50 ${
+              maxBodyHeight ? "sticky top-0 z-10" : ""
+            }`}
+          >
             <tr>
               {columns.map((column) => (
                 <th
@@ -149,6 +169,41 @@ export default function DataTable<T>({
           </tbody>
         </table>
       </div>
+      {(footer || pagination) && (
+        <div className="border-t border-gray-200 p-6 dark:border-gray-800">
+          {pagination ? (
+            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Total rows per-page
+                </span>
+                <select
+                  value={pagination.itemsPerPage}
+                  onChange={(event) => {
+                    pagination.onItemsPerPageChange(Number(event.target.value));
+                    pagination.onPageChange(1);
+                  }}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-800 dark:text-white"
+                >
+                  {(pagination.itemsPerPageOptions ?? [10, 25, 50, 100]).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to{" "}
+                {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of{" "}
+                {pagination.totalItems} results
+              </div>
+            </div>
+          ) : (
+            footer
+          )}
+        </div>
+      )}
     </div>
   );
 }
