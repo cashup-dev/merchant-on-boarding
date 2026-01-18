@@ -14,6 +14,7 @@ export default function EDCInformationClient() {
   const setEdcInformation = useOnboardingStore((state) => state.setEdcInformation);
   const [edcType, setEdcType] = useState(storedEdcInformation.edcType);
   const [edcCount, setEdcCount] = useState(storedEdcInformation.edcCount);
+  const [edcOwnership, setEdcOwnership] = useState(storedEdcInformation.edcOwnership ?? "");
   const [streetName, setStreetName] = useState(storedEdcInformation.shippingAddress.streetName);
   const [rt, setRt] = useState(storedEdcInformation.shippingAddress.rt);
   const [rw, setRw] = useState(storedEdcInformation.shippingAddress.rw);
@@ -26,6 +27,7 @@ export default function EDCInformationClient() {
   useEffect(() => {
     setEdcType(storedEdcInformation.edcType);
     setEdcCount(storedEdcInformation.edcCount);
+    setEdcOwnership(storedEdcInformation.edcOwnership ?? "");
     setStreetName(storedEdcInformation.shippingAddress.streetName);
     setRt(storedEdcInformation.shippingAddress.rt);
     setRw(storedEdcInformation.shippingAddress.rw);
@@ -44,6 +46,7 @@ export default function EDCInformationClient() {
           setEdcInformation({
             edcType,
             edcCount,
+            edcOwnership,
             shippingAddress: {
               streetName,
               rt,
@@ -68,6 +71,25 @@ export default function EDCInformationClient() {
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="edcOwnership">
+              {t("onboarding.edcInformation.fields.edcOwnership.label")}
+            </label>
+            <Select value={edcOwnership} onValueChange={setEdcOwnership}>
+              <SelectTrigger id="edcOwnership" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                <SelectValue placeholder={t("onboarding.edcInformation.fields.edcOwnership.placeholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="buy">
+                  {t("onboarding.edcInformation.fields.edcOwnership.options.buy")}
+                </SelectItem>
+                <SelectItem value="rent">
+                  {t("onboarding.edcInformation.fields.edcOwnership.options.rent")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="edcOwnership" value={edcOwnership} />
+          </div>
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="edcType">
               {t("onboarding.edcInformation.fields.edcType.label")}

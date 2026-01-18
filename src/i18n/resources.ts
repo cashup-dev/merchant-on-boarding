@@ -126,6 +126,14 @@ export const resources = {
             title: "Informasi EDC",
             subtitle: "Lengkapi kebutuhan EDC untuk merchant Anda.",
             fields: {
+              edcOwnership: {
+                label: "Kepemilikan EDC",
+                placeholder: "Pilih kepemilikan EDC",
+                options: {
+                  buy: "Beli",
+                  rent: "Sewa",
+                },
+              },
               edcType: {
                 label: "Tipe EDC",
                 placeholder: "Pilih tipe EDC",
@@ -232,7 +240,7 @@ export const resources = {
               placeholder: "Pilih tahun",
             },
             employeeCount: {
-              label: "Perkiraan Jumlah Karyawan",
+              label: "Jumlah Karyawan",
               placeholder: "Pilih",
               options: {
                 "1_5": "1-5",
@@ -610,6 +618,14 @@ export const resources = {
             title: "EDC Information",
             subtitle: "Provide the EDC requirements for this merchant.",
             fields: {
+              edcOwnership: {
+                label: "EDC Ownership",
+                placeholder: "Select EDC ownership",
+                options: {
+                  buy: "Buy",
+                  rent: "Rent",
+                },
+              },
               edcType: {
                 label: "EDC Type",
                 placeholder: "Select EDC type",
@@ -716,7 +732,7 @@ export const resources = {
               placeholder: "Select year",
             },
             employeeCount: {
-              label: "Estimated Current Employees",
+              label: "Current Employees",
               placeholder: "Select",
               options: {
                 "1_5": "1-5",

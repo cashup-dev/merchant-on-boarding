@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Store, ArrowLeft } from "lucide-react";
+import { Store, ArrowLeft, Landmark, Percent, CheckCircle2, Wallet } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
@@ -17,9 +17,13 @@ interface MerchantDetailProps {
 }
 
 type TabType = "information" | "mdr" | "devices" | "device-users" | "mids" | "tids" | "transactions";
+type MdrTab = "cdcp" | "qr-dynamic" | "bnpl" | "va";
+type LimitTab = "credit-debit" | "qr-payment" | "bnpl" | "va";
 
 const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   const [activeTab, setActiveTab] = useState<TabType>("information");
+  const [activeMdrTab, setActiveMdrTab] = useState<MdrTab>("cdcp");
+  const [activeLimitTab, setActiveLimitTab] = useState<LimitTab>("credit-debit");
   const [showAddMidModal, setShowAddMidModal] = useState(false);
   const [midFormData, setMidFormData] = useState({ mid: "", batchGroup: "" });
   const [searchMid, setSearchMid] = useState("");
@@ -37,9 +41,32 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   // Dummy merchant data
   const merchantData = {
     name: "Decoupling Demo",
+    trademark: "Decoupling Demo",
     subtitle: "test, Kota Jakarta Selatan, 12780, Dki Jakarta, Indonesia",
-    type: "Business Entity",
+    type: "Individual",
     classification: "Retail",
+    category: "Miscellaneous and Specialty Retail Stores",
+    establishedYear: "2018",
+    employeeCount: "21-50",
+    monthlyVolume: "50-200 juta",
+    storeUrl: "https://example-merchant.com",
+    bankName: "BANK CENTRAL ASIA",
+    bankBranch: "Sunter",
+    bankAccount: "1234567890",
+    bankOnBehalf: "Eunike Candice Cantikasari",
+    bankClearingCode: "0140397",
+    bankCurrency: "IDR",
+    ownerName: "Diana Engelia Agustin",
+    ownerBirthDate: "08/08/1958",
+    ownerIdNumber: "317437465928475",
+    ownerNationality: "WNI",
+    ownerTaxNumber: "096128186016000",
+    ownerAddressKtp:
+      "Jl. Gaharu VI 37 RT 003 RW 011, Cilandak Barat, Cilandak, Jakarta Selatan. DKI Jakarta. 12430.",
+    ownerAddressDomicile:
+      "Jl. Gaharu VI 37 RT 003 RW 011, Cilandak Barat, Cilandak, Jakarta Selatan. DKI Jakarta. 12430.",
+    ownerEmail: "accounting_sing@aquaexpeditions.com",
+    ownerPhone: "6282183583",
     idNumber: "000000000000000",
     taxNumber: "00.000.000.0-000.000",
     familyCertificate: "000000000000000",
@@ -52,23 +79,208 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   const tabs = [
     { id: "information" as TabType, label: "Information" },
     { id: "mdr" as TabType, label: "MDR, Limit & Features" },
-    { id: "devices" as TabType, label: "Devices" },
-    { id: "device-users" as TabType, label: "Device Users" },
-    { id: "mids" as TabType, label: "MIDs & Batch Groups" },
-    { id: "tids" as TabType, label: "TIDs & Batch Group" },
-    { id: "transactions" as TabType, label: "Transactions" },
+    // { id: "devices" as TabType, label: "Devices" },
+    // { id: "device-users" as TabType, label: "Device Users" },
+    // { id: "mids" as TabType, label: "MIDs & Batch Groups" },
+    // { id: "tids" as TabType, label: "TIDs & Batch Group" },
+    // { id: "transactions" as TabType, label: "Transactions" },
   ];
 
   const merchantInfoRows = [
     { label: "Name", value: merchantData.name },
+    { label: "Trademark", value: merchantData.trademark },
     { label: "Type", value: merchantData.type },
     { label: "Classification", value: merchantData.classification },
+    { label: "Category", value: merchantData.category },
+    { label: "Tahun Berdiri", value: merchantData.establishedYear },
+    { label: "Jumlah Karyawan", value: merchantData.employeeCount },
+    { label: "Perkiraan Volume Transaksi Bulanan", value: merchantData.monthlyVolume },
+    {
+      label: "Store URL",
+      value: (
+        <a
+          href={merchantData.storeUrl}
+          className="text-blue-600 hover:text-blue-700"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {merchantData.storeUrl}
+        </a>
+      ),
+    },
     // { label: "ID #", value: merchantData.idNumber },
-    // { label: "Tax #", value: merchantData.taxNumber },
+    { label: "Tax #", value: merchantData.taxNumber },
     // { label: "Family Certificate #", value: merchantData.familyCertificate },
     { label: "Address", value: merchantData.address },
     { label: "Phone", value: merchantData.phone },
   ];
+
+  const mdrTabs = [
+    { id: "cdcp" as MdrTab, label: "CDCP" },
+    { id: "qr-dynamic" as MdrTab, label: "QR Dynamic" },
+    { id: "bnpl" as MdrTab, label: "BNPL" },
+    { id: "va" as MdrTab, label: "VA" },
+  ];
+
+  const paymentFeatures = [
+    { label: "Credit Debit Card Present", enabled: true },
+    { label: "QR Payment", enabled: true },
+    { label: "BNPL", enabled: false },
+  ];
+
+  const limitTabs = [
+    { id: "credit-debit" as LimitTab, label: "Credit Debit" },
+    { id: "qr-payment" as LimitTab, label: "QR Payment" },
+    { id: "bnpl" as LimitTab, label: "BNPL" },
+    { id: "va" as LimitTab, label: "VA" },
+  ];
+
+  const limitData: Record<LimitTab, Array<{ label: string; value: string }>> = {
+    "credit-debit": [
+      { label: "Minimum Amount", value: "Rp 0" },
+      { label: "Maximum Amount With CVM", value: "Rp 0" },
+      { label: "Maximum Amount Without CVM", value: "Rp 0" },
+    ],
+    "qr-payment": [
+      { label: "Minimum Amount", value: "Rp 0" },
+      { label: "Maximum Amount With CVM", value: "Rp 0" },
+      { label: "Maximum Amount Without CVM", value: "Rp 0" },
+    ],
+    "bnpl": [
+      { label: "Minimum Amount", value: "Rp 0" },
+      { label: "Maximum Amount With CVM", value: "Rp 0" },
+      { label: "Maximum Amount Without CVM", value: "Rp 0" },
+    ],
+    "va": [
+      { label: "Minimum Amount", value: "Rp 0" },
+      { label: "Maximum Amount With CVM", value: "Rp 0" },
+      { label: "Maximum Amount Without CVM", value: "Rp 0" },
+    ],
+  };
+
+  const mdrData: Record<MdrTab, Array<{
+    cardType: string;
+    cardPrincipal: string;
+    acquirer: string;
+    acquirerOnUs: string;
+    acquirerOffUs: string;
+    cashlezOnUs: string;
+    cashlezOffUs: string;
+    aggregatorOnUs: string;
+    aggregatorOffUs: string;
+    agentOnUs: string;
+    agentOffUs: string;
+    dealerOnUs: string;
+    dealerOffUs: string;
+    salesOnUs: string;
+    salesOffUs: string;
+    totalOnUs: string;
+    totalOffUs: string;
+  }>> = {
+    "cdcp": [
+      {
+        cardType: "CREDIT",
+        cardPrincipal: "VISA",
+        acquirer: "Bank MTI",
+        acquirerOnUs: "0.00%",
+        acquirerOffUs: "2.00%",
+        cashlezOnUs: "0.00%",
+        cashlezOffUs: "1.00%",
+        aggregatorOnUs: "0.00%",
+        aggregatorOffUs: "1.00%",
+        agentOnUs: "0.00%",
+        agentOffUs: "1.00%",
+        dealerOnUs: "0.00%",
+        dealerOffUs: "1.00%",
+        salesOnUs: "0.00%",
+        salesOffUs: "1.00%",
+        totalOnUs: "0.00%",
+        totalOffUs: "6.00%",
+      },
+      {
+        cardType: "DEBIT",
+        cardPrincipal: "VISA",
+        acquirer: "Bank MTI",
+        acquirerOnUs: "0.00%",
+        acquirerOffUs: "2.00%",
+        cashlezOnUs: "0.00%",
+        cashlezOffUs: "1.00%",
+        aggregatorOnUs: "0.00%",
+        aggregatorOffUs: "1.00%",
+        agentOnUs: "0.00%",
+        agentOffUs: "1.00%",
+        dealerOnUs: "0.00%",
+        dealerOffUs: "1.00%",
+        salesOnUs: "0.00%",
+        salesOffUs: "1.00%",
+        totalOnUs: "0.00%",
+        totalOffUs: "6.00%",
+      },
+    ],
+    "qr-dynamic": [
+      {
+        cardType: "QRIS",
+        cardPrincipal: "QRIS",
+        acquirer: "Bank MTI",
+        acquirerOnUs: "0.30%",
+        acquirerOffUs: "0.70%",
+        cashlezOnUs: "0.10%",
+        cashlezOffUs: "0.30%",
+        aggregatorOnUs: "0.10%",
+        aggregatorOffUs: "0.20%",
+        agentOnUs: "0.05%",
+        agentOffUs: "0.15%",
+        dealerOnUs: "0.05%",
+        dealerOffUs: "0.15%",
+        salesOnUs: "0.05%",
+        salesOffUs: "0.10%",
+        totalOnUs: "0.65%",
+        totalOffUs: "1.60%",
+      },
+    ],
+    "bnpl": [
+      {
+        cardType: "BNPL",
+        cardPrincipal: "Kredivo",
+        acquirer: "Bank MTI",
+        acquirerOnUs: "1.00%",
+        acquirerOffUs: "2.50%",
+        cashlezOnUs: "0.50%",
+        cashlezOffUs: "1.00%",
+        aggregatorOnUs: "0.30%",
+        aggregatorOffUs: "0.50%",
+        agentOnUs: "0.20%",
+        agentOffUs: "0.30%",
+        dealerOnUs: "0.20%",
+        dealerOffUs: "0.30%",
+        salesOnUs: "0.20%",
+        salesOffUs: "0.30%",
+        totalOnUs: "2.40%",
+        totalOffUs: "4.90%",
+      },
+    ],
+    "va": [
+      {
+        cardType: "VA",
+        cardPrincipal: "Transfer",
+        acquirer: "Bank MTI",
+        acquirerOnUs: "0.20%",
+        acquirerOffUs: "0.50%",
+        cashlezOnUs: "0.10%",
+        cashlezOffUs: "0.20%",
+        aggregatorOnUs: "0.05%",
+        aggregatorOffUs: "0.10%",
+        agentOnUs: "0.05%",
+        agentOffUs: "0.10%",
+        dealerOnUs: "0.05%",
+        dealerOffUs: "0.10%",
+        salesOnUs: "0.05%",
+        salesOffUs: "0.10%",
+        totalOnUs: "0.50%",
+        totalOffUs: "1.10%",
+      },
+    ],
+  };
 
   const registrationRows = [
     { label: "Type", value: merchantData.type },
@@ -99,18 +311,48 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
 
   const registrationDocuments = [
     { label: "KTP (WNI) / Passport (WNA)", image: "/images/carousel/carousel-01.png" },
-    { label: "NPWP Perusahaan", image: "/images/carousel/carousel-02.png" },
+    { label: "NPWP", image: "/images/carousel/carousel-02.png" },
     { label: "SIUP", image: "/images/carousel/carousel-03.png" },
     { label: "TDP", image: "/images/carousel/carousel-04.png" },
     { label: "SITU/SKDU", value: "-" },
     { label: "Akta Perusahaan", value: "-" },
-    { label: "Foto Perusahaan", value: "-" },
+    { label: "Foto Usaha", image: "/images/carousel/carousel-01.png" },
     { label: "Surat Kuasa", value: "-" },
   ];
 
+  const bankRows = [
+    { label: "Name", value: merchantData.bankName },
+    { label: "Branch", value: merchantData.bankBranch },
+    { label: "Account #", value: merchantData.bankAccount },
+    { label: "On Behalf", value: merchantData.bankOnBehalf },
+    { label: "Clearing Code", value: merchantData.bankClearingCode },
+    { label: "Currency", value: merchantData.bankCurrency },
+  ];
+
+  const ownerRows = [
+    { label: "Nama Pemilik Merchant", value: merchantData.ownerName },
+    { label: "Tempat & Tanggal Lahir", value: merchantData.ownerBirthDate },
+    { label: "Alamat Sesuai KTP", value: merchantData.ownerAddressKtp },
+    { label: "Alamat Domisili", value: merchantData.ownerAddressDomicile },
+    { label: "Kewarganegaraan", value: merchantData.ownerNationality },
+    { label: "Email", value: merchantData.ownerEmail },
+    { label: "Nomor Identitas", value: merchantData.ownerIdNumber },
+    { label: "No Hp.", value: merchantData.ownerPhone },
+    { label: "NPWP", value: merchantData.ownerTaxNumber },
+  ];
+
+  const deviceInfoRows = [
+    { label: "Kepemilikan EDC", value: "Beli" },
+    { label: "Tipe", value: "T6D" },
+    { label: "Jumlah", value: "3" },
+    { label: "Alamat Pengiriman", value: merchantData.ownerAddressDomicile },
+  ];
+
   useEffect(() => {
-    Fancybox.bind("[data-fancybox='registration-docs']", {
-      Thumbs: false,
+    const fancyboxOptions = {
+      Thumbs: {
+        autoStart: false,
+      },
       Toolbar: {
         display: {
           left: [],
@@ -118,7 +360,9 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
           right: ["close"],
         },
       },
-    });
+    } as unknown as Record<string, unknown>;
+
+    Fancybox.bind("[data-fancybox='registration-docs']", fancyboxOptions);
 
     return () => {
       Fancybox.destroy();
@@ -167,135 +411,463 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
         <div className="p-6">
           {/* Information Tab */}
           {activeTab === "information" && (
-            <div className="space-y-8">
-              <div className="grid gap-10 lg:grid-cols-2">
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
-                      <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Merchant Information
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Merchant details and application.
-                      </p>
-                    </div>
+            <div className="columns-1 gap-8 space-y-8 lg:columns-2">
+              <div className="break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {merchantInfoRows.map((row) => (
-                      <div
-                        key={row.label}
-                        className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {row.label}
-                        </span>
-                        <span className="text-sm text-gray-900 dark:text-white sm:text-right sm:max-w-[60%]">
-                          {row.value}
-                        </span>
-                      </div>
-                    ))}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Merchant Information
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Merchant details and application.
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
-                      <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {merchantInfoRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="text-sm text-gray-900 dark:text-white sm:text-right sm:max-w-[60%]">
+                        {row.value}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Registration
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Merchant registration status.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {registrationRows.map((row) => (
-                      <div
-                        key={row.label}
-                        className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {row.label}
-                        </span>
-                        <span className="text-sm text-gray-900 dark:text-white sm:text-right">
-                          {row.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 border-t border-gray-100 dark:border-gray-800">
-                    {registrationDocuments.map((doc) => (
-                      <div
-                        key={doc.label}
-                        className="flex items-center justify-between py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800"
-                      >
-                        <span>{doc.label}</span>
-                        {doc.image ? (
-                          <a
-                            href={doc.image}
-                            data-fancybox="registration-docs"
-                            data-caption={doc.label}
-                            className="flex flex-col items-end gap-1 text-blue-600 hover:text-blue-700"
-                          >
-                            <img
-                              src={doc.image}
-                              alt={doc.label}
-                              className="h-14 w-24 rounded-md border border-gray-200 object-cover dark:border-gray-800"
-                            />
-                            <span className="text-xs">Enlarge</span>
-                          </a>
-                        ) : (
-                          <span className="text-gray-500 dark:text-gray-500">{doc.value}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Outlets Section */}
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
-                      <Store className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Outlets
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Available outlets for this merchant.
-                      </p>
-                    </div>
+              <div className="break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Registration
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Merchant registration status.
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg dark:border-gray-800">
-                    <select className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-800 dark:text-white">
-                      <option>Select an option</option>
-                    </select>
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {registrationRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="text-sm text-gray-900 dark:text-white sm:text-right">
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 border-t border-gray-100 dark:border-gray-800">
+                  {registrationDocuments.map((doc) => (
+                    <div
+                      key={doc.label}
+                      className="flex items-center justify-between py-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800"
+                    >
+                      <span>{doc.label}</span>
+                      {doc.image ? (
+                        <a
+                          href={doc.image}
+                          data-fancybox="registration-docs"
+                          data-caption={doc.label}
+                          className="flex flex-col items-end gap-1 text-blue-600 hover:text-blue-700"
+                        >
+                          <img
+                            src={doc.image}
+                            alt={doc.label}
+                            className="h-14 w-24 rounded-md border border-gray-200 object-cover dark:border-gray-800"
+                          />
+                          <span className="text-xs">Enlarge</span>
+                        </a>
+                      ) : (
+                        <span className="text-gray-500 dark:text-gray-500">{doc.value}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                    <svg
+                      className="w-6 h-6 text-blue-600 dark:text-blue-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11zm0 0c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Penanggung Jawab
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Data penanggung jawab merchant
+                    </p>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {ownerRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="text-sm text-gray-900 dark:text-white sm:text-right sm:max-w-[60%]">
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                    <Landmark className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Bank
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Merchant destination transfer bank
+                    </p>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {bankRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="text-sm text-gray-900 dark:text-white sm:text-right">
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                    <Store className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Informasi Perangkat
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Detail perangkat dan alamat pengiriman
+                    </p>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {deviceInfoRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="text-sm text-gray-900 dark:text-white sm:text-right sm:max-w-[60%]">
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "mdr" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-900 dark:bg-blue-950/20">
+                  <Percent className="w-6 h-6 text-white dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    MDR & Fee
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Merchant Discount Rate
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-b border-gray-200 dark:border-gray-800">
+                <div className="flex overflow-x-auto gap-2">
+                  {mdrTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveMdrTab(tab.id)}
+                      className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                        activeMdrTab === tab.id
+                          ? "border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500"
+                          : "border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto border border-gray-200 rounded-lg dark:border-gray-800">
+                <table className="min-w-[1700px] w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
+                    <tr>
+                      <th rowSpan={2} className="px-5 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Card Type
+                      </th>
+                      <th rowSpan={2} className="px-5 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Card Principal
+                      </th>
+                      <th rowSpan={2} className="px-5 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Acquirer
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Acquirer MDR
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Cashlez MDR
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Aggregator MDR
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Agent MDR
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Dealer MDR
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Sales MDR
+                      </th>
+                      <th colSpan={2} className="px-5 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Total MDR
+                      </th>
+                    </tr>
+                    <tr>
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`acq-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`cashlez-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`agg-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`agent-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`dealer-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`sales-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                      {["On Us", "Off Us"].map((label) => (
+                        <th key={`total-${label}`} className="px-5 py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                          {label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                    {mdrData[activeMdrTab].map((row, index) => (
+                      <tr key={`${row.cardType}-${row.cardPrincipal}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition-colors">
+                        <td className="px-5 py-3 text-gray-900 dark:text-white font-medium whitespace-nowrap">
+                          {row.cardType}
+                        </td>
+                        <td className="px-5 py-3 text-gray-900 dark:text-white whitespace-nowrap">
+                          {row.cardPrincipal}
+                        </td>
+                        <td className="px-5 py-3 text-gray-900 dark:text-white whitespace-nowrap">
+                          {row.acquirer}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.acquirerOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.acquirerOffUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.cashlezOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.cashlezOffUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.aggregatorOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.aggregatorOffUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.agentOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.agentOffUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.dealerOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.dealerOffUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.salesOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {row.salesOffUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-900 dark:text-white font-medium whitespace-nowrap">
+                          {row.totalOnUs}
+                        </td>
+                        <td className="px-5 py-3 text-center text-gray-900 dark:text-white font-medium whitespace-nowrap">
+                          {row.totalOffUs}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="grid gap-8 lg:grid-cols-2">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-900 dark:bg-blue-950/20">
+                      <CheckCircle2 className="w-6 h-6 text-white dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Payment Features
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Payment transaction features that enabled for this merchant
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      Name
-                    </label>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">-</p>
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {paymentFeatures.map((feature) => (
+                      <div key={feature.label} className="flex items-center justify-between py-3">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {feature.label}
+                        </span>
+                        <span
+                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                            feature.enabled
+                              ? "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                          }`}
+                        >
+                          {feature.enabled ? "Yes" : "No"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-900 dark:bg-blue-950/20">
+                      <Wallet className="w-6 h-6 text-white dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Transaction Limit
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        The total nominal value (minimum & maximum) transaction.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-b border-gray-200 dark:border-gray-800">
+                    <div className="flex overflow-x-auto gap-2">
+                      {limitTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveLimitTab(tab.id)}
+                          className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                            activeLimitTab === tab.id
+                              ? "border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500"
+                              : "border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
+                    {limitData[activeLimitTab].map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between py-3"
+                      >
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {row.label}
+                        </span>
+                        <span className="text-sm text-gray-900 dark:text-white">
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -303,7 +875,7 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
           )}
 
           {/* MIDs & Batch Groups Tab */}
-          {activeTab === "mids" && (
+          {false && (
             <div className="space-y-8">
               {/* Credit Debit */}
               <div>
@@ -604,7 +1176,7 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
           )}
 
           {/* TIDs & Batch Group Tab */}
-          {activeTab === "tids" && (
+          {false && (
             <div className="space-y-8">
               {/* Credit Debit TID */}
               <div>
@@ -789,7 +1361,7 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
           )}
 
           {/* Transactions Tab */}
-          {activeTab === "transactions" && (
+          {false && (
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
@@ -979,7 +1551,7 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
           )}
 
           {/* Other tabs placeholder */}
-          {(activeTab === "mdr" || activeTab === "devices" || activeTab === "device-users") && (
+          {false && (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">

@@ -19,14 +19,14 @@ const featureOptions: FeatureCard[] = [
     titleKey: "onboarding.paymentFeature.options.cashlez.title",
     descriptionKey: "onboarding.paymentFeature.options.cashlez.description",
     detailKey: "onboarding.paymentFeature.options.cashlez.detail",
-    badges: ["VA", "BNI", "BRI", "+9"],
+    badges: ["QRIS", "Credit/Debit"],
   },
   {
     id: "czlink",
     titleKey: "onboarding.paymentFeature.options.czlink.title",
     descriptionKey: "onboarding.paymentFeature.options.czlink.description",
     detailKey: "onboarding.paymentFeature.options.czlink.detail",
-    badges: ["VA", "QRIS"],
+    badges: ["VA", "QRIS", "Card Not Present"],
   },
 ];
 

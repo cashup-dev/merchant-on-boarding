@@ -136,7 +136,9 @@ const dummyMerchants: Merchant[] = [
   },
 ];
 
-const statusToBadge = (status: Merchant["approvalStatus"]) => {
+const statusToBadge = (
+  status: Merchant["approvalStatus"],
+): { color: "success" | "warning" | "error" | "dark"; label: string } => {
   switch (status) {
     case "Approved":
       return { color: "success", label: "Approved" };

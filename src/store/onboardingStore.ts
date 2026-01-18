@@ -17,6 +17,7 @@ type EdcShippingAddress = {
 type EdcInformation = {
   edcType: string;
   edcCount: string;
+  edcOwnership: string;
   shippingAddress: EdcShippingAddress;
 };
 
@@ -86,6 +87,7 @@ type OnboardingState = {
 const emptyEdcInformation: EdcInformation = {
   edcType: "",
   edcCount: "",
+  edcOwnership: "",
   shippingAddress: {
     streetName: "",
     rt: "",
