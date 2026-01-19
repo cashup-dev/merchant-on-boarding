@@ -119,6 +119,9 @@ const AppHeader: React.FC = () => {
             )}
             {/* Cross Icon */}
           </button>
+          <div className="hidden lg:flex items-center">
+            <LanguageToggle />
+          </div>
 
           <Link
             href="/dashboard"
@@ -197,10 +200,10 @@ const AppHeader: React.FC = () => {
         <div
           className={`${
             isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          } items-center justify-between w-full gap-x-2 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           {/* Date and Time Display */}
-          <div className="hidden lg:flex flex-col items-end mr-4">
+          <div className="hidden lg:flex flex-col items-end">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
               {currentDateTime ? formatDate(currentDateTime) : "\u2014"}
             </span>
@@ -208,7 +211,6 @@ const AppHeader: React.FC = () => {
               {currentDateTime ? formatTime(currentDateTime) : "\u2014"}
             </span>
           </div>
-
           <div className="flex items-center gap-2 2xsm:gap-3">
             {/* Message/Chat Icon */}
             {/* <button className="relative flex items-center justify-center w-10 h-10 text-gray-500 hover:bg-gray-100 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800 transition-colors">

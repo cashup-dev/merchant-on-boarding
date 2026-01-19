@@ -1,10 +1,22 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+
+const salesOptions = [
+  { id: "sales-001", name: "Ardi Pratama" },
+  { id: "sales-002", name: "Nadia Putri" },
+  { id: "sales-003", name: "Kevin Wijaya" },
+  { id: "sales-004", name: "Salsabila Hartono" },
+  { id: "sales-005", name: "Rizky Mahendra" },
+  { id: "sales-006", name: "Intan Permata" },
+  { id: "sales-007", name: "Dimas Santoso" },
+  { id: "sales-008", name: "Fajar Ramadhan" },
+];
 
 export default function SignUpForm() {
   const { t } = useTranslation();
@@ -16,6 +28,12 @@ export default function SignUpForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  const [salesQuery, setSalesQuery] = useState("");
+  const [isSalesOpen, setIsSalesOpen] = useState(false);
+
+  const filteredSales = salesOptions.filter((option) =>
+    option.name.toLowerCase().includes(salesQuery.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
@@ -135,17 +153,52 @@ export default function SignUpForm() {
                 <div className="sm:col-span-2">
                   <Label htmlFor="referralCode">
                     {t("signup.register.fields.referral.label")}
-                    <span className="ml-2 text-xs text-gray-400">
-                      {t("signup.register.fields.referral.optional")}
-                    </span>
                   </Label>
-                  <Input
-                    id="referralCode"
-                    name="referralCode"
-                    placeholder={t("signup.register.fields.referral.placeholder")}
-                    value={referralCode}
-                    onChange={(event) => setReferralCode(event.target.value)}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="referralCode"
+                      placeholder={t("signup.register.fields.referral.placeholder")}
+                      value={salesQuery}
+                      onChange={(event) => {
+                        setSalesQuery(event.target.value);
+                        setReferralCode("");
+                        setIsSalesOpen(true);
+                      }}
+                      onFocus={() => setIsSalesOpen(true)}
+                      className="dropdown-toggle"
+                      required
+                    />
+                    <input type="hidden" name="referralCode" value={referralCode} />
+                    <Dropdown
+                      isOpen={isSalesOpen}
+                      onClose={() => setIsSalesOpen(false)}
+                      className="left-0 right-auto mt-2 w-full max-h-64 overflow-y-auto"
+                    >
+                      <div className="py-2">
+                        {filteredSales.length > 0 ? (
+                          filteredSales.map((option) => (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() => {
+                                setReferralCode(option.id);
+                                setSalesQuery(option.name);
+                                setIsSalesOpen(false);
+                              }}
+                              className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              <span className="font-medium text-gray-900">{option.name}</span>
+                              <span className="ml-2 text-xs text-gray-400">{option.id}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-gray-500">
+                            No results
+                          </div>
+                        )}
+                      </div>
+                    </Dropdown>
+                  </div>
                 </div>
               </div>
 

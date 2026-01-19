@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 type EdcShippingAddress = {
   streetName: string;
+  addressNumber?: string;
   rt: string;
   rw: string;
   province: string;
@@ -35,6 +36,7 @@ type BusinessEntityDraft = {
     logoFileName: string;
   };
   address: {
+    houseNumber?: string;
     addressDetail: string;
     rt: string;
     rw: string;
@@ -50,7 +52,25 @@ type BusinessEntityDraft = {
     ownerName: string;
     ownerNik: string;
     ownerNpwp: string;
-    jobTitle: string;
+    ownerKtpAddress: string;
+    ownerKtpAddressNumber: string;
+    ownerKtpRt: string;
+    ownerKtpRw: string;
+    ownerKtpProvince: string;
+    ownerKtpCity: string;
+    ownerKtpDistrict: string;
+    ownerKtpSubDistrict: string;
+    ownerKtpPostalCode: string;
+    ownerDomicileSame: boolean;
+    ownerDomicileAddress: string;
+    ownerDomicileAddressNumber: string;
+    ownerDomicileRt: string;
+    ownerDomicileRw: string;
+    ownerDomicileProvince: string;
+    ownerDomicileCity: string;
+    ownerDomicileDistrict: string;
+    ownerDomicileSubDistrict: string;
+    ownerDomicilePostalCode: string;
     bankName: string;
     accountNumber: string;
     accountName: string;
@@ -90,6 +110,7 @@ const emptyEdcInformation: EdcInformation = {
   edcOwnership: "",
   shippingAddress: {
     streetName: "",
+    addressNumber: "",
     rt: "",
     rw: "",
     province: "",

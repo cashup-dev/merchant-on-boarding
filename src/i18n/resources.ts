@@ -54,9 +54,9 @@ export const resources = {
               placeholder: "Konfirmasi password",
             },
             referral: {
-              label: "Referral code",
+              label: "Perwakilan sales Cashlez",
               optional: "(opsional)",
-              placeholder: "Masukkan referral code",
+              placeholder: "Masukkan nama sales Cashlez",
             },
           },
           actions: {
@@ -107,13 +107,13 @@ export const resources = {
               detail: "Metode tersedia: VA, transfer bank, e-wallet, QRIS, kartu.",
             },
             czlink: {
-              title: "Cashlez Link",
+              title: "softPOS",
               description: "Kirim pembayaran melalui Link",
               detail: "Lorem ipsum dolor sit amet",
             },
             softpos: {
               title: "Softpos",
-              description: "Kirim pembayaran melalui Link",
+              description: "Kirim pembayaran kartu melalui smartphone anda",
               detail: "Lorem ipsum dolor sit amet",
             },
           },
@@ -157,6 +157,10 @@ export const resources = {
               streetName: {
                 label: "Nama Jalan",
                 placeholder: "Nama jalan dan nomor",
+              },
+              addressNumber: {
+                label: "Nomor Alamat",
+                placeholder: "Masukkan nomor alamat",
               },
               rt: {
                 label: "RT",
@@ -313,6 +317,10 @@ export const resources = {
               label: "Nama jalan",
               placeholder: "Nama jalan",
             },
+            houseNumber: {
+              label: "Nomor alamat",
+              placeholder: "Masukkan nomor alamat",
+            },
             rt: {
               label: "RT",
               placeholder: "RT",
@@ -365,8 +373,58 @@ export const resources = {
                 placeholder: "1414 1414 1414 1414",
                 helper: "Sesuai Akta Pendirian/Perubahan Perusahaan",
               },
-              jobTitle: {
-                label: "Jabatan",
+              addressKtp: {
+                title: "Alamat Sesuai KTP",
+                streetName: "Nama jalan",
+                streetNamePlaceholder: "Nama jalan, nomor, dan detail alamat",
+                addressNumber: "Nomor alamat",
+                addressNumberPlaceholder: "Nomor alamat",
+                rt: "RT",
+                rtPlaceholder: "RT",
+                rw: "RW",
+                rwPlaceholder: "RW",
+                province: "Provinsi",
+                city: "Kota",
+                district: "Kecamatan",
+                subDistrict: "Kelurahan",
+                postalCode: "Kode Pos",
+              },
+              addressDomicile: {
+                title: "Alamat Domisili",
+                sameAsKtp: "Sama dengan KTP",
+                streetName: "Nama jalan",
+                streetNamePlaceholder: "Nama jalan, nomor, dan detail alamat",
+                addressNumber: "Nomor alamat",
+                addressNumberPlaceholder: "Nomor alamat",
+                rt: "RT",
+                rtPlaceholder: "RT",
+                rw: "RW",
+                rwPlaceholder: "RW",
+                province: "Provinsi",
+                city: "Kota",
+                district: "Kecamatan",
+                subDistrict: "Kelurahan",
+                postalCode: "Kode Pos",
+              },
+              address: {
+                label: "Alamat Pemilik",
+                placeholder: "Nama jalan, nomor, dan detail alamat",
+              },
+              addressNumber: {
+                label: "Nomor Alamat",
+                placeholder: "Masukkan nomor alamat",
+              },
+              rt: {
+                label: "RT",
+                placeholder: "RT",
+              },
+              rw: {
+                label: "RW",
+                placeholder: "RW",
+              },
+              postalCode: {
+                label: "Kode Pos",
+                placeholder: "Masukkan kode pos",
               },
             },
             legalDocuments: {
@@ -546,9 +604,9 @@ export const resources = {
               placeholder: "Confirm password",
             },
             referral: {
-              label: "Referral code",
+              label: "Cashlez sales representative",
               optional: "(optional)",
-              placeholder: "Enter referral code",
+              placeholder: "Enter Cashlez sales name",
             },
           },
           actions: {
@@ -649,6 +707,10 @@ export const resources = {
               streetName: {
                 label: "Street Name",
                 placeholder: "Street name and number",
+              },
+              addressNumber: {
+                label: "Address Number",
+                placeholder: "Enter address number",
               },
               rt: {
                 label: "RT",
@@ -805,6 +867,10 @@ export const resources = {
               label: "Street name",
               placeholder: "Street name",
             },
+            houseNumber: {
+              label: "Address number",
+              placeholder: "Enter address number",
+            },
             rt: {
               label: "RT",
               placeholder: "RT",
@@ -857,8 +923,58 @@ export const resources = {
                 placeholder: "1414 1414 1414 1414",
                 helper: "As per deed of establishment/amendment",
               },
-              jobTitle: {
-                label: "Job Title",
+              addressKtp: {
+                title: "Address As Per ID",
+                streetName: "Street name",
+                streetNamePlaceholder: "Street name, number, and address details",
+                addressNumber: "Address number",
+                addressNumberPlaceholder: "Address number",
+                rt: "RT",
+                rtPlaceholder: "RT",
+                rw: "RW",
+                rwPlaceholder: "RW",
+                province: "Province",
+                city: "City",
+                district: "District",
+                subDistrict: "Sub-district",
+                postalCode: "Postal code",
+              },
+              addressDomicile: {
+                title: "Domicile Address",
+                sameAsKtp: "Same as ID",
+                streetName: "Street name",
+                streetNamePlaceholder: "Street name, number, and address details",
+                addressNumber: "Address number",
+                addressNumberPlaceholder: "Address number",
+                rt: "RT",
+                rtPlaceholder: "RT",
+                rw: "RW",
+                rwPlaceholder: "RW",
+                province: "Province",
+                city: "City",
+                district: "District",
+                subDistrict: "Sub-district",
+                postalCode: "Postal code",
+              },
+              address: {
+                label: "Owner Address",
+                placeholder: "Street name, number, and address details",
+              },
+              addressNumber: {
+                label: "Address Number",
+                placeholder: "Enter address number",
+              },
+              rt: {
+                label: "RT",
+                placeholder: "RT",
+              },
+              rw: {
+                label: "RW",
+                placeholder: "RW",
+              },
+              postalCode: {
+                label: "Postal Code",
+                placeholder: "Enter postal code",
               },
             },
             legalDocuments: {

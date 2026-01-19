@@ -33,6 +33,7 @@ export default function BusinessEntityForm() {
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [subDistrict, setSubDistrict] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
   const [rt, setRt] = useState("");
   const [rw, setRw] = useState("");
@@ -48,7 +49,25 @@ export default function BusinessEntityForm() {
   const [ownerName, setOwnerName] = useState("");
   const [ownerNik, setOwnerNik] = useState("");
   const [ownerNpwp, setOwnerNpwp] = useState("");
-  const [ownerJobTitle, setOwnerJobTitle] = useState("");
+  const [ownerKtpAddress, setOwnerKtpAddress] = useState("");
+  const [ownerKtpAddressNumber, setOwnerKtpAddressNumber] = useState("");
+  const [ownerKtpRt, setOwnerKtpRt] = useState("");
+  const [ownerKtpRw, setOwnerKtpRw] = useState("");
+  const [ownerKtpProvince, setOwnerKtpProvince] = useState("");
+  const [ownerKtpCity, setOwnerKtpCity] = useState("");
+  const [ownerKtpDistrict, setOwnerKtpDistrict] = useState("");
+  const [ownerKtpSubDistrict, setOwnerKtpSubDistrict] = useState("");
+  const [ownerKtpPostalCode, setOwnerKtpPostalCode] = useState("");
+  const [ownerDomicileSame, setOwnerDomicileSame] = useState(false);
+  const [ownerDomicileAddress, setOwnerDomicileAddress] = useState("");
+  const [ownerDomicileAddressNumber, setOwnerDomicileAddressNumber] = useState("");
+  const [ownerDomicileRt, setOwnerDomicileRt] = useState("");
+  const [ownerDomicileRw, setOwnerDomicileRw] = useState("");
+  const [ownerDomicileProvince, setOwnerDomicileProvince] = useState("");
+  const [ownerDomicileCity, setOwnerDomicileCity] = useState("");
+  const [ownerDomicileDistrict, setOwnerDomicileDistrict] = useState("");
+  const [ownerDomicileSubDistrict, setOwnerDomicileSubDistrict] = useState("");
+  const [ownerDomicilePostalCode, setOwnerDomicilePostalCode] = useState("");
   const [nibNumber, setNibNumber] = useState("");
   const [nibFile, setNibFile] = useState<FileWithPreview | null>(null);
   const [deedEstablishmentFile, setDeedEstablishmentFile] = useState<FileWithPreview | null>(null);
@@ -79,6 +98,7 @@ export default function BusinessEntityForm() {
     setMonthlyVolume(storedBusinessEntity.business.monthlyVolume);
     setSocialType(storedBusinessEntity.business.socialType);
     setSocialLink(storedBusinessEntity.business.socialLink);
+    setHouseNumber(storedBusinessEntity.address.houseNumber ?? "");
     setAddressDetail(storedBusinessEntity.address.addressDetail);
     setRt(storedBusinessEntity.address.rt);
     setRw(storedBusinessEntity.address.rw);
@@ -90,7 +110,25 @@ export default function BusinessEntityForm() {
     setOwnerName(storedBusinessEntity.bank.ownerName);
     setOwnerNik(storedBusinessEntity.bank.ownerNik);
     setOwnerNpwp(storedBusinessEntity.bank.ownerNpwp);
-    setOwnerJobTitle(storedBusinessEntity.bank.jobTitle ?? "");
+    setOwnerKtpAddress(storedBusinessEntity.bank.ownerKtpAddress ?? "");
+    setOwnerKtpAddressNumber(storedBusinessEntity.bank.ownerKtpAddressNumber ?? "");
+    setOwnerKtpRt(storedBusinessEntity.bank.ownerKtpRt ?? "");
+    setOwnerKtpRw(storedBusinessEntity.bank.ownerKtpRw ?? "");
+    setOwnerKtpProvince(storedBusinessEntity.bank.ownerKtpProvince ?? "");
+    setOwnerKtpCity(storedBusinessEntity.bank.ownerKtpCity ?? "");
+    setOwnerKtpDistrict(storedBusinessEntity.bank.ownerKtpDistrict ?? "");
+    setOwnerKtpSubDistrict(storedBusinessEntity.bank.ownerKtpSubDistrict ?? "");
+    setOwnerKtpPostalCode(storedBusinessEntity.bank.ownerKtpPostalCode ?? "");
+    setOwnerDomicileSame(storedBusinessEntity.bank.ownerDomicileSame ?? false);
+    setOwnerDomicileAddress(storedBusinessEntity.bank.ownerDomicileAddress ?? "");
+    setOwnerDomicileAddressNumber(storedBusinessEntity.bank.ownerDomicileAddressNumber ?? "");
+    setOwnerDomicileRt(storedBusinessEntity.bank.ownerDomicileRt ?? "");
+    setOwnerDomicileRw(storedBusinessEntity.bank.ownerDomicileRw ?? "");
+    setOwnerDomicileProvince(storedBusinessEntity.bank.ownerDomicileProvince ?? "");
+    setOwnerDomicileCity(storedBusinessEntity.bank.ownerDomicileCity ?? "");
+    setOwnerDomicileDistrict(storedBusinessEntity.bank.ownerDomicileDistrict ?? "");
+    setOwnerDomicileSubDistrict(storedBusinessEntity.bank.ownerDomicileSubDistrict ?? "");
+    setOwnerDomicilePostalCode(storedBusinessEntity.bank.ownerDomicilePostalCode ?? "");
     setNibNumber(storedBusinessEntity.legalDocuments?.nibNumber ?? "");
     setBankName(storedBusinessEntity.bank.bankName);
     setBankAccountNumber(storedBusinessEntity.bank.accountNumber);
@@ -105,6 +143,48 @@ export default function BusinessEntityForm() {
     }
     return years;
   }, []);
+
+  const syncOwnerDomicileWithKtp = (checked: boolean) => {
+    setOwnerDomicileSame(checked);
+    if (!checked) {
+      return;
+    }
+    setOwnerDomicileAddress(ownerKtpAddress);
+    setOwnerDomicileAddressNumber(ownerKtpAddressNumber);
+    setOwnerDomicileRt(ownerKtpRt);
+    setOwnerDomicileRw(ownerKtpRw);
+    setOwnerDomicileProvince(ownerKtpProvince);
+    setOwnerDomicileCity(ownerKtpCity);
+    setOwnerDomicileDistrict(ownerKtpDistrict);
+    setOwnerDomicileSubDistrict(ownerKtpSubDistrict);
+    setOwnerDomicilePostalCode(ownerKtpPostalCode);
+  };
+
+  useEffect(() => {
+    if (!ownerDomicileSame) {
+      return;
+    }
+    setOwnerDomicileAddress(ownerKtpAddress);
+    setOwnerDomicileAddressNumber(ownerKtpAddressNumber);
+    setOwnerDomicileRt(ownerKtpRt);
+    setOwnerDomicileRw(ownerKtpRw);
+    setOwnerDomicileProvince(ownerKtpProvince);
+    setOwnerDomicileCity(ownerKtpCity);
+    setOwnerDomicileDistrict(ownerKtpDistrict);
+    setOwnerDomicileSubDistrict(ownerKtpSubDistrict);
+    setOwnerDomicilePostalCode(ownerKtpPostalCode);
+  }, [
+    ownerDomicileSame,
+    ownerKtpAddress,
+    ownerKtpAddressNumber,
+    ownerKtpRt,
+    ownerKtpRw,
+    ownerKtpProvince,
+    ownerKtpCity,
+    ownerKtpDistrict,
+    ownerKtpSubDistrict,
+    ownerKtpPostalCode,
+  ]);
 
   useEffect(() => {
     if (!logoFile || !logoFile.type.startsWith("image/")) {
@@ -200,6 +280,7 @@ export default function BusinessEntityForm() {
     city !== "" &&
     district !== "" &&
     subDistrict !== "" &&
+    houseNumber.trim().length > 0 &&
     addressDetail.trim().length > 0 &&
     rt.trim().length > 0 &&
     rw.trim().length > 0 &&
@@ -218,7 +299,24 @@ export default function BusinessEntityForm() {
     ownerName.trim().length > 0 &&
     ownerNik.trim().length > 0 &&
     ownerNpwp.trim().length > 0 &&
-    ownerJobTitle.trim().length > 0 &&
+    ownerKtpAddress.trim().length > 0 &&
+    ownerKtpAddressNumber.trim().length > 0 &&
+    ownerKtpRt.trim().length > 0 &&
+    ownerKtpRw.trim().length > 0 &&
+    ownerKtpProvince !== "" &&
+    ownerKtpCity !== "" &&
+    ownerKtpDistrict !== "" &&
+    ownerKtpSubDistrict !== "" &&
+    ownerKtpPostalCode.trim().length > 0 &&
+    ownerDomicileAddress.trim().length > 0 &&
+    ownerDomicileAddressNumber.trim().length > 0 &&
+    ownerDomicileRt.trim().length > 0 &&
+    ownerDomicileRw.trim().length > 0 &&
+    ownerDomicileProvince !== "" &&
+    ownerDomicileCity !== "" &&
+    ownerDomicileDistrict !== "" &&
+    ownerDomicileSubDistrict !== "" &&
+    ownerDomicilePostalCode.trim().length > 0 &&
     bankName !== "" &&
     bankAccountNumber.trim().length > 0 &&
     bankAccountName.trim().length > 0 &&
@@ -245,6 +343,7 @@ export default function BusinessEntityForm() {
         setCity("");
         setDistrict("");
         setSubDistrict("");
+        setHouseNumber("");
         setAddressDetail("");
         setRt("");
         setRw("");
@@ -260,7 +359,25 @@ export default function BusinessEntityForm() {
         setOwnerName("");
         setOwnerNik("");
         setOwnerNpwp("");
-        setOwnerJobTitle("");
+        setOwnerKtpAddress("");
+        setOwnerKtpAddressNumber("");
+        setOwnerKtpRt("");
+        setOwnerKtpRw("");
+        setOwnerKtpProvince("");
+        setOwnerKtpCity("");
+        setOwnerKtpDistrict("");
+        setOwnerKtpSubDistrict("");
+        setOwnerKtpPostalCode("");
+        setOwnerDomicileSame(false);
+        setOwnerDomicileAddress("");
+        setOwnerDomicileAddressNumber("");
+        setOwnerDomicileRt("");
+        setOwnerDomicileRw("");
+        setOwnerDomicileProvince("");
+        setOwnerDomicileCity("");
+        setOwnerDomicileDistrict("");
+        setOwnerDomicileSubDistrict("");
+        setOwnerDomicilePostalCode("");
         setNibNumber("");
         setNibFile(null);
         setDeedEstablishmentFile(null);
@@ -303,6 +420,7 @@ export default function BusinessEntityForm() {
               logoFileName: logoFile?.name ?? "",
             },
             address: {
+              houseNumber,
               addressDetail,
               rt,
               rw,
@@ -318,7 +436,25 @@ export default function BusinessEntityForm() {
               ownerName,
               ownerNik,
               ownerNpwp,
-              jobTitle: ownerJobTitle,
+              ownerKtpAddress,
+              ownerKtpAddressNumber,
+              ownerKtpRt,
+              ownerKtpRw,
+              ownerKtpProvince,
+              ownerKtpCity,
+              ownerKtpDistrict,
+              ownerKtpSubDistrict,
+              ownerKtpPostalCode,
+              ownerDomicileSame,
+              ownerDomicileAddress,
+              ownerDomicileAddressNumber,
+              ownerDomicileRt,
+              ownerDomicileRw,
+              ownerDomicileProvince,
+              ownerDomicileCity,
+              ownerDomicileDistrict,
+              ownerDomicileSubDistrict,
+              ownerDomicilePostalCode,
               bankName,
               accountNumber: bankAccountNumber,
               accountName: bankAccountName,
@@ -601,53 +737,72 @@ export default function BusinessEntityForm() {
                 {t("onboarding.businessEntity.common.required")}
               </span>
             </label>
-            <input
+            <Textarea
               id="addressDetail"
               name="addressDetail"
-              type="text"
               value={addressDetail}
               onChange={(event) => setAddressDetail(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
               placeholder={t("onboarding.businessEntity.address.addressDetail.placeholder")}
               required
             />
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="rt">
-              {t("onboarding.businessEntity.address.rt.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <input
-              id="rt"
-              name="rt"
-              type="text"
-              value={rt}
-              onChange={(event) => setRt(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              placeholder={t("onboarding.businessEntity.address.rt.placeholder")}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="rw">
-              {t("onboarding.businessEntity.address.rw.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <input
-              id="rw"
-              name="rw"
-              type="text"
-              value={rw}
-              onChange={(event) => setRw(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              placeholder={t("onboarding.businessEntity.address.rw.placeholder")}
-              required
-            />
-          </div>
+          <div className="md:col-span-2 grid gap-6 sm:grid-cols-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="houseNumber">
+                {t("onboarding.businessEntity.address.houseNumber.label")}
+                <span className="ml-2 text-xs text-red-500">
+                  {t("onboarding.businessEntity.common.required")}
+                </span>
+              </label>
+              <input
+                id="houseNumber"
+                name="houseNumber"
+                type="text"
+                value={houseNumber}
+                onChange={(event) => setHouseNumber(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder={t("onboarding.businessEntity.address.houseNumber.placeholder")}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="rt">
+                {t("onboarding.businessEntity.address.rt.label")}
+                <span className="ml-2 text-xs text-red-500">
+                  {t("onboarding.businessEntity.common.required")}
+                </span>
+              </label>
+              <input
+                id="rt"
+                name="rt"
+                type="text"
+                value={rt}
+                onChange={(event) => setRt(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder={t("onboarding.businessEntity.address.rt.placeholder")}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="rw">
+                {t("onboarding.businessEntity.address.rw.label")}
+                <span className="ml-2 text-xs text-red-500">
+                  {t("onboarding.businessEntity.common.required")}
+                </span>
+              </label>
+              <input
+                id="rw"
+                name="rw"
+                type="text"
+                value={rw}
+                onChange={(event) => setRw(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder={t("onboarding.businessEntity.address.rw.placeholder")}
+                required
+              />
+              </div>
+            </div>
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="province">
               {t("onboarding.businessEntity.address.province.label")}
@@ -896,22 +1051,457 @@ export default function BusinessEntityForm() {
                   {t("onboarding.businessEntity.bank.ownerSection.npwp.helper")}
                 </p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="ownerJobTitle">
-                  {t("onboarding.businessEntity.bank.ownerSection.jobTitle.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <input
-                  id="ownerJobTitle"
-                  name="ownerJobTitle"
-                  type="text"
-                  value={ownerJobTitle}
-                  onChange={(event) => setOwnerJobTitle(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                  required
-                />
+              <div className="md:col-span-2 grid gap-6 lg:grid-cols-2">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
+                    {t("onboarding.businessEntity.bank.ownerSection.addressKtp.title")}
+                  </h3>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpAddress">
+                      {t("onboarding.businessEntity.bank.ownerSection.addressKtp.streetName")}
+                      <span className="ml-2 text-xs text-red-500">
+                        {t("onboarding.businessEntity.common.required")}
+                      </span>
+                    </label>
+                    <Textarea
+                      id="ownerKtpAddress"
+                      name="ownerKtpAddress"
+                      value={ownerKtpAddress}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setOwnerKtpAddress(value);
+                        if (ownerDomicileSame) setOwnerDomicileAddress(value);
+                      }}
+                      className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
+                      placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.streetNamePlaceholder")}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpAddressNumber">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.addressNumber")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <input
+                        id="ownerKtpAddressNumber"
+                        name="ownerKtpAddressNumber"
+                        type="text"
+                        value={ownerKtpAddressNumber}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setOwnerKtpAddressNumber(value);
+                          if (ownerDomicileSame) setOwnerDomicileAddressNumber(value);
+                        }}
+                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.addressNumberPlaceholder")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRt">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.rt")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <input
+                        id="ownerKtpRt"
+                        name="ownerKtpRt"
+                        type="text"
+                        value={ownerKtpRt}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setOwnerKtpRt(value);
+                          if (ownerDomicileSame) setOwnerDomicileRt(value);
+                        }}
+                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.rtPlaceholder")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRw">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.rw")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <input
+                        id="ownerKtpRw"
+                        name="ownerKtpRw"
+                        type="text"
+                        value={ownerKtpRw}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setOwnerKtpRw(value);
+                          if (ownerDomicileSame) setOwnerDomicileRw(value);
+                        }}
+                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.rwPlaceholder")}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpProvince">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.province")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerKtpProvince}
+                        onValueChange={(value) => {
+                          setOwnerKtpProvince(value);
+                          if (ownerDomicileSame) setOwnerDomicileProvince(value);
+                        }}
+                      >
+                        <SelectTrigger id="ownerKtpProvince" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.province.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dki">{t("onboarding.businessEntity.address.province.options.dki")}</SelectItem>
+                          <SelectItem value="jabar">{t("onboarding.businessEntity.address.province.options.jabar")}</SelectItem>
+                          <SelectItem value="jateng">{t("onboarding.businessEntity.address.province.options.jateng")}</SelectItem>
+                          <SelectItem value="jatim">{t("onboarding.businessEntity.address.province.options.jatim")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpCity">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.city")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerKtpCity}
+                        onValueChange={(value) => {
+                          setOwnerKtpCity(value);
+                          if (ownerDomicileSame) setOwnerDomicileCity(value);
+                        }}
+                      >
+                        <SelectTrigger id="ownerKtpCity" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.city.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="jakarta">{t("onboarding.businessEntity.address.city.options.jakarta")}</SelectItem>
+                          <SelectItem value="bandung">{t("onboarding.businessEntity.address.city.options.bandung")}</SelectItem>
+                          <SelectItem value="semarang">{t("onboarding.businessEntity.address.city.options.semarang")}</SelectItem>
+                          <SelectItem value="surabaya">{t("onboarding.businessEntity.address.city.options.surabaya")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpDistrict">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.district")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerKtpDistrict}
+                        onValueChange={(value) => {
+                          setOwnerKtpDistrict(value);
+                          if (ownerDomicileSame) setOwnerDomicileDistrict(value);
+                        }}
+                      >
+                        <SelectTrigger id="ownerKtpDistrict" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.district.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="district-1">{t("onboarding.businessEntity.address.district.options.district1")}</SelectItem>
+                          <SelectItem value="district-2">{t("onboarding.businessEntity.address.district.options.district2")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpSubDistrict">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.subDistrict")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerKtpSubDistrict}
+                        onValueChange={(value) => {
+                          setOwnerKtpSubDistrict(value);
+                          if (ownerDomicileSame) setOwnerDomicileSubDistrict(value);
+                        }}
+                      >
+                        <SelectTrigger id="ownerKtpSubDistrict" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.subDistrict.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sub-1">{t("onboarding.businessEntity.address.subDistrict.options.sub1")}</SelectItem>
+                          <SelectItem value="sub-2">{t("onboarding.businessEntity.address.subDistrict.options.sub2")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpPostalCode">
+                      {t("onboarding.businessEntity.bank.ownerSection.addressKtp.postalCode")}
+                      <span className="ml-2 text-xs text-red-500">
+                        {t("onboarding.businessEntity.common.required")}
+                      </span>
+                    </label>
+                    <input
+                      id="ownerKtpPostalCode"
+                      name="ownerKtpPostalCode"
+                      type="text"
+                      value={ownerKtpPostalCode}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setOwnerKtpPostalCode(value);
+                        if (ownerDomicileSame) setOwnerDomicilePostalCode(value);
+                      }}
+                      className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                      placeholder={t("onboarding.businessEntity.address.postalCode.placeholder")}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
+                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.title")}
+                    </h3>
+                    <label className="flex items-center gap-2 text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-gray-900"
+                        checked={ownerDomicileSame}
+                        onChange={(event) => syncOwnerDomicileWithKtp(event.target.checked)}
+                      />
+                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.sameAsKtp")}
+                    </label>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileAddress">
+                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.streetName")}
+                      <span className="ml-2 text-xs text-red-500">
+                        {t("onboarding.businessEntity.common.required")}
+                      </span>
+                    </label>
+                    <Textarea
+                      id="ownerDomicileAddress"
+                      name="ownerDomicileAddress"
+                      value={ownerDomicileAddress}
+                      onChange={(event) => setOwnerDomicileAddress(event.target.value)}
+                      readOnly={ownerDomicileSame}
+                      className={`mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0 ${
+                        ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                      }`}
+                      placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.streetNamePlaceholder")}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileAddressNumber">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.addressNumber")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <input
+                        id="ownerDomicileAddressNumber"
+                        name="ownerDomicileAddressNumber"
+                        type="text"
+                        value={ownerDomicileAddressNumber}
+                        onChange={(event) => setOwnerDomicileAddressNumber(event.target.value)}
+                        readOnly={ownerDomicileSame}
+                        className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                          ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                        }`}
+                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.addressNumberPlaceholder")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRt">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rt")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <input
+                        id="ownerDomicileRt"
+                        name="ownerDomicileRt"
+                        type="text"
+                        value={ownerDomicileRt}
+                        onChange={(event) => setOwnerDomicileRt(event.target.value)}
+                        readOnly={ownerDomicileSame}
+                        className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                          ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                        }`}
+                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rtPlaceholder")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRw">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rw")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <input
+                        id="ownerDomicileRw"
+                        name="ownerDomicileRw"
+                        type="text"
+                        value={ownerDomicileRw}
+                        onChange={(event) => setOwnerDomicileRw(event.target.value)}
+                        readOnly={ownerDomicileSame}
+                        className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                          ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                        }`}
+                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rwPlaceholder")}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileProvince">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.province")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerDomicileProvince}
+                        onValueChange={setOwnerDomicileProvince}
+                        disabled={ownerDomicileSame}
+                      >
+                        <SelectTrigger
+                          id="ownerDomicileProvince"
+                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
+                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                          }`}
+                        >
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.province.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dki">{t("onboarding.businessEntity.address.province.options.dki")}</SelectItem>
+                          <SelectItem value="jabar">{t("onboarding.businessEntity.address.province.options.jabar")}</SelectItem>
+                          <SelectItem value="jateng">{t("onboarding.businessEntity.address.province.options.jateng")}</SelectItem>
+                          <SelectItem value="jatim">{t("onboarding.businessEntity.address.province.options.jatim")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileCity">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.city")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerDomicileCity}
+                        onValueChange={setOwnerDomicileCity}
+                        disabled={ownerDomicileSame}
+                      >
+                        <SelectTrigger
+                          id="ownerDomicileCity"
+                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
+                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                          }`}
+                        >
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.city.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="jakarta">{t("onboarding.businessEntity.address.city.options.jakarta")}</SelectItem>
+                          <SelectItem value="bandung">{t("onboarding.businessEntity.address.city.options.bandung")}</SelectItem>
+                          <SelectItem value="semarang">{t("onboarding.businessEntity.address.city.options.semarang")}</SelectItem>
+                          <SelectItem value="surabaya">{t("onboarding.businessEntity.address.city.options.surabaya")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileDistrict">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.district")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerDomicileDistrict}
+                        onValueChange={setOwnerDomicileDistrict}
+                        disabled={ownerDomicileSame}
+                      >
+                        <SelectTrigger
+                          id="ownerDomicileDistrict"
+                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
+                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                          }`}
+                        >
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.district.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="district-1">{t("onboarding.businessEntity.address.district.options.district1")}</SelectItem>
+                          <SelectItem value="district-2">{t("onboarding.businessEntity.address.district.options.district2")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileSubDistrict">
+                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.subDistrict")}
+                        <span className="ml-2 text-xs text-red-500">
+                          {t("onboarding.businessEntity.common.required")}
+                        </span>
+                      </label>
+                      <Select
+                        value={ownerDomicileSubDistrict}
+                        onValueChange={setOwnerDomicileSubDistrict}
+                        disabled={ownerDomicileSame}
+                      >
+                        <SelectTrigger
+                          id="ownerDomicileSubDistrict"
+                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
+                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                          }`}
+                        >
+                          <SelectValue placeholder={t("onboarding.businessEntity.address.subDistrict.placeholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sub-1">{t("onboarding.businessEntity.address.subDistrict.options.sub1")}</SelectItem>
+                          <SelectItem value="sub-2">{t("onboarding.businessEntity.address.subDistrict.options.sub2")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicilePostalCode">
+                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.postalCode")}
+                      <span className="ml-2 text-xs text-red-500">
+                        {t("onboarding.businessEntity.common.required")}
+                      </span>
+                    </label>
+                    <input
+                      id="ownerDomicilePostalCode"
+                      name="ownerDomicilePostalCode"
+                      type="text"
+                      value={ownerDomicilePostalCode}
+                      onChange={(event) => setOwnerDomicilePostalCode(event.target.value)}
+                      readOnly={ownerDomicileSame}
+                      className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                        ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                      }`}
+                      placeholder={t("onboarding.businessEntity.address.postalCode.placeholder")}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1150,23 +1740,25 @@ export default function BusinessEntityForm() {
                   {t("onboarding.businessEntity.common.seeGuideline")}
                 </button>
               </div>
-              <div>
-                <UploadPreviewField
-                  id="bankSku"
-                  name="bankSku"
-                  label={t("onboarding.businessEntity.bank.bankSection.sku.label")}
-                  accept="image/*,application/pdf"
-                  file={bankSkuFile}
-                  previewUrl={bankSkuPreview}
-                  onFileChange={setBankSkuFile}
-                  onClear={() => setBankSkuFile(null)}
-                  previewAlt={t("onboarding.businessEntity.bank.bankSection.sku.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
+              {!isCompany && (
+                <div>
+                  <UploadPreviewField
+                    id="bankSku"
+                    name="bankSku"
+                    label={t("onboarding.businessEntity.bank.bankSection.sku.label")}
+                    accept="image/*,application/pdf"
+                    file={bankSkuFile}
+                    previewUrl={bankSkuPreview}
+                    onFileChange={setBankSkuFile}
+                    onClear={() => setBankSkuFile(null)}
+                    previewAlt={t("onboarding.businessEntity.bank.bankSection.sku.previewAlt")}
+                    previewHeightClass="h-36"
+                  />
+                  <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
+                    {t("onboarding.businessEntity.common.seeGuideline")}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

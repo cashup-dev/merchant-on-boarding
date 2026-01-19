@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import Link from "next/link";
@@ -16,6 +17,7 @@ export default function EDCInformationClient() {
   const [edcCount, setEdcCount] = useState(storedEdcInformation.edcCount);
   const [edcOwnership, setEdcOwnership] = useState(storedEdcInformation.edcOwnership ?? "");
   const [streetName, setStreetName] = useState(storedEdcInformation.shippingAddress.streetName);
+  const [addressNumber, setAddressNumber] = useState(storedEdcInformation.shippingAddress.addressNumber ?? "");
   const [rt, setRt] = useState(storedEdcInformation.shippingAddress.rt);
   const [rw, setRw] = useState(storedEdcInformation.shippingAddress.rw);
   const [province, setProvince] = useState(storedEdcInformation.shippingAddress.province);
@@ -29,6 +31,7 @@ export default function EDCInformationClient() {
     setEdcCount(storedEdcInformation.edcCount);
     setEdcOwnership(storedEdcInformation.edcOwnership ?? "");
     setStreetName(storedEdcInformation.shippingAddress.streetName);
+    setAddressNumber(storedEdcInformation.shippingAddress.addressNumber ?? "");
     setRt(storedEdcInformation.shippingAddress.rt);
     setRw(storedEdcInformation.shippingAddress.rw);
     setProvince(storedEdcInformation.shippingAddress.province);
@@ -49,6 +52,7 @@ export default function EDCInformationClient() {
             edcOwnership,
             shippingAddress: {
               streetName,
+              addressNumber,
               rt,
               rw,
               province,
@@ -144,17 +148,31 @@ export default function EDCInformationClient() {
               <label className="text-sm font-medium text-gray-700" htmlFor="streetName">
                 {t("onboarding.edcInformation.shippingAddress.streetName.label")}
               </label>
-              <input
+              <Textarea
                 id="streetName"
                 name="streetName"
-                type="text"
                 value={streetName}
                 onChange={(event) => setStreetName(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
                 placeholder={t("onboarding.edcInformation.shippingAddress.streetName.placeholder")}
               />
             </div>
-            <div>
+            <div className="md:col-span-2 grid gap-6 sm:grid-cols-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="addressNumber">
+                  {t("onboarding.edcInformation.shippingAddress.addressNumber.label")}
+                </label>
+                <input
+                  id="addressNumber"
+                  name="addressNumber"
+                  type="text"
+                  value={addressNumber}
+                  onChange={(event) => setAddressNumber(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  placeholder={t("onboarding.edcInformation.shippingAddress.addressNumber.placeholder")}
+                />
+              </div>
+              <div>
               <label className="text-sm font-medium text-gray-700" htmlFor="rt">
                 {t("onboarding.edcInformation.shippingAddress.rt.label")}
               </label>
@@ -167,8 +185,8 @@ export default function EDCInformationClient() {
                 className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
                 placeholder={t("onboarding.edcInformation.shippingAddress.rt.placeholder")}
               />
-            </div>
-            <div>
+              </div>
+              <div>
               <label className="text-sm font-medium text-gray-700" htmlFor="rw">
                 {t("onboarding.edcInformation.shippingAddress.rw.label")}
               </label>
@@ -181,6 +199,7 @@ export default function EDCInformationClient() {
                 className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
                 placeholder={t("onboarding.edcInformation.shippingAddress.rw.placeholder")}
               />
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700" htmlFor="province">

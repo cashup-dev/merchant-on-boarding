@@ -22,11 +22,11 @@ const featureOptions: FeatureCard[] = [
     badges: ["QRIS", "Credit/Debit"],
   },
   {
-    id: "czlink",
-    titleKey: "onboarding.paymentFeature.options.czlink.title",
-    descriptionKey: "onboarding.paymentFeature.options.czlink.description",
-    detailKey: "onboarding.paymentFeature.options.czlink.detail",
-    badges: ["VA", "QRIS", "Card Not Present"],
+    id: "softpos",
+    titleKey: "onboarding.paymentFeature.options.softpos.title",
+    descriptionKey: "onboarding.paymentFeature.options.softpos.description",
+    detailKey: "onboarding.paymentFeature.options.softpos.detail",
+    badges: ["NFC", "Contactless", "Card Present"],
   },
 ];
 
@@ -38,9 +38,10 @@ export default function PaymentFeatureForm() {
   const [selected, setSelected] = useState<string>(storedPaymentFeature || "cashlez");
 
   useEffect(() => {
-    if (storedPaymentFeature) {
-      setSelected(storedPaymentFeature);
+    if (!storedPaymentFeature) {
+      return;
     }
+    setSelected(storedPaymentFeature === "czlink" ? "softpos" : storedPaymentFeature);
   }, [storedPaymentFeature]);
 
   return (

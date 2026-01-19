@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useSidebar } from "../context/SidebarContext";
 import { HorizontaLDots } from "../icons/index";
-import LanguageToggle from "@/components/i18n/LanguageToggle";
 import { Store, Users, Calendar, FileText, CreditCard, Shield } from "lucide-react";
 
 type TimelineStep = {
@@ -298,14 +297,6 @@ const AppSidebar: React.FC = () => {
           </div>
         </nav>
       </div>
-      {showSidebarContent && (
-        <div className="border-t pb-20 pt-4 md:pb-7 md:pt-5 border-gray-200 px-4 dark:border-gray-800">
-          <p className="mb-3 text-xs font-semibold uppercase text-gray-400">
-            {t("sidebar.sections.language")}
-          </p>
-          <LanguageToggle />
-        </div>
-      )}
     </aside>
   );
 };
