@@ -476,7 +476,7 @@ export default function BusinessEntityForm() {
                 }
               : undefined,
           });
-          router.push("/terms");
+          router.push("/onboarding/terms");
         }
       }}
     >
@@ -1816,3 +1816,6 @@ export default function BusinessEntityForm() {
     </form>
   );
 }
+
+
+

@@ -22,7 +22,7 @@ export default function PaymentFeatureClient() {
       <PaymentFeatureForm />
       <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
         <Button asChild variant="outline">
-          <Link href="/business-type">{t("onboarding.paymentFeature.actions.previous")}</Link>
+          <Link href="/onboarding/business-type">{t("onboarding.paymentFeature.actions.previous")}</Link>
         </Button>
         <Button type="submit" form="payment-feature-form" className="bg-teal-500 text-white hover:bg-teal-600">
           {t("onboarding.paymentFeature.actions.submit")}
@@ -31,3 +31,6 @@ export default function PaymentFeatureClient() {
     </section>
   );
 }
+
+
+

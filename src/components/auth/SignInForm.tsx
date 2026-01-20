@@ -20,7 +20,7 @@ export default function SignInForm() {
       description: "Sign-in belum dihubungkan ke backend.",
     });
     setIsLoading(false);
-    router.push("/business-type");
+    router.push("/onboarding");
   };
 
   return (
@@ -102,3 +102,6 @@ export default function SignInForm() {
     </div>
   );
 }
+
+
+

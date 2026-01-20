@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useSidebar } from "../context/SidebarContext";
 import { HorizontaLDots } from "../icons/index";
 import { Store, Users, Calendar, FileText, CreditCard, Shield } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboardingStore";
 
 type TimelineStep = {
   title: string;
@@ -28,17 +29,17 @@ const onboardingSteps: TimelineStep[] = [
   {
     title: "sidebar.onboarding.steps.businessType.title",
     description: "sidebar.onboarding.steps.businessType.description",
-    href: "/business-type",
+    href: "/onboarding/business-type",
   },
   {
     title: "sidebar.onboarding.steps.paymentFeature.title",
     description: "sidebar.onboarding.steps.paymentFeature.description",
-    href: "/payment-feature",
+    href: "/onboarding/payment-feature",
   },
   {
     title: "sidebar.onboarding.steps.edcInformation.title",
     description: "sidebar.onboarding.steps.edcInformation.description",
-    href: "/edc-information",
+    href: "/onboarding/edc-information",
   },
   // {
   //   title: "sidebar.onboarding.steps.representative.title",
@@ -48,22 +49,22 @@ const onboardingSteps: TimelineStep[] = [
   {
     title: "sidebar.onboarding.steps.businessEntity.title",
     description: "sidebar.onboarding.steps.businessEntity.description",
-    href: "/business-entity",
+    href: "/onboarding/business-entity",
   },
   {
     title: "sidebar.onboarding.steps.terms.title",
     description: "sidebar.onboarding.steps.terms.description",
-    href: "/terms",
+    href: "/onboarding/terms",
   },
   {
     title: "sidebar.onboarding.steps.inReview.title",
     description: "sidebar.onboarding.steps.inReview.description",
-    href: "/in-review",
+    href: "/onboarding/in-review",
   },
   {
     title: "sidebar.onboarding.steps.finish.title",
     description: "sidebar.onboarding.steps.finish.description",
-    href: "/finish",
+    href: "/onboarding/finish",
   },
 ];
 
@@ -73,6 +74,63 @@ const sidebarItems: SidebarItem[] = [
     label: "sidebar.menu.merchants",
     href: "/merchants",
     icon: Store,
+  },
+  { type: "divider", label: "sidebar.sections.app2app" },
+  {
+    type: "item",
+    label: "sidebar.menu.cdcpQris",
+    href: "/credentials-testing/cdcp-qris",
+    icon: FileText,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.miniAtmApp2app",
+    href: "/credentials-testing/mini-atm-app2app",
+    icon: FileText,
+  },
+  { type: "divider", label: "sidebar.sections.ecr" },
+  {
+    type: "item",
+    label: "sidebar.menu.erica",
+    href: "/credentials-testing/erica",
+    icon: FileText,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.carla",
+    href: "/credentials-testing/carla",
+    icon: FileText,
+  },
+  { type: "divider", label: "sidebar.sections.host2host" },
+  {
+    type: "item",
+    label: "sidebar.menu.cdcpQprs",
+    href: "/credentials-testing/cdcp-qprs",
+    icon: FileText,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.bnpl",
+    href: "/credentials-testing/bnpl",
+    icon: FileText,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.cnp",
+    href: "/credentials-testing/cnp",
+    icon: FileText,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.cashlezLink",
+    href: "/credentials-testing/cashlez-link",
+    icon: FileText,
+  },
+  {
+    type: "item",
+    label: "sidebar.menu.miniAtmHost2host",
+    href: "/credentials-testing/mini-atm-host2host",
+    icon: FileText,
   },
   { type: "divider", label: "sidebar.sections.accessControl" },
   {
@@ -98,16 +156,19 @@ const AppSidebar: React.FC = () => {
   const { t } = useTranslation();
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-  const isOnboardingRoute = [
-    "/business-type",
-    "/payment-feature",
-    "/edc-information",
-    "/business-representative-information",
-    "/business-entity",
-    "/terms",
-    "/in-review",
-    "/finish",
-  ].some((path) => pathname.startsWith(path));
+  const isOnboardingRoute =
+    pathname.startsWith("/onboarding/") && pathname !== "/onboarding";
+  const businessType = useOnboardingStore((state) => state.businessType);
+  const paymentFeature = useOnboardingStore((state) => state.paymentFeature);
+  const edcInformation = useOnboardingStore((state) => state.edcInformation);
+  const businessEntity = useOnboardingStore((state) => state.businessEntity);
+  const completedStepsCount =
+    Number(Boolean(businessType)) +
+    Number(Boolean(paymentFeature)) +
+    Number(Boolean(edcInformation.edcType && edcInformation.edcCount)) +
+    Number(Boolean(businessEntity));
+  const totalStepsCount = onboardingSteps.length;
+  const progressPercent = Math.round((completedStepsCount / totalStepsCount) * 100);
   const showSidebarContent = isExpanded || isHovered || isMobileOpen;
   const activeOnboardingIndex = Math.max(
     0,
@@ -127,13 +188,13 @@ const AppSidebar: React.FC = () => {
         <Link href="/dashboard">
           {isExpanded || isHovered || isMobileOpen ? (
             <div className="">
-            <Image
+            {/* <Image
                 className="sm:hidden"
                 src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
                 alt="Logo"
                 width={150}
                 height={50}
-              />
+              /> */}
               <Image
                 className="m-auto hidden sm:inline-flex"
                 src="/images/logo/cashup-logo.svg" // Pastikan path logo benar
@@ -154,6 +215,36 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto pb-4 duration-300 ease-linear no-scrollbar">
+        {showSidebarContent && !isOnboardingRoute && (
+          <div className="pb-4">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-emerald-700">
+                Onboarding progress
+              </p>
+              <p className="mt-1 text-xs text-emerald-700">
+                Data tersimpan otomatis, lanjutkan onboarding kapan saja.
+              </p>
+              <div className="mt-3 flex items-center justify-between text-xs text-emerald-700">
+                <span>
+                  {completedStepsCount} / {totalStepsCount} langkah selesai
+                </span>
+                <span className="font-semibold">{progressPercent}%</span>
+              </div>
+              <div className="mt-2 h-2 rounded-full bg-emerald-100">
+                <div
+                  className="h-2 rounded-full bg-emerald-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <Link
+                href="/onboarding"
+                className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+              >
+                Lanjutkan onboarding
+              </Link>
+            </div>
+          </div>
+        )}
         <nav className="">
           <div className="flex flex-col gap-4">
             <div>
@@ -302,3 +393,5 @@ const AppSidebar: React.FC = () => {
 };
 
 export default AppSidebar;
+
+

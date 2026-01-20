@@ -62,7 +62,7 @@ export default function EDCInformationClient() {
               postalCode,
             },
           });
-          router.push("/business-entity");
+          router.push("/onboarding/business-entity");
         }}
       >
         <div className="space-y-2">
@@ -276,7 +276,7 @@ export default function EDCInformationClient() {
 
         <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
           <Link
-            href="/payment-feature"
+            href="/onboarding/payment-feature"
             className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700"
           >
             Back
@@ -292,3 +292,6 @@ export default function EDCInformationClient() {
     </section>
   );
 }
+
+
+

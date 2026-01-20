@@ -10,3 +10,6 @@ export const metadata = {
 export default function FinishPage() {
   return <FinishClient />;
 }
+
+
+

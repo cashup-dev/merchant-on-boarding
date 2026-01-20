@@ -162,7 +162,7 @@ export default function TermsAndFinishContent() {
           }`}
           onClick={() => {
             if (accepted) {
-              router.push("/in-review");
+              router.push("/onboarding/in-review");
             }
           }}
         >
@@ -172,3 +172,6 @@ export default function TermsAndFinishContent() {
     </div>
   );
 }
+
+
+

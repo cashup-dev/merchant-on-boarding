@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import React from "react";
 import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
+import OnboardingProgressCard from "@/components/dashboard/OnboardingProgressCard";
 import TransactionCards from "@/components/dashboard/TransactionCards";
 import MonthlyTransactionsChart from "@/components/dashboard/MonthlyTransactionsChart";
 import TransactionStatistics from "@/components/dashboard/TransactionStatistics";
@@ -15,6 +16,8 @@ export default function Dashboard() {
     <div className="space-y-4 md:space-y-6">
       {/* Welcome Banner */}
       <WelcomeBanner userName="admin2" />
+
+      {/* <OnboardingProgressCard /> */}
 
       {/* Transaction Cards */}
       <TransactionCards />

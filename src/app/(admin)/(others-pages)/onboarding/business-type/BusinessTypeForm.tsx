@@ -14,6 +14,7 @@ export default function BusinessTypeForm() {
   const setOnboardingBusinessType = useOnboardingStore((state) => state.setBusinessType);
   const [businessType, setBusinessType] = useState<string>(storedBusinessType);
   const [companyType, setCompanyType] = useState<string>(storedCompanyType);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setBusinessType(storedBusinessType);
@@ -29,10 +30,28 @@ export default function BusinessTypeForm() {
         setCompanyType("pt");
         setOnboardingBusinessType("individual", "pt");
       }}
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
+        setIsSaving(true);
+        try {
+          await fetch("/api/onboarding/draft/business-type", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              businessType,
+              companyType: businessType === "company" ? companyType : "",
+              status: "completed",
+            }),
+          });
+        } catch (error) {
+          console.error("Failed to save business type draft", error);
+        } finally {
+          setIsSaving(false);
+        }
         setOnboardingBusinessType(businessType, companyType);
-        router.push("/payment-feature");
+        router.push("/onboarding/payment-feature");
       }}
     >
       <div className="flex flex-col gap-6">
@@ -125,12 +144,16 @@ export default function BusinessTypeForm() {
           </button>
           <button
             type="submit"
+            disabled={isSaving}
             className="inline-flex items-center justify-center rounded-xl bg-teal-100 px-6 py-2.5 text-sm font-semibold text-green-950 transition hover:bg-teal-200"
           >
-            {t("onboarding.businessType.actions.submit")}
+            {isSaving ? "Menyimpan..." : t("onboarding.businessType.actions.submit")}
           </button>
         </div>
       </div>
     </form>
   );
 }
+
+
+
