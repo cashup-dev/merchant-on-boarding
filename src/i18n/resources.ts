@@ -212,24 +212,34 @@ export const resources = {
           },
           business: {
             companyLogo: {
-              label: "Logo Perusahaan",
+              label: "Logo Usaha",
               previewAlt: "Pratinjau logo",
               helper: "Hanya JPEG/PNG dengan ukuran maksimal 5MB.",
+              infoLabel: "Informasi logo usaha",
+              info: "Kredivo wajib lampirkan logo (bentuk JPEG).",
             },
             brandName: {
-              label: "Nama Brand",
+              label: "Nama Merchant",
               placeholder: "Terisi otomatis dari signup",
             },
             legalName: {
-              label: "Nama Legal Usaha",
+              label: "Nama Perusahaan",
               placeholder: "mis. PT Sejahtera",
             },
+            phoneNumber: {
+              label: "Nomor Handphone",
+              placeholder: "Masukkan nomor handphone",
+            },
+            email: {
+              label: "Email",
+              placeholder: "Masukkan email",
+            },
             description: {
-              label: "Deskripsi Usaha",
+              label: "Deskripsi Usaha (Takeout)",
               placeholder: "Ceritakan tentang bisnis Anda",
             },
             category: {
-              label: "Kategori Usaha",
+              label: "Kategori",
               placeholder: "Pilih kategori",
               options: {
                 food: "Makanan & Minuman",
@@ -237,6 +247,23 @@ export const resources = {
                 service: "Jasa",
                 travel: "Travel",
                 health: "Kesehatan",
+              },
+            },
+            businessMode: {
+              label: "Jenis Usaha",
+              placeholder: "Pilih jenis usaha",
+              options: {
+                online: "Online",
+                offline: "Offline",
+              },
+            },
+            ownershipStatus: {
+              label: "Status Kepemilikan Usaha",
+              placeholder: "Pilih status kepemilikan",
+              options: {
+                owned: "Milik sendiri",
+                rent: "Sewa",
+                partner: "Kerja sama",
               },
             },
             establishedYear: {
@@ -266,14 +293,8 @@ export const resources = {
               },
             },
             socialLink: {
-              label: "Website Bisnis atau Media Sosial",
-              placeholder: "www.brandanda.com",
-              options: {
-                website: "Website",
-                instagram: "Instagram",
-                facebook: "Facebook",
-                tiktok: "TikTok",
-              },
+              label: "Link Website",
+              placeholder: "www.merchantanda.com",
             },
           },
           address: {
@@ -288,8 +309,8 @@ export const resources = {
               },
             },
             city: {
-              label: "Kota",
-              placeholder: "Pilih kota",
+              label: "Kota/Kabupaten",
+              placeholder: "Pilih kota/kabupaten",
               options: {
                 jakarta: "Jakarta",
                 bandung: "Bandung",
@@ -314,8 +335,8 @@ export const resources = {
               },
             },
             addressDetail: {
-              label: "Nama jalan",
-              placeholder: "Nama jalan",
+              label: "Nama Jalan",
+              placeholder: "Masukkan nama jalan",
             },
             houseNumber: {
               label: "Nomor alamat",
@@ -334,15 +355,21 @@ export const resources = {
               placeholder: "Kode pos",
             },
             officePhoto: {
-              title: "Foto Kantor",
+              title: "Foto Usaha",
               helper: "Hanya JPEG/PNG, maksimal 5MB.",
               inside: {
-                label: "Foto Ruangan Dalam",
-                previewAlt: "Pratinjau ruangan dalam",
+                label: "Foto usaha dalam tampak produk usaha/terlihat aktivitas usaha",
+                previewAlt: "Pratinjau foto usaha dalam",
               },
               outside: {
-                label: "Foto Ruangan Luar",
-                previewAlt: "Pratinjau ruangan luar",
+                label: "Foto usaha tampak depan terlihat plang usaha",
+                previewAlt: "Pratinjau foto usaha depan",
+              },
+              product: {
+                label: "Foto produk/brosur/price list",
+                previewAlt: "Pratinjau foto produk",
+                infoLabel: "Informasi foto produk",
+                info: "*Bidang usaha jasa bisa melampirkan foto lokasi usaha yang terlihat aktivitas usaha.",
               },
             },
           },
@@ -429,29 +456,30 @@ export const resources = {
             },
             legalDocuments: {
               title: "Dokumen Legal",
-              note: "Format file harus PDF.",
-              nibNumber: {
-                label: "Nomor Induk Berusaha (NIB)",
-              },
+              note: "Unggah dokumen perusahaan sesuai ketentuan.",
               nibDocument: {
-                label: "Dokumen NIB",
+                label: "NIB Perusahaan (PDF)",
+                infoLabel: "Informasi dokumen NIB",
+                info: "*Harus sesuai dengan bidang usaha.",
               },
               deedEstablishment: {
-                label: "Akta Pendirian Perusahaan",
+                label: "Akta Perusahaan (PDF)",
+                infoLabel: "Informasi akta perusahaan",
+                info:
+                  "*Akta tidak lebih dari 5 tahun dan menjabarkan jajaran direksi serta pasal yang menerangkan \"maksud & tujuan perusahaan\".",
               },
               skMenkumhamEstablishment: {
-                label: "SK Menkumham Akta Pendirian",
+                label: "SK Kemenkumham (PDF)",
               },
-              deedAmendment: {
-                label: "Akta Perubahan Akhir (opsional)",
-                helper: "Unggah dokumen jika ada perubahan data di Akta Pendirian Perusahaan.",
+              companyNpwp: {
+                label: "NPWP Perusahaan (Image)",
+                previewAlt: "Pratinjau NPWP perusahaan",
               },
-              skMenkumhamAmendment: {
-                label: "SK Menkumham Akta Perubahan Akhir (opsional)",
-                helper: "Dokumen ini wajib jika Anda mengunggah Akta Perubahan Akhir.",
-              },
-              pseLicense: {
-                label: "Izin PSE (Penyelenggaraan Sistem Elektronik)",
+              additionalDocument: {
+                label: "Dokumen Tambahan (Opsional)",
+                infoLabel: "Informasi dokumen tambahan",
+                info:
+                  "*Pengajuan Indodana lampirkan file Excel sales volume. Online Card Payment lampirkan FPM BRI (PDF).",
               },
             },
             bankSection: {
@@ -762,24 +790,34 @@ export const resources = {
           },
           business: {
             companyLogo: {
-              label: "Company Logo",
+              label: "Business Logo",
               previewAlt: "Logo preview",
               helper: "Only JPEG/PNG with maximum size of 5MB.",
+              infoLabel: "Business logo information",
+              info: "Kredivo requires a logo (JPEG format).",
             },
             brandName: {
-              label: "Brand Name",
+              label: "Merchant Name",
               placeholder: "Autofill from signup",
             },
             legalName: {
-              label: "Business Legal Name",
+              label: "Company Name",
               placeholder: "e.g. PT Sejahtera",
             },
+            phoneNumber: {
+              label: "Phone Number",
+              placeholder: "Enter phone number",
+            },
+            email: {
+              label: "Email",
+              placeholder: "Enter email",
+            },
             description: {
-              label: "Business Description",
+              label: "Business Description (Takeout)",
               placeholder: "Tell us about your business",
             },
             category: {
-              label: "Business Category",
+              label: "Category",
               placeholder: "Select category",
               options: {
                 food: "Food & Beverage",
@@ -787,6 +825,23 @@ export const resources = {
                 service: "Service",
                 travel: "Travel",
                 health: "Health",
+              },
+            },
+            businessMode: {
+              label: "Business Type",
+              placeholder: "Select business type",
+              options: {
+                online: "Online",
+                offline: "Offline",
+              },
+            },
+            ownershipStatus: {
+              label: "Business Ownership Status",
+              placeholder: "Select ownership status",
+              options: {
+                owned: "Owned",
+                rent: "Rented",
+                partner: "Partnership",
               },
             },
             establishedYear: {
@@ -816,14 +871,8 @@ export const resources = {
               },
             },
             socialLink: {
-              label: "Business Website or Social Media Link",
-              placeholder: "www.yourbrand.com",
-              options: {
-                website: "Website",
-                instagram: "Instagram",
-                facebook: "Facebook",
-                tiktok: "TikTok",
-              },
+              label: "Website Link",
+              placeholder: "www.yourmerchant.com",
             },
           },
           address: {
@@ -838,8 +887,8 @@ export const resources = {
               },
             },
             city: {
-              label: "City",
-              placeholder: "Select city",
+              label: "City/Regency",
+              placeholder: "Select city/regency",
               options: {
                 jakarta: "Jakarta",
                 bandung: "Bandung",
@@ -864,8 +913,8 @@ export const resources = {
               },
             },
             addressDetail: {
-              label: "Street name",
-              placeholder: "Street name",
+              label: "Street Name",
+              placeholder: "Enter street name",
             },
             houseNumber: {
               label: "Address number",
@@ -884,15 +933,21 @@ export const resources = {
               placeholder: "Postal code",
             },
             officePhoto: {
-              title: "Office Photo",
+              title: "Business Photo",
               helper: "Only JPEG/PNG, max 5MB.",
               inside: {
-                label: "Inside Office Room Photo",
-                previewAlt: "Inside office preview",
+                label: "Business interior photo showing products/activity",
+                previewAlt: "Business interior preview",
               },
               outside: {
-                label: "Outside Office Room Photo",
-                previewAlt: "Outside office preview",
+                label: "Front photo with business signage",
+                previewAlt: "Business front preview",
+              },
+              product: {
+                label: "Product/brochure/price list photo",
+                previewAlt: "Product photo preview",
+                infoLabel: "Product photo information",
+                info: "*Service businesses can attach a photo of the business location showing activity.",
               },
             },
           },
@@ -979,29 +1034,30 @@ export const resources = {
             },
             legalDocuments: {
               title: "Legal Documents",
-              note: "File format must be PDF.",
-              nibNumber: {
-                label: "Business Registration Number (NIB)",
-              },
+              note: "Upload company documents according to the requirements.",
               nibDocument: {
-                label: "NIB Document",
+                label: "Company NIB (PDF)",
+                infoLabel: "NIB document information",
+                info: "*Must match the business activity.",
               },
               deedEstablishment: {
-                label: "Deed of Establishment",
+                label: "Company Deed (PDF)",
+                infoLabel: "Company deed information",
+                info:
+                  "*Issued within the last 5 years and lists directors plus the clause stating the company's purpose.",
               },
               skMenkumhamEstablishment: {
-                label: "MOLHR Deed Approval Letter",
+                label: "MOLHR Approval Letter (PDF)",
               },
-              deedAmendment: {
-                label: "Latest Deed Amendment (optional)",
-                helper: "Upload if there are changes from the Deed of Establishment.",
+              companyNpwp: {
+                label: "Company NPWP (Image)",
+                previewAlt: "Company NPWP preview",
               },
-              skMenkumhamAmendment: {
-                label: "MOLHR Amendment Approval Letter (optional)",
-                helper: "Required if you upload the Latest Deed Amendment.",
-              },
-              pseLicense: {
-                label: "PSE License (Electronic System Operator)",
+              additionalDocument: {
+                label: "Additional Document (Optional)",
+                infoLabel: "Additional document information",
+                info:
+                  "*Indodana submissions attach an Excel sales volume file. Online Card Payment attach FPM BRI (PDF).",
               },
             },
             bankSection: {

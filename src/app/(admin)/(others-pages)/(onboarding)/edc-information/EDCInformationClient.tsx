@@ -62,7 +62,7 @@ export default function EDCInformationClient() {
               postalCode,
             },
           });
-          router.push("/business-entity");
+          router.push("/terms");
         }}
       >
         <div className="space-y-2">

@@ -2,189 +2,574 @@
 
 import UploadPreviewField from "@/components/form/UploadPreviewField";
 import TableUpload from "@/components/table-upload";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Check, ChevronRight } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Info } from "lucide-react";
+import { z } from "zod";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import type { FileWithPreview } from "@/hooks/use-file-upload";
 
+const imageAccept = "image/jpeg,image/png";
+const pdfAccept = "application/pdf";
+
+const nonEmptyString = z.string().min(1);
+
+const addressSchema = z.object({
+  streetName: nonEmptyString,
+  rt: nonEmptyString,
+  rw: nonEmptyString,
+  provinceId: nonEmptyString,
+  cityId: nonEmptyString,
+  districtId: nonEmptyString,
+  subdistrictId: nonEmptyString,
+  postalCode: nonEmptyString,
+});
+
+const ownerDomicileSchema = z
+  .object({
+    isSameAsKtp: z.boolean(),
+    streetName: z.string().optional(),
+    rt: z.string().optional(),
+    rw: z.string().optional(),
+    provinceId: z.string().optional(),
+    cityId: z.string().optional(),
+    districtId: z.string().optional(),
+    subdistrictId: z.string().optional(),
+    postalCode: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.isSameAsKtp) {
+      return;
+    }
+    const fields = [
+      ["streetName", value.streetName],
+      ["rt", value.rt],
+      ["rw", value.rw],
+      ["provinceId", value.provinceId],
+      ["cityId", value.cityId],
+      ["districtId", value.districtId],
+      ["subdistrictId", value.subdistrictId],
+      ["postalCode", value.postalCode],
+    ];
+    fields.forEach(([key, fieldValue]) => {
+      if (!fieldValue || fieldValue.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "Required" });
+      }
+    });
+  });
+
+const businessEntitySchema = z
+  .object({
+    business: z.object({
+      merchantName: nonEmptyString,
+      businessType: z.enum(["company", "individual"]),
+      companyType: z.string().optional(),
+      companyName: z.string().optional(),
+      phoneNumber: nonEmptyString,
+      email: nonEmptyString,
+      websiteLink: z.string().optional(),
+      businessMode: z.enum(["online", "offline"]),
+      ownershipStatus: z.enum(["owned", "rent"]),
+      mcc: nonEmptyString,
+      nibNumber: z.string().optional(),
+      npwpNumber: z.string().optional(),
+    }),
+    businessAddress: addressSchema,
+    documents: z.object({
+      deedFileName: z.string().optional(),
+      skKemenkumhamFileName: z.string().optional(),
+      nibSkuFileName: z.string().optional(),
+      additionalDocumentFileName: z.string().optional(),
+    }),
+    photos: z.object({
+      frontPhotoFileName: nonEmptyString,
+      insidePhotoFileName: nonEmptyString,
+      productPhotoFileName: nonEmptyString,
+      logoFileName: z.string().optional(),
+    }),
+    owner: z.object({
+      name: nonEmptyString,
+      birthPlace: nonEmptyString,
+      birthDate: nonEmptyString,
+      citizenship: nonEmptyString,
+      ktpFileName: nonEmptyString,
+      npwpFileName: nonEmptyString,
+      nik: nonEmptyString,
+      phoneNumber: nonEmptyString,
+      email: nonEmptyString,
+    }),
+    ownerKtpAddress: addressSchema,
+    ownerDomicileAddress: ownerDomicileSchema,
+    picAdmin: z.object({
+      name: nonEmptyString,
+      email: nonEmptyString,
+      phoneNumber: nonEmptyString,
+    }),
+    settlement: z.object({
+      bankName: nonEmptyString,
+      accountNumber: nonEmptyString,
+      accountName: nonEmptyString,
+      email: nonEmptyString,
+    }),
+  })
+  .superRefine((value, ctx) => {
+    const { business, documents } = value;
+    if (business.businessType === "company") {
+      if (!business.companyType || business.companyType.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "companyType"], message: "Required" });
+      }
+      if (!business.companyName || business.companyName.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "companyName"], message: "Required" });
+      }
+      if (!business.nibNumber || business.nibNumber.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "nibNumber"], message: "Required" });
+      }
+      if (!business.npwpNumber || business.npwpNumber.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "npwpNumber"], message: "Required" });
+      }
+      if (!documents.deedFileName || documents.deedFileName.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["documents", "deedFileName"], message: "Required" });
+      }
+      if (!documents.skKemenkumhamFileName || documents.skKemenkumhamFileName.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["documents", "skKemenkumhamFileName"], message: "Required" });
+      }
+    }
+    if (business.businessType === "individual") {
+      if (!documents.nibSkuFileName || documents.nibSkuFileName.trim().length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["documents", "nibSkuFileName"], message: "Required" });
+      }
+    }
+  });
+
+function InfoPopover({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center text-gray-400 transition hover:text-gray-600"
+          aria-label={label}
+        >
+          <Info className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="text-xs text-gray-600">{children}</PopoverContent>
+    </Popover>
+  );
+}
+
+type SelectOption = {
+  value: string;
+  label: string;
+};
+
+function SearchableSelect({
+  id,
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  disabled = false,
+}: {
+  id: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: SelectOption[];
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  const [query, setQuery] = useState("");
+  const filteredOptions = options.filter((option) =>
+    option.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <Select
+      value={value}
+      onValueChange={(nextValue) => {
+        onValueChange(nextValue);
+        setQuery("");
+      }}
+      disabled={disabled}
+    >
+      <SelectTrigger id={id} className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <div className="px-3 py-2">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Cari..."
+            className="w-full rounded-md border border-gray-200 px-2 py-1 text-sm outline-none focus:border-gray-400"
+          />
+        </div>
+        {filteredOptions.length === 0 ? (
+          <div className="px-4 py-2 text-sm text-gray-400">Tidak ada hasil</div>
+        ) : (
+          filteredOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))
+        )}
+      </SelectContent>
+    </Select>
+  );
+}
+
+const provinceOptions: SelectOption[] = [
+  { value: "dki", label: "DKI Jakarta" },
+  { value: "jabar", label: "Jawa Barat" },
+  { value: "jateng", label: "Jawa Tengah" },
+  { value: "jatim", label: "Jawa Timur" },
+];
+
+const cityOptionsByProvince: Record<string, SelectOption[]> = {
+  dki: [
+    { value: "jakarta", label: "Jakarta" },
+    { value: "kepulauan-seribu", label: "Kepulauan Seribu" },
+  ],
+  jabar: [
+    { value: "bandung", label: "Bandung" },
+    { value: "bekasi", label: "Bekasi" },
+  ],
+  jateng: [
+    { value: "semarang", label: "Semarang" },
+    { value: "surakarta", label: "Surakarta" },
+  ],
+  jatim: [
+    { value: "surabaya", label: "Surabaya" },
+    { value: "malang", label: "Malang" },
+  ],
+};
+
+const districtOptionsByCity: Record<string, SelectOption[]> = {
+  jakarta: [
+    { value: "menteng", label: "Menteng" },
+    { value: "tanah-abang", label: "Tanah Abang" },
+  ],
+  bandung: [
+    { value: "coblong", label: "Coblong" },
+    { value: "lengkong", label: "Lengkong" },
+  ],
+  semarang: [
+    { value: "banyumanik", label: "Banyumanik" },
+    { value: "candisari", label: "Candisari" },
+  ],
+  surabaya: [
+    { value: "gubeng", label: "Gubeng" },
+    { value: "tegalsari", label: "Tegalsari" },
+  ],
+};
+
+const subdistrictOptionsByDistrict: Record<string, SelectOption[]> = {
+  menteng: [
+    { value: "cikini", label: "Cikini" },
+    { value: "gondangdia", label: "Gondangdia" },
+  ],
+  "tanah-abang": [
+    { value: "bendungan-hilir", label: "Bendungan Hilir" },
+    { value: "karet-tengsin", label: "Karet Tengsin" },
+  ],
+  coblong: [
+    { value: "dago", label: "Dago" },
+    { value: "lebakgede", label: "Lebakgede" },
+  ],
+  lengkong: [
+    { value: "malabar", label: "Malabar" },
+    { value: "turangga", label: "Turangga" },
+  ],
+};
+
 export default function BusinessEntityForm() {
-  const { t } = useTranslation();
   const router = useRouter();
-  const businessType = useOnboardingStore((state) => state.businessType);
   const storedBusinessEntity = useOnboardingStore((state) => state.businessEntity);
   const setBusinessEntity = useOnboardingStore((state) => state.setBusinessEntity);
-  const [activeStep, setActiveStep] = useState<"business" | "address" | "bank">("business");
+
+  const [merchantName, setMerchantName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [companyType, setCompanyType] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [businessStreetName, setBusinessStreetName] = useState("");
+  const [businessRt, setBusinessRt] = useState("");
+  const [businessRw, setBusinessRw] = useState("");
+  const [businessProvinceId, setBusinessProvinceId] = useState("");
+  const [businessCityId, setBusinessCityId] = useState("");
+  const [businessDistrictId, setBusinessDistrictId] = useState("");
+  const [businessSubdistrictId, setBusinessSubdistrictId] = useState("");
+  const [businessPostalCode, setBusinessPostalCode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [websiteLink, setWebsiteLink] = useState("");
+  const [businessMode, setBusinessMode] = useState("");
+  const [ownershipStatus, setOwnershipStatus] = useState("");
+  const [mcc, setMcc] = useState("");
+
+  const [deedFile, setDeedFile] = useState<FileWithPreview | null>(null);
+  const [skKemenkumhamFile, setSkKemenkumhamFile] = useState<FileWithPreview | null>(null);
+  const [nibCompanyFile, setNibCompanyFile] = useState<FileWithPreview | null>(null);
+  const [npwpCompanyFile, setNpwpCompanyFile] = useState<File | null>(null);
+  const [npwpCompanyPreview, setNpwpCompanyPreview] = useState("");
+  const [nibSkuFile, setNibSkuFile] = useState<FileWithPreview | null>(null);
+
+  const [frontPhotoFile, setFrontPhotoFile] = useState<File | null>(null);
+  const [frontPhotoPreview, setFrontPhotoPreview] = useState("");
+  const [insidePhotoFile, setInsidePhotoFile] = useState<File | null>(null);
+  const [insidePhotoPreview, setInsidePhotoPreview] = useState("");
+  const [productPhotoFile, setProductPhotoFile] = useState<File | null>(null);
+  const [productPhotoPreview, setProductPhotoPreview] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
-  const [brandName, setBrandName] = useState("");
-  const [legalName, setLegalName] = useState("");
-  const [businessDescription, setBusinessDescription] = useState("");
-  const [businessCategory, setBusinessCategory] = useState("");
-  const [establishedYear, setEstablishedYear] = useState("");
-  const [employeeCount, setEmployeeCount] = useState("");
-  const [monthlyVolume, setMonthlyVolume] = useState("");
-  const [socialType, setSocialType] = useState("website");
-  const [socialLink, setSocialLink] = useState("");
-  const [province, setProvince] = useState("");
-  const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
-  const [subDistrict, setSubDistrict] = useState("");
-  const [houseNumber, setHouseNumber] = useState("");
-  const [addressDetail, setAddressDetail] = useState("");
-  const [rt, setRt] = useState("");
-  const [rw, setRw] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [insideOfficeFile, setInsideOfficeFile] = useState<File | null>(null);
-  const [outsideOfficeFile, setOutsideOfficeFile] = useState<File | null>(null);
-  const [insideOfficePreview, setInsideOfficePreview] = useState("");
-  const [outsideOfficePreview, setOutsideOfficePreview] = useState("");
-  const [ownerKtpFile, setOwnerKtpFile] = useState<File | null>(null);
-  const [ownerNpwpFile, setOwnerNpwpFile] = useState<File | null>(null);
-  const [ownerKtpPreview, setOwnerKtpPreview] = useState("");
-  const [ownerNpwpPreview, setOwnerNpwpPreview] = useState("");
+  const [additionalDocumentFile, setAdditionalDocumentFile] = useState<FileWithPreview | null>(null);
+  const [photoErrors, setPhotoErrors] = useState<Record<string, string>>({});
+
   const [ownerName, setOwnerName] = useState("");
-  const [ownerNik, setOwnerNik] = useState("");
-  const [ownerNpwp, setOwnerNpwp] = useState("");
-  const [ownerKtpAddress, setOwnerKtpAddress] = useState("");
-  const [ownerKtpAddressNumber, setOwnerKtpAddressNumber] = useState("");
+  const [ownerBirthPlace, setOwnerBirthPlace] = useState("");
+  const [ownerBirthDate, setOwnerBirthDate] = useState("");
+  const [ownerKtpStreetName, setOwnerKtpStreetName] = useState("");
   const [ownerKtpRt, setOwnerKtpRt] = useState("");
   const [ownerKtpRw, setOwnerKtpRw] = useState("");
-  const [ownerKtpProvince, setOwnerKtpProvince] = useState("");
-  const [ownerKtpCity, setOwnerKtpCity] = useState("");
-  const [ownerKtpDistrict, setOwnerKtpDistrict] = useState("");
-  const [ownerKtpSubDistrict, setOwnerKtpSubDistrict] = useState("");
+  const [ownerKtpProvinceId, setOwnerKtpProvinceId] = useState("");
+  const [ownerKtpCityId, setOwnerKtpCityId] = useState("");
+  const [ownerKtpDistrictId, setOwnerKtpDistrictId] = useState("");
+  const [ownerKtpSubdistrictId, setOwnerKtpSubdistrictId] = useState("");
   const [ownerKtpPostalCode, setOwnerKtpPostalCode] = useState("");
   const [ownerDomicileSame, setOwnerDomicileSame] = useState(false);
-  const [ownerDomicileAddress, setOwnerDomicileAddress] = useState("");
-  const [ownerDomicileAddressNumber, setOwnerDomicileAddressNumber] = useState("");
+  const [ownerDomicileStreetName, setOwnerDomicileStreetName] = useState("");
   const [ownerDomicileRt, setOwnerDomicileRt] = useState("");
   const [ownerDomicileRw, setOwnerDomicileRw] = useState("");
-  const [ownerDomicileProvince, setOwnerDomicileProvince] = useState("");
-  const [ownerDomicileCity, setOwnerDomicileCity] = useState("");
-  const [ownerDomicileDistrict, setOwnerDomicileDistrict] = useState("");
-  const [ownerDomicileSubDistrict, setOwnerDomicileSubDistrict] = useState("");
+  const [ownerDomicileProvinceId, setOwnerDomicileProvinceId] = useState("");
+  const [ownerDomicileCityId, setOwnerDomicileCityId] = useState("");
+  const [ownerDomicileDistrictId, setOwnerDomicileDistrictId] = useState("");
+  const [ownerDomicileSubdistrictId, setOwnerDomicileSubdistrictId] = useState("");
   const [ownerDomicilePostalCode, setOwnerDomicilePostalCode] = useState("");
-  const [nibNumber, setNibNumber] = useState("");
-  const [nibFile, setNibFile] = useState<FileWithPreview | null>(null);
-  const [deedEstablishmentFile, setDeedEstablishmentFile] = useState<FileWithPreview | null>(null);
-  const [skMenkumhamEstablishmentFile, setSkMenkumhamEstablishmentFile] = useState<FileWithPreview | null>(null);
-  const [deedAmendmentFile, setDeedAmendmentFile] = useState<FileWithPreview | null>(null);
-  const [skMenkumhamAmendmentFile, setSkMenkumhamAmendmentFile] = useState<FileWithPreview | null>(null);
-  const [pseLicenseFile, setPseLicenseFile] = useState<FileWithPreview | null>(null);
+  const [ownerCitizenship, setOwnerCitizenship] = useState("");
+  const [ownerKtpFile, setOwnerKtpFile] = useState<File | null>(null);
+  const [ownerKtpPreview, setOwnerKtpPreview] = useState("");
+  const [ownerNpwpFile, setOwnerNpwpFile] = useState<File | null>(null);
+  const [ownerNpwpPreview, setOwnerNpwpPreview] = useState("");
+  const [ownerNik, setOwnerNik] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+
+  const [picName, setPicName] = useState("");
+  const [picEmail, setPicEmail] = useState("");
+  const [picPhone, setPicPhone] = useState("");
+
   const [bankName, setBankName] = useState("");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [bankAccountName, setBankAccountName] = useState("");
-  const [bankBookFile, setBankBookFile] = useState<File | null>(null);
-  const [bankMutationFile, setBankMutationFile] = useState<File | null>(null);
-  const [bankSkuFile, setBankSkuFile] = useState<File | null>(null);
-  const [bankBookPreview, setBankBookPreview] = useState("");
-  const [bankMutationPreview, setBankMutationPreview] = useState("");
-  const [bankSkuPreview, setBankSkuPreview] = useState("");
+  const [settlementEmail, setSettlementEmail] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
 
   useEffect(() => {
     if (!storedBusinessEntity) {
       return;
     }
-    setBrandName(storedBusinessEntity.business.brandName);
-    setLegalName(storedBusinessEntity.business.legalName);
-    setBusinessDescription(storedBusinessEntity.business.description);
-    setBusinessCategory(storedBusinessEntity.business.category);
-    setEstablishedYear(storedBusinessEntity.business.establishedYear);
-    setEmployeeCount(storedBusinessEntity.business.employeeCount);
-    setMonthlyVolume(storedBusinessEntity.business.monthlyVolume);
-    setSocialType(storedBusinessEntity.business.socialType);
-    setSocialLink(storedBusinessEntity.business.socialLink);
-    setHouseNumber(storedBusinessEntity.address.houseNumber ?? "");
-    setAddressDetail(storedBusinessEntity.address.addressDetail);
-    setRt(storedBusinessEntity.address.rt);
-    setRw(storedBusinessEntity.address.rw);
-    setProvince(storedBusinessEntity.address.province);
-    setCity(storedBusinessEntity.address.city);
-    setDistrict(storedBusinessEntity.address.district);
-    setSubDistrict(storedBusinessEntity.address.subDistrict);
-    setPostalCode(storedBusinessEntity.address.postalCode);
-    setOwnerName(storedBusinessEntity.bank.ownerName);
-    setOwnerNik(storedBusinessEntity.bank.ownerNik);
-    setOwnerNpwp(storedBusinessEntity.bank.ownerNpwp);
-    setOwnerKtpAddress(storedBusinessEntity.bank.ownerKtpAddress ?? "");
-    setOwnerKtpAddressNumber(storedBusinessEntity.bank.ownerKtpAddressNumber ?? "");
-    setOwnerKtpRt(storedBusinessEntity.bank.ownerKtpRt ?? "");
-    setOwnerKtpRw(storedBusinessEntity.bank.ownerKtpRw ?? "");
-    setOwnerKtpProvince(storedBusinessEntity.bank.ownerKtpProvince ?? "");
-    setOwnerKtpCity(storedBusinessEntity.bank.ownerKtpCity ?? "");
-    setOwnerKtpDistrict(storedBusinessEntity.bank.ownerKtpDistrict ?? "");
-    setOwnerKtpSubDistrict(storedBusinessEntity.bank.ownerKtpSubDistrict ?? "");
-    setOwnerKtpPostalCode(storedBusinessEntity.bank.ownerKtpPostalCode ?? "");
-    setOwnerDomicileSame(storedBusinessEntity.bank.ownerDomicileSame ?? false);
-    setOwnerDomicileAddress(storedBusinessEntity.bank.ownerDomicileAddress ?? "");
-    setOwnerDomicileAddressNumber(storedBusinessEntity.bank.ownerDomicileAddressNumber ?? "");
-    setOwnerDomicileRt(storedBusinessEntity.bank.ownerDomicileRt ?? "");
-    setOwnerDomicileRw(storedBusinessEntity.bank.ownerDomicileRw ?? "");
-    setOwnerDomicileProvince(storedBusinessEntity.bank.ownerDomicileProvince ?? "");
-    setOwnerDomicileCity(storedBusinessEntity.bank.ownerDomicileCity ?? "");
-    setOwnerDomicileDistrict(storedBusinessEntity.bank.ownerDomicileDistrict ?? "");
-    setOwnerDomicileSubDistrict(storedBusinessEntity.bank.ownerDomicileSubDistrict ?? "");
-    setOwnerDomicilePostalCode(storedBusinessEntity.bank.ownerDomicilePostalCode ?? "");
-    setNibNumber(storedBusinessEntity.legalDocuments?.nibNumber ?? "");
-    setBankName(storedBusinessEntity.bank.bankName);
-    setBankAccountNumber(storedBusinessEntity.bank.accountNumber);
-    setBankAccountName(storedBusinessEntity.bank.accountName);
+    setMerchantName(storedBusinessEntity.business.merchantName ?? "");
+    setBusinessType(storedBusinessEntity.business.businessType ?? "");
+    setCompanyType(storedBusinessEntity.business.companyType ?? "");
+    setCompanyName(storedBusinessEntity.business.companyName ?? "");
+    setBusinessStreetName(storedBusinessEntity.businessAddress.streetName ?? "");
+    setBusinessRt(storedBusinessEntity.businessAddress.rt ?? "");
+    setBusinessRw(storedBusinessEntity.businessAddress.rw ?? "");
+    setBusinessProvinceId(storedBusinessEntity.businessAddress.provinceId ?? "");
+    setBusinessCityId(storedBusinessEntity.businessAddress.cityId ?? "");
+    setBusinessDistrictId(storedBusinessEntity.businessAddress.districtId ?? "");
+    setBusinessSubdistrictId(storedBusinessEntity.businessAddress.subdistrictId ?? "");
+    setBusinessPostalCode(storedBusinessEntity.businessAddress.postalCode ?? "");
+    setPhoneNumber(storedBusinessEntity.business.phoneNumber ?? "");
+    setEmail(storedBusinessEntity.business.email ?? "");
+    setWebsiteLink(storedBusinessEntity.business.websiteLink ?? "");
+    setBusinessMode(storedBusinessEntity.business.businessMode ?? "");
+    setOwnershipStatus(storedBusinessEntity.business.ownershipStatus ?? "");
+    setMcc(storedBusinessEntity.business.mcc ?? "");
+    setNibCompanyFile(null);
+    setNpwpCompanyFile(null);
+    setNpwpCompanyPreview("");
+
+    setOwnerName(storedBusinessEntity.owner.name ?? "");
+    setOwnerBirthPlace(storedBusinessEntity.owner.birthPlace ?? "");
+    setOwnerBirthDate(storedBusinessEntity.owner.birthDate ?? "");
+    setOwnerKtpStreetName(storedBusinessEntity.ownerKtpAddress.streetName ?? "");
+    setOwnerKtpRt(storedBusinessEntity.ownerKtpAddress.rt ?? "");
+    setOwnerKtpRw(storedBusinessEntity.ownerKtpAddress.rw ?? "");
+    setOwnerKtpProvinceId(storedBusinessEntity.ownerKtpAddress.provinceId ?? "");
+    setOwnerKtpCityId(storedBusinessEntity.ownerKtpAddress.cityId ?? "");
+    setOwnerKtpDistrictId(storedBusinessEntity.ownerKtpAddress.districtId ?? "");
+    setOwnerKtpSubdistrictId(storedBusinessEntity.ownerKtpAddress.subdistrictId ?? "");
+    setOwnerKtpPostalCode(storedBusinessEntity.ownerKtpAddress.postalCode ?? "");
+    setOwnerDomicileSame(storedBusinessEntity.ownerDomicileAddress.isSameAsKtp ?? false);
+    setOwnerDomicileStreetName(storedBusinessEntity.ownerDomicileAddress.streetName ?? "");
+    setOwnerDomicileRt(storedBusinessEntity.ownerDomicileAddress.rt ?? "");
+    setOwnerDomicileRw(storedBusinessEntity.ownerDomicileAddress.rw ?? "");
+    setOwnerDomicileProvinceId(storedBusinessEntity.ownerDomicileAddress.provinceId ?? "");
+    setOwnerDomicileCityId(storedBusinessEntity.ownerDomicileAddress.cityId ?? "");
+    setOwnerDomicileDistrictId(storedBusinessEntity.ownerDomicileAddress.districtId ?? "");
+    setOwnerDomicileSubdistrictId(storedBusinessEntity.ownerDomicileAddress.subdistrictId ?? "");
+    setOwnerDomicilePostalCode(storedBusinessEntity.ownerDomicileAddress.postalCode ?? "");
+    setOwnerCitizenship(storedBusinessEntity.owner.citizenship ?? "");
+    setOwnerNik(storedBusinessEntity.owner.nik ?? "");
+    setOwnerPhone(storedBusinessEntity.owner.phoneNumber ?? "");
+    setOwnerEmail(storedBusinessEntity.owner.email ?? "");
+
+    setPicName(storedBusinessEntity.picAdmin.name ?? "");
+    setPicEmail(storedBusinessEntity.picAdmin.email ?? "");
+    setPicPhone(storedBusinessEntity.picAdmin.phoneNumber ?? "");
+
+    setBankName(storedBusinessEntity.settlement.bankName ?? "");
+    setBankAccountNumber(storedBusinessEntity.settlement.accountNumber ?? "");
+    setBankAccountName(storedBusinessEntity.settlement.accountName ?? "");
+    setSettlementEmail(storedBusinessEntity.settlement.email ?? "");
   }, [storedBusinessEntity]);
 
-  const yearOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let year = currentYear; year >= currentYear - 60; year -= 1) {
-      years.push(`${year}`);
-    }
-    return years;
-  }, []);
+  useEffect(() => {
+    setBusinessCityId("");
+    setBusinessDistrictId("");
+    setBusinessSubdistrictId("");
+  }, [businessProvinceId]);
 
-  const syncOwnerDomicileWithKtp = (checked: boolean) => {
-    setOwnerDomicileSame(checked);
-    if (!checked) {
-      return;
-    }
-    setOwnerDomicileAddress(ownerKtpAddress);
-    setOwnerDomicileAddressNumber(ownerKtpAddressNumber);
-    setOwnerDomicileRt(ownerKtpRt);
-    setOwnerDomicileRw(ownerKtpRw);
-    setOwnerDomicileProvince(ownerKtpProvince);
-    setOwnerDomicileCity(ownerKtpCity);
-    setOwnerDomicileDistrict(ownerKtpDistrict);
-    setOwnerDomicileSubDistrict(ownerKtpSubDistrict);
-    setOwnerDomicilePostalCode(ownerKtpPostalCode);
-  };
+  useEffect(() => {
+    setBusinessDistrictId("");
+    setBusinessSubdistrictId("");
+  }, [businessCityId]);
+
+  useEffect(() => {
+    setBusinessSubdistrictId("");
+  }, [businessDistrictId]);
+
+  useEffect(() => {
+    setOwnerKtpCityId("");
+    setOwnerKtpDistrictId("");
+    setOwnerKtpSubdistrictId("");
+  }, [ownerKtpProvinceId]);
+
+  useEffect(() => {
+    setOwnerKtpDistrictId("");
+    setOwnerKtpSubdistrictId("");
+  }, [ownerKtpCityId]);
+
+  useEffect(() => {
+    setOwnerKtpSubdistrictId("");
+  }, [ownerKtpDistrictId]);
+
+  useEffect(() => {
+    setOwnerDomicileCityId("");
+    setOwnerDomicileDistrictId("");
+    setOwnerDomicileSubdistrictId("");
+  }, [ownerDomicileProvinceId]);
+
+  useEffect(() => {
+    setOwnerDomicileDistrictId("");
+    setOwnerDomicileSubdistrictId("");
+  }, [ownerDomicileCityId]);
+
+  useEffect(() => {
+    setOwnerDomicileSubdistrictId("");
+  }, [ownerDomicileDistrictId]);
 
   useEffect(() => {
     if (!ownerDomicileSame) {
       return;
     }
-    setOwnerDomicileAddress(ownerKtpAddress);
-    setOwnerDomicileAddressNumber(ownerKtpAddressNumber);
+    setOwnerDomicileStreetName(ownerKtpStreetName);
     setOwnerDomicileRt(ownerKtpRt);
     setOwnerDomicileRw(ownerKtpRw);
-    setOwnerDomicileProvince(ownerKtpProvince);
-    setOwnerDomicileCity(ownerKtpCity);
-    setOwnerDomicileDistrict(ownerKtpDistrict);
-    setOwnerDomicileSubDistrict(ownerKtpSubDistrict);
+    setOwnerDomicileProvinceId(ownerKtpProvinceId);
+    setOwnerDomicileCityId(ownerKtpCityId);
+    setOwnerDomicileDistrictId(ownerKtpDistrictId);
+    setOwnerDomicileSubdistrictId(ownerKtpSubdistrictId);
     setOwnerDomicilePostalCode(ownerKtpPostalCode);
   }, [
     ownerDomicileSame,
-    ownerKtpAddress,
-    ownerKtpAddressNumber,
+    ownerKtpStreetName,
     ownerKtpRt,
     ownerKtpRw,
-    ownerKtpProvince,
-    ownerKtpCity,
-    ownerKtpDistrict,
-    ownerKtpSubDistrict,
+    ownerKtpProvinceId,
+    ownerKtpCityId,
+    ownerKtpDistrictId,
+    ownerKtpSubdistrictId,
     ownerKtpPostalCode,
   ]);
+
+  const handleBusinessTypeChange = (value: string) => {
+    setBusinessType(value);
+    setCompanyType("");
+    if (value === "company") {
+      setNibSkuFile(null);
+    }
+    if (value === "individual") {
+      setDeedFile(null);
+      setSkKemenkumhamFile(null);
+      setNibCompanyFile(null);
+      setNpwpCompanyFile(null);
+      setNpwpCompanyPreview("");
+    }
+    setDeedFile(null);
+    setSkKemenkumhamFile(null);
+    setNibSkuFile(null);
+    setNibCompanyFile(null);
+    setNpwpCompanyFile(null);
+    setNpwpCompanyPreview("");
+    setFrontPhotoFile(null);
+    setFrontPhotoPreview("");
+    setInsidePhotoFile(null);
+    setInsidePhotoPreview("");
+    setProductPhotoFile(null);
+    setProductPhotoPreview("");
+    setLogoFile(null);
+    setLogoPreview("");
+    setAdditionalDocumentFile(null);
+    setPhotoErrors({});
+  };
+
+  const handleDomicileSameChange = (checked: boolean) => {
+    setOwnerDomicileSame(checked);
+    if (!checked) {
+      return;
+    }
+    setOwnerDomicileStreetName(ownerKtpStreetName);
+    setOwnerDomicileRt(ownerKtpRt);
+    setOwnerDomicileRw(ownerKtpRw);
+    setOwnerDomicileProvinceId(ownerKtpProvinceId);
+    setOwnerDomicileCityId(ownerKtpCityId);
+    setOwnerDomicileDistrictId(ownerKtpDistrictId);
+    setOwnerDomicileSubdistrictId(ownerKtpSubdistrictId);
+    setOwnerDomicilePostalCode(ownerKtpPostalCode);
+  };
+
+  useEffect(() => {
+    if (!frontPhotoFile || !frontPhotoFile.type.startsWith("image/")) {
+      setFrontPhotoPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(frontPhotoFile);
+    setFrontPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [frontPhotoFile]);
+
+  useEffect(() => {
+    if (!insidePhotoFile || !insidePhotoFile.type.startsWith("image/")) {
+      setInsidePhotoPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(insidePhotoFile);
+    setInsidePhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [insidePhotoFile]);
+
+  useEffect(() => {
+    if (!productPhotoFile || !productPhotoFile.type.startsWith("image/")) {
+      setProductPhotoPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(productPhotoFile);
+    setProductPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [productPhotoFile]);
 
   useEffect(() => {
     if (!logoFile || !logoFile.type.startsWith("image/")) {
@@ -197,24 +582,14 @@ export default function BusinessEntityForm() {
   }, [logoFile]);
 
   useEffect(() => {
-    if (!insideOfficeFile || !insideOfficeFile.type.startsWith("image/")) {
-      setInsideOfficePreview("");
+    if (!npwpCompanyFile || !npwpCompanyFile.type.startsWith("image/")) {
+      setNpwpCompanyPreview("");
       return;
     }
-    const url = URL.createObjectURL(insideOfficeFile);
-    setInsideOfficePreview(url);
+    const url = URL.createObjectURL(npwpCompanyFile);
+    setNpwpCompanyPreview(url);
     return () => URL.revokeObjectURL(url);
-  }, [insideOfficeFile]);
-
-  useEffect(() => {
-    if (!outsideOfficeFile || !outsideOfficeFile.type.startsWith("image/")) {
-      setOutsideOfficePreview("");
-      return;
-    }
-    const url = URL.createObjectURL(outsideOfficeFile);
-    setOutsideOfficePreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [outsideOfficeFile]);
+  }, [npwpCompanyFile]);
 
   useEffect(() => {
     if (!ownerKtpFile || !ownerKtpFile.type.startsWith("image/")) {
@@ -236,1582 +611,1590 @@ export default function BusinessEntityForm() {
     return () => URL.revokeObjectURL(url);
   }, [ownerNpwpFile]);
 
-  useEffect(() => {
-    if (!bankBookFile || !bankBookFile.type.startsWith("image/")) {
-      setBankBookPreview("");
+  const handleNumericChange = (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setter(event.target.value.replace(/\D/g, ""));
+  };
+
+  const hasFile = (file: File | null) => file instanceof File;
+  const hasFileWrapper = (file: FileWithPreview | null) => !!file?.file;
+
+  const handlePdfChange =
+    (setter: (file: FileWithPreview | null) => void) => (files: FileWithPreview[]) =>
+      setter(files[0] ?? null);
+
+  const handleImageChange =
+    (key: string, setter: (file: File | null) => void) => (file: File | null) => {
+    if (!file) {
+      setter(null);
+      setPhotoErrors((prev) => ({ ...prev, [key]: "" }));
       return;
     }
-    const url = URL.createObjectURL(bankBookFile);
-    setBankBookPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [bankBookFile]);
-
-  useEffect(() => {
-    if (!bankMutationFile || !bankMutationFile.type.startsWith("image/")) {
-      setBankMutationPreview("");
+    if (!file.type.includes("jpeg") && !file.type.includes("png")) {
+      setPhotoErrors((prev) => ({ ...prev, [key]: "Format harus JPG, JPEG, atau PNG." }));
       return;
     }
-    const url = URL.createObjectURL(bankMutationFile);
-    setBankMutationPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [bankMutationFile]);
+    setPhotoErrors((prev) => ({ ...prev, [key]: "" }));
+    setter(file);
+  };
 
-  useEffect(() => {
-    if (!bankSkuFile || !bankSkuFile.type.startsWith("image/")) {
-      setBankSkuPreview("");
-      return;
-    }
-    const url = URL.createObjectURL(bankSkuFile);
-    setBankSkuPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [bankSkuFile]);
+  const buildMultipartPayload = () => {
+    const formData = new FormData();
+    const appendIf = (key: string, file?: File | null) => {
+      if (file) {
+        formData.append(key, file);
+      }
+    };
+    appendIf("companyDeedFile", deedFile?.file ?? null);
+    appendIf("skKemenkumhamFile", skKemenkumhamFile?.file ?? null);
+    appendIf("nibNumber", nibCompanyFile?.file ?? null);
+    appendIf("npwpNumber", npwpCompanyFile);
+    appendIf("nibSkuFile", nibSkuFile?.file ?? null);
+    appendIf("frontPhotoFile", frontPhotoFile);
+    appendIf("insidePhotoFile", insidePhotoFile);
+    appendIf("productPhotoFile", productPhotoFile);
+    appendIf("logoFile", logoFile);
+    appendIf("additionalDocumentFile", additionalDocumentFile?.file ?? null);
+    appendIf("ownerKtpFile", ownerKtpFile);
+    appendIf("ownerNpwpFile", ownerNpwpFile);
+    return formData;
+  };
 
-  const isBusinessStepValid =
-    brandName.trim().length > 0 &&
-    legalName.trim().length > 0 &&
-    businessDescription.trim().length > 0 &&
-    businessCategory !== "" &&
-    establishedYear !== "" &&
-    employeeCount !== "" &&
-    monthlyVolume !== "";
+  const isStep1Valid = () => {
+    const hasCompanyDocuments =
+      businessType !== "company" ||
+      (companyType !== "" &&
+        companyName.trim().length > 0 &&
+        hasFileWrapper(deedFile) &&
+        hasFileWrapper(skKemenkumhamFile) &&
+        hasFileWrapper(nibCompanyFile) &&
+        hasFile(npwpCompanyFile));
 
-  const isAddressStepValid =
-    province !== "" &&
-    city !== "" &&
-    district !== "" &&
-    subDistrict !== "" &&
-    houseNumber.trim().length > 0 &&
-    addressDetail.trim().length > 0 &&
-    rt.trim().length > 0 &&
-    rw.trim().length > 0 &&
-    postalCode.trim().length > 0;
+    const hasIndividualDocuments = businessType !== "individual" ? true : hasFileWrapper(nibSkuFile);
 
-  const isCompany = businessType === "company";
-  const hasCompanyDocuments = !isCompany
-    ? true
-    : nibNumber.trim().length > 0 &&
-      !!nibFile &&
-      !!deedEstablishmentFile &&
-      !!skMenkumhamEstablishmentFile &&
-      !!pseLicenseFile;
+    return (
+      merchantName.trim().length > 0 &&
+      businessType !== "" &&
+      businessStreetName.trim().length > 0 &&
+      businessRt.trim().length > 0 &&
+      businessRw.trim().length > 0 &&
+      businessProvinceId !== "" &&
+      businessCityId !== "" &&
+      businessDistrictId !== "" &&
+      businessSubdistrictId !== "" &&
+      businessPostalCode.trim().length > 0 &&
+      phoneNumber.trim().length > 0 &&
+      email.trim().length > 0 &&
+      businessMode !== "" &&
+      ownershipStatus !== "" &&
+      mcc !== "" &&
+      hasFile(frontPhotoFile) &&
+      hasFile(insidePhotoFile) &&
+      hasFile(productPhotoFile) &&
+      hasCompanyDocuments &&
+      hasIndividualDocuments
+    );
+  };
 
-  const isBankStepValid =
+  const isStep2Valid = () =>
     ownerName.trim().length > 0 &&
-    ownerNik.trim().length > 0 &&
-    ownerNpwp.trim().length > 0 &&
-    ownerKtpAddress.trim().length > 0 &&
-    ownerKtpAddressNumber.trim().length > 0 &&
+    ownerBirthPlace.trim().length > 0 &&
+    ownerBirthDate.trim().length > 0 &&
+    ownerKtpStreetName.trim().length > 0 &&
     ownerKtpRt.trim().length > 0 &&
     ownerKtpRw.trim().length > 0 &&
-    ownerKtpProvince !== "" &&
-    ownerKtpCity !== "" &&
-    ownerKtpDistrict !== "" &&
-    ownerKtpSubDistrict !== "" &&
+    ownerKtpProvinceId !== "" &&
+    ownerKtpCityId !== "" &&
+    ownerKtpDistrictId !== "" &&
+    ownerKtpSubdistrictId !== "" &&
     ownerKtpPostalCode.trim().length > 0 &&
-    ownerDomicileAddress.trim().length > 0 &&
-    ownerDomicileAddressNumber.trim().length > 0 &&
-    ownerDomicileRt.trim().length > 0 &&
-    ownerDomicileRw.trim().length > 0 &&
-    ownerDomicileProvince !== "" &&
-    ownerDomicileCity !== "" &&
-    ownerDomicileDistrict !== "" &&
-    ownerDomicileSubDistrict !== "" &&
-    ownerDomicilePostalCode.trim().length > 0 &&
+    (ownerDomicileSame ||
+      (ownerDomicileStreetName.trim().length > 0 &&
+        ownerDomicileRt.trim().length > 0 &&
+        ownerDomicileRw.trim().length > 0 &&
+        ownerDomicileProvinceId !== "" &&
+        ownerDomicileCityId !== "" &&
+        ownerDomicileDistrictId !== "" &&
+        ownerDomicileSubdistrictId !== "" &&
+        ownerDomicilePostalCode.trim().length > 0)) &&
+    ownerCitizenship.trim().length > 0 &&
+    hasFile(ownerKtpFile) &&
+    hasFile(ownerNpwpFile) &&
+    ownerNik.trim().length > 0 &&
+    ownerPhone.trim().length > 0 &&
+    ownerEmail.trim().length > 0;
+
+  const isStep3Valid = () =>
+    picName.trim().length > 0 && picEmail.trim().length > 0 && picPhone.trim().length > 0;
+
+  const isStep4Valid = () =>
     bankName !== "" &&
     bankAccountNumber.trim().length > 0 &&
     bankAccountName.trim().length > 0 &&
-    hasCompanyDocuments;
+    settlementEmail.trim().length > 0;
+
+  const isFormValid = isStep1Valid() && isStep2Valid() && isStep3Valid() && isStep4Valid();
+
+  const steps = [
+    { id: 1, label: "Informasi Merchant / Badan Usaha" },
+    { id: 2, label: "Data Pemilik Usaha / Direktur" },
+    { id: 3, label: "Data PIC Admin" },
+    { id: 4, label: "Data Rekening Settlement" },
+  ];
+
+  const isStepValid =
+    currentStep === 1
+      ? isStep1Valid()
+      : currentStep === 2
+      ? isStep2Valid()
+      : currentStep === 3
+      ? isStep3Valid()
+      : isStep4Valid();
+  const isFirstStep = currentStep === 1;
+  const isLastStep = currentStep === steps.length;
+
+  const goToStep = (nextStep: number) => {
+    setCurrentStep(nextStep);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleNextStep = () => {
+    if (!isStepValid || isLastStep) {
+      return;
+    }
+    goToStep(currentStep + 1);
+  };
+
+  const handlePrevStep = () => {
+    if (isFirstStep) {
+      return;
+    }
+    goToStep(currentStep - 1);
+  };
+
+  const isCompany = businessType === "company";
+  const ownerLabel = isCompany ? "Direktur" : "Pemilik Usaha";
 
   return (
     <form
       id="business-entity-form"
-      className="mt-8 space-y-8"
+      className="mt-8 space-y-10"
       onReset={() => {
-        setActiveStep("business");
+        setMerchantName("");
+        setBusinessType("");
+        setCompanyType("");
+        setCompanyName("");
+        setBusinessStreetName("");
+        setBusinessRt("");
+        setBusinessRw("");
+        setBusinessProvinceId("");
+        setBusinessCityId("");
+        setBusinessDistrictId("");
+        setBusinessSubdistrictId("");
+        setBusinessPostalCode("");
+        setPhoneNumber("");
+        setEmail("");
+        setWebsiteLink("");
+        setBusinessMode("");
+        setOwnershipStatus("");
+        setMcc("");
+        setDeedFile(null);
+        setSkKemenkumhamFile(null);
+        setNibCompanyFile(null);
+        setNpwpCompanyFile(null);
+        setNpwpCompanyPreview("");
+        setNibSkuFile(null);
+        setFrontPhotoFile(null);
+        setFrontPhotoPreview("");
+        setInsidePhotoFile(null);
+        setInsidePhotoPreview("");
+        setProductPhotoFile(null);
+        setProductPhotoPreview("");
         setLogoFile(null);
         setLogoPreview("");
-        setBrandName("");
-        setLegalName("");
-        setBusinessDescription("");
-        setBusinessCategory("");
-        setEstablishedYear("");
-        setEmployeeCount("");
-        setMonthlyVolume("");
-        setSocialType("website");
-        setSocialLink("");
-        setProvince("");
-        setCity("");
-        setDistrict("");
-        setSubDistrict("");
-        setHouseNumber("");
-        setAddressDetail("");
-        setRt("");
-        setRw("");
-        setPostalCode("");
-        setInsideOfficeFile(null);
-        setOutsideOfficeFile(null);
-        setInsideOfficePreview("");
-        setOutsideOfficePreview("");
-        setOwnerKtpFile(null);
-        setOwnerNpwpFile(null);
-        setOwnerKtpPreview("");
-        setOwnerNpwpPreview("");
+        setAdditionalDocumentFile(null);
         setOwnerName("");
-        setOwnerNik("");
-        setOwnerNpwp("");
-        setOwnerKtpAddress("");
-        setOwnerKtpAddressNumber("");
+        setOwnerBirthPlace("");
+        setOwnerBirthDate("");
+        setOwnerKtpStreetName("");
         setOwnerKtpRt("");
         setOwnerKtpRw("");
-        setOwnerKtpProvince("");
-        setOwnerKtpCity("");
-        setOwnerKtpDistrict("");
-        setOwnerKtpSubDistrict("");
+        setOwnerKtpProvinceId("");
+        setOwnerKtpCityId("");
+        setOwnerKtpDistrictId("");
+        setOwnerKtpSubdistrictId("");
         setOwnerKtpPostalCode("");
         setOwnerDomicileSame(false);
-        setOwnerDomicileAddress("");
-        setOwnerDomicileAddressNumber("");
+        setOwnerDomicileStreetName("");
         setOwnerDomicileRt("");
         setOwnerDomicileRw("");
-        setOwnerDomicileProvince("");
-        setOwnerDomicileCity("");
-        setOwnerDomicileDistrict("");
-        setOwnerDomicileSubDistrict("");
+        setOwnerDomicileProvinceId("");
+        setOwnerDomicileCityId("");
+        setOwnerDomicileDistrictId("");
+        setOwnerDomicileSubdistrictId("");
         setOwnerDomicilePostalCode("");
-        setNibNumber("");
-        setNibFile(null);
-        setDeedEstablishmentFile(null);
-        setSkMenkumhamEstablishmentFile(null);
-        setDeedAmendmentFile(null);
-        setSkMenkumhamAmendmentFile(null);
-        setPseLicenseFile(null);
+        setOwnerCitizenship("");
+        setOwnerKtpFile(null);
+        setOwnerKtpPreview("");
+        setOwnerNpwpFile(null);
+        setOwnerNpwpPreview("");
+        setOwnerNik("");
+        setOwnerPhone("");
+        setOwnerEmail("");
+        setPicName("");
+        setPicEmail("");
+        setPicPhone("");
         setBankName("");
         setBankAccountNumber("");
         setBankAccountName("");
-        setBankBookFile(null);
-        setBankMutationFile(null);
-        setBankSkuFile(null);
-        setBankBookPreview("");
-        setBankMutationPreview("");
-        setBankSkuPreview("");
+        setSettlementEmail("");
+        setCurrentStep(1);
       }}
       onSubmit={(event) => {
         event.preventDefault();
-        if (activeStep === "business" && isBusinessStepValid) {
-          setActiveStep("address");
+        if (currentStep !== steps.length) {
+          if (isStepValid) {
+            goToStep(currentStep + 1);
+          }
           return;
         }
-        if (activeStep === "address" && isAddressStepValid) {
-          setActiveStep("bank");
+        if (!isFormValid) {
           return;
         }
-        if (activeStep === "bank" && isBankStepValid) {
-          setBusinessEntity({
-            business: {
-              brandName,
-              legalName,
-              description: businessDescription,
-              category: businessCategory,
-              establishedYear,
-              employeeCount,
-              monthlyVolume,
-              socialType,
-              socialLink,
-              logoFileName: logoFile?.name ?? "",
-            },
-            address: {
-              houseNumber,
-              addressDetail,
-              rt,
-              rw,
-              province,
-              city,
-              district,
-              subDistrict,
-              postalCode,
-              insideOfficeFileName: insideOfficeFile?.name ?? "",
-              outsideOfficeFileName: outsideOfficeFile?.name ?? "",
-            },
-            bank: {
-              ownerName,
-              ownerNik,
-              ownerNpwp,
-              ownerKtpAddress,
-              ownerKtpAddressNumber,
-              ownerKtpRt,
-              ownerKtpRw,
-              ownerKtpProvince,
-              ownerKtpCity,
-              ownerKtpDistrict,
-              ownerKtpSubDistrict,
-              ownerKtpPostalCode,
-              ownerDomicileSame,
-              ownerDomicileAddress,
-              ownerDomicileAddressNumber,
-              ownerDomicileRt,
-              ownerDomicileRw,
-              ownerDomicileProvince,
-              ownerDomicileCity,
-              ownerDomicileDistrict,
-              ownerDomicileSubDistrict,
-              ownerDomicilePostalCode,
-              bankName,
-              accountNumber: bankAccountNumber,
-              accountName: bankAccountName,
-              ownerKtpFileName: ownerKtpFile?.name ?? "",
-              ownerNpwpFileName: ownerNpwpFile?.name ?? "",
-              bankBookFileName: bankBookFile?.name ?? "",
-              bankMutationFileName: bankMutationFile?.name ?? "",
-              bankSkuFileName: bankSkuFile?.name ?? "",
-            },
-            legalDocuments: isCompany
-              ? {
-                  nibNumber,
-                  nibFileName: nibFile?.file.name ?? "",
-                  deedEstablishmentFileName: deedEstablishmentFile?.file.name ?? "",
-                  skMenkumhamEstablishmentFileName: skMenkumhamEstablishmentFile?.file.name ?? "",
-                  deedAmendmentFileName: deedAmendmentFile?.file.name ?? "",
-                  skMenkumhamAmendmentFileName: skMenkumhamAmendmentFile?.file.name ?? "",
-                  pseLicenseFileName: pseLicenseFile?.file.name ?? "",
-                }
-              : undefined,
-          });
-          router.push("/terms");
+        buildMultipartPayload();
+        const payload = {
+          business: {
+            merchantName,
+            businessType,
+            companyType: isCompany ? companyType : "",
+            companyName: isCompany ? companyName : "",
+            phoneNumber,
+            email,
+            websiteLink,
+            businessMode,
+            ownershipStatus,
+            mcc,
+            nibNumber: isCompany ? nibCompanyFile?.file.name ?? "" : "",
+            npwpNumber: isCompany ? npwpCompanyFile?.name ?? "" : "",
+          },
+          businessAddress: {
+            streetName: businessStreetName,
+            rt: businessRt,
+            rw: businessRw,
+            provinceId: businessProvinceId,
+            cityId: businessCityId,
+            districtId: businessDistrictId,
+            subdistrictId: businessSubdistrictId,
+            postalCode: businessPostalCode,
+          },
+          documents: {
+            deedFileName: deedFile?.file.name ?? "",
+            skKemenkumhamFileName: skKemenkumhamFile?.file.name ?? "",
+            nibSkuFileName: nibSkuFile?.file.name ?? "",
+            additionalDocumentFileName: additionalDocumentFile?.file.name ?? "",
+          },
+          photos: {
+            frontPhotoFileName: frontPhotoFile?.name ?? "",
+            insidePhotoFileName: insidePhotoFile?.name ?? "",
+            productPhotoFileName: productPhotoFile?.name ?? "",
+            logoFileName: logoFile?.name ?? "",
+          },
+          owner: {
+            name: ownerName,
+            birthPlace: ownerBirthPlace,
+            birthDate: ownerBirthDate,
+            citizenship: ownerCitizenship,
+            ktpFileName: ownerKtpFile?.name ?? "",
+            npwpFileName: ownerNpwpFile?.name ?? "",
+            nik: ownerNik,
+            phoneNumber: ownerPhone,
+            email: ownerEmail,
+          },
+          ownerKtpAddress: {
+            streetName: ownerKtpStreetName,
+            rt: ownerKtpRt,
+            rw: ownerKtpRw,
+            provinceId: ownerKtpProvinceId,
+            cityId: ownerKtpCityId,
+            districtId: ownerKtpDistrictId,
+            subdistrictId: ownerKtpSubdistrictId,
+            postalCode: ownerKtpPostalCode,
+          },
+          ownerDomicileAddress: {
+            isSameAsKtp: ownerDomicileSame,
+            streetName: ownerDomicileStreetName,
+            rt: ownerDomicileRt,
+            rw: ownerDomicileRw,
+            provinceId: ownerDomicileProvinceId,
+            cityId: ownerDomicileCityId,
+            districtId: ownerDomicileDistrictId,
+            subdistrictId: ownerDomicileSubdistrictId,
+            postalCode: ownerDomicilePostalCode,
+          },
+          picAdmin: {
+            name: picName,
+            email: picEmail,
+            phoneNumber: picPhone,
+          },
+          settlement: {
+            bankName,
+            accountNumber: bankAccountNumber,
+            accountName: bankAccountName,
+            email: settlementEmail,
+          },
+        };
+        const validationResult = businessEntitySchema.safeParse(payload);
+        if (!validationResult.success) {
+          return;
         }
+        setBusinessEntity(validationResult.data);
+        router.push("/payment-feature");
       }}
     >
-      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-        <span
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full font-semibold ${
-            activeStep === "business"
-              ? "bg-teal-100 text-teal-700"
-              : "bg-gray-100 text-teal-600"
-          }`}
-        >
-          {activeStep === "business" ? "1" : <Check className="h-4 w-4" />}
-        </span>
-        <span className={activeStep === "business" ? "font-semibold text-gray-900" : "text-gray-400"}>
-          {t("onboarding.businessEntity.steps.business")}
-        </span>
-        <ChevronRight className="h-4 w-4 text-gray-300" />
-        <span
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full font-semibold ${
-            activeStep === "address"
-              ? "bg-teal-100 text-teal-700"
-              : activeStep === "bank"
-              ? "bg-gray-100 text-teal-600"
-              : "bg-gray-100 text-gray-400"
-          }`}
-        >
-          {activeStep === "bank" ? <Check className="h-4 w-4" /> : "2"}
-        </span>
-        <span
-          className={
-            activeStep === "address" || activeStep === "bank"
-              ? "font-semibold text-gray-900"
-              : "text-gray-400"
-          }
-        >
-          {t("onboarding.businessEntity.steps.address")}
-        </span>
-        <ChevronRight className="h-4 w-4 text-gray-300" />
-        <span
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full font-semibold ${
-            activeStep === "bank" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-400"
-          }`}
-        >
-          3
-        </span>
-        <span className={activeStep === "bank" ? "font-semibold text-gray-900" : "text-gray-400"}>
-          {t("onboarding.businessEntity.steps.bank")}
-        </span>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {steps.map((step, index) => {
+            const isActive = currentStep === step.id;
+            const isComplete = currentStep > step.id;
+            return (
+              <div key={step.id} className="flex items-center gap-3">
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                    isActive
+                      ? "bg-teal-500 text-white"
+                      : isComplete
+                      ? "bg-teal-100 text-teal-700"
+                      : "bg-gray-100 text-gray-400"
+                  }`}
+                >
+                  {step.id}
+                </div>
+                <span
+                  className={`text-sm font-semibold ${
+                    isActive ? "text-gray-900" : isComplete ? "text-gray-700" : "text-gray-400"
+                  }`}
+                >
+                  {step.label}
+                </span>
+                {index < steps.length - 1 && <span className="text-gray-300">›</span>}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      {activeStep === "business" && (
+
+      {currentStep === 1 && (
+      <section className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Informasi Merchant / Badan Usaha</h3>
+          <p className="text-sm text-gray-500">Lengkapi data bisnis merchant sesuai jenis usaha.</p>
+        </div>
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="md:col-span-1">
-            <UploadPreviewField
-              id="companyLogo"
-              name="companyLogo"
-              label={t("onboarding.businessEntity.business.companyLogo.label")}
-              accept="image/*"
-              file={logoFile}
-              previewUrl={logoPreview}
-              onFileChange={setLogoFile}
-              onClear={() => setLogoFile(null)}
-              previewAlt={t("onboarding.businessEntity.business.companyLogo.previewAlt")}
-              previewHeightClass="h-32"
-            />
-            <p className="mt-2 text-xs text-gray-500">
-              {t("onboarding.businessEntity.business.companyLogo.helper")}
-            </p>
-          </div>
-          <div className="hidden md:block" aria-hidden="true" />
-
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-700" htmlFor="brandName">
-              {t("onboarding.businessEntity.business.brandName.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
+            <label className="text-sm font-medium text-gray-700">
+              Tipe Bisnis
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
-            <input
-              id="brandName"
-              name="brandName"
-              type="text"
-              value={brandName}
-              onChange={(event) => setBrandName(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              placeholder={t("onboarding.businessEntity.business.brandName.placeholder")}
-              required
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-700" htmlFor="legalName">
-              {t("onboarding.businessEntity.business.legalName.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <input
-              id="legalName"
-              name="legalName"
-              type="text"
-              value={legalName}
-              onChange={(event) => setLegalName(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              placeholder={t("onboarding.businessEntity.business.legalName.placeholder")}
-              required
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700" htmlFor="businessDescription">
-                {t("onboarding.businessEntity.business.description.label")}
-                <span className="ml-2 text-xs text-red-500">
-                  {t("onboarding.businessEntity.common.required")}
-                </span>
-              </label>
-              <span className="text-xs text-gray-400">{businessDescription.length}/100</span>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  value: "individual",
+                  title: "Individu",
+                  description: "Bisnis yang dimiliki dan dikelola oleh satu individu.",
+                },
+                {
+                  value: "company",
+                  title: "Perusahaan",
+                  description:
+                    "Bisnis yang dimiliki oleh suatu entitas dan memiliki hak dan kewajiban hukum sendiri.",
+                },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleBusinessTypeChange(option.value)}
+                  className={`flex h-full w-full flex-col items-start gap-2 rounded-2xl border px-4 py-4 text-left transition ${
+                    businessType === option.value
+                      ? "border-teal-500 bg-teal-50 text-teal-900"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-teal-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-4 w-4 rounded-full border ${
+                        businessType === option.value ? "border-teal-500 bg-teal-500" : "border-gray-300"
+                      }`}
+                    />
+                    <span className="text-sm font-semibold">{option.title}</span>
+                  </div>
+                  <span className="text-xs text-gray-500">{option.description}</span>
+                </button>
+              ))}
             </div>
-            <Textarea
-              id="businessDescription"
-              name="businessDescription"
-              value={businessDescription}
-              onChange={(event) => setBusinessDescription(event.target.value.slice(0, 100))}
-              className="mt-2 min-h-[96px] rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
-              placeholder={t("onboarding.businessEntity.business.description.placeholder")}
-              required
-            />
+            <input type="hidden" name="businessType" value={businessType} required />
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="businessCategory">
-              {t("onboarding.businessEntity.business.category.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={businessCategory} onValueChange={setBusinessCategory}>
-              <SelectTrigger id="businessCategory" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.business.category.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="food">{t("onboarding.businessEntity.business.category.options.food")}</SelectItem>
-                <SelectItem value="retail">{t("onboarding.businessEntity.business.category.options.retail")}</SelectItem>
-                <SelectItem value="service">{t("onboarding.businessEntity.business.category.options.service")}</SelectItem>
-                <SelectItem value="travel">{t("onboarding.businessEntity.business.category.options.travel")}</SelectItem>
-                <SelectItem value="health">{t("onboarding.businessEntity.business.category.options.health")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="businessCategory" value={businessCategory} />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="establishedYear">
-              {t("onboarding.businessEntity.business.establishedYear.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={establishedYear} onValueChange={setEstablishedYear}>
-              <SelectTrigger id="establishedYear" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.business.establishedYear.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
+          {businessType === "company" && (
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700">
+                Tipe Perusahaan
+                <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {["PT", "CV", "Firma", "Koperasi", "Nirlaba"].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setCompanyType(type)}
+                    className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                      companyType === type
+                        ? "border-teal-500 bg-teal-50 text-teal-900"
+                        : "border-gray-200 text-gray-700 hover:border-teal-300"
+                    }`}
+                  >
+                    {type}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="establishedYear" value={establishedYear} />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="employeeCount">
-              {t("onboarding.businessEntity.business.employeeCount.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={employeeCount} onValueChange={setEmployeeCount}>
-              <SelectTrigger id="employeeCount" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.business.employeeCount.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1-5">{t("onboarding.businessEntity.business.employeeCount.options.1_5")}</SelectItem>
-                <SelectItem value="6-20">{t("onboarding.businessEntity.business.employeeCount.options.6_20")}</SelectItem>
-                <SelectItem value="21-50">{t("onboarding.businessEntity.business.employeeCount.options.21_50")}</SelectItem>
-                <SelectItem value="51-200">{t("onboarding.businessEntity.business.employeeCount.options.51_200")}</SelectItem>
-                <SelectItem value="200+">{t("onboarding.businessEntity.business.employeeCount.options.200_plus")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="employeeCount" value={employeeCount} />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="monthlyVolume">
-              {t("onboarding.businessEntity.business.monthlyVolume.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={monthlyVolume} onValueChange={setMonthlyVolume}>
-              <SelectTrigger id="monthlyVolume" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.business.monthlyVolume.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="<10m">{t("onboarding.businessEntity.business.monthlyVolume.options.lt_10m")}</SelectItem>
-                <SelectItem value="10-50m">{t("onboarding.businessEntity.business.monthlyVolume.options.10_50m")}</SelectItem>
-                <SelectItem value="50-200m">{t("onboarding.businessEntity.business.monthlyVolume.options.50_200m")}</SelectItem>
-                <SelectItem value="200-500m">{t("onboarding.businessEntity.business.monthlyVolume.options.200_500m")}</SelectItem>
-                <SelectItem value="500m+">{t("onboarding.businessEntity.business.monthlyVolume.options.gt_500m")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="monthlyVolume" value={monthlyVolume} />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-700" htmlFor="socialLink">
-              {t("onboarding.businessEntity.business.socialLink.label")}
-            </label>
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-              <Select value={socialType} onValueChange={setSocialType}>
-                <SelectTrigger className="h-11 w-full rounded-xl border-gray-200 px-4 text-sm sm:w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="website">{t("onboarding.businessEntity.business.socialLink.options.website")}</SelectItem>
-                  <SelectItem value="instagram">{t("onboarding.businessEntity.business.socialLink.options.instagram")}</SelectItem>
-                  <SelectItem value="facebook">{t("onboarding.businessEntity.business.socialLink.options.facebook")}</SelectItem>
-                  <SelectItem value="tiktok">{t("onboarding.businessEntity.business.socialLink.options.tiktok")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <input
-                id="socialLink"
-                name="socialLink"
-                type="text"
-                value={socialLink}
-                onChange={(event) => setSocialLink(event.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                placeholder={t("onboarding.businessEntity.business.socialLink.placeholder")}
-              />
-            </div>
-            <input type="hidden" name="socialType" value={socialType} />
-          </div>
-
-          <button type="button" className="text-left text-sm font-semibold text-teal-500">
-            {t("onboarding.businessEntity.common.seeGuideline")}
-          </button>
-        </div>
-      )}
-
-      {activeStep === "address" && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-700" htmlFor="addressDetail">
-              {t("onboarding.businessEntity.address.addressDetail.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Textarea
-              id="addressDetail"
-              name="addressDetail"
-              value={addressDetail}
-              onChange={(event) => setAddressDetail(event.target.value)}
-              className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
-              placeholder={t("onboarding.businessEntity.address.addressDetail.placeholder")}
-              required
-            />
-          </div>
-          <div className="md:col-span-2 grid gap-6 sm:grid-cols-3">
-            <div>
-              <label className="text-sm font-medium text-gray-700" htmlFor="houseNumber">
-                {t("onboarding.businessEntity.address.houseNumber.label")}
-                <span className="ml-2 text-xs text-red-500">
-                  {t("onboarding.businessEntity.common.required")}
-                </span>
-              </label>
-              <input
-                id="houseNumber"
-                name="houseNumber"
-                type="text"
-                value={houseNumber}
-                onChange={(event) => setHouseNumber(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                placeholder={t("onboarding.businessEntity.address.houseNumber.placeholder")}
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700" htmlFor="rt">
-                {t("onboarding.businessEntity.address.rt.label")}
-                <span className="ml-2 text-xs text-red-500">
-                  {t("onboarding.businessEntity.common.required")}
-                </span>
-              </label>
-              <input
-                id="rt"
-                name="rt"
-                type="text"
-                value={rt}
-                onChange={(event) => setRt(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                placeholder={t("onboarding.businessEntity.address.rt.placeholder")}
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700" htmlFor="rw">
-                {t("onboarding.businessEntity.address.rw.label")}
-                <span className="ml-2 text-xs text-red-500">
-                  {t("onboarding.businessEntity.common.required")}
-                </span>
-              </label>
-              <input
-                id="rw"
-                name="rw"
-                type="text"
-                value={rw}
-                onChange={(event) => setRw(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                placeholder={t("onboarding.businessEntity.address.rw.placeholder")}
-                required
-              />
               </div>
+              <input type="hidden" name="companyType" value={companyType} required />
             </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="province">
-              {t("onboarding.businessEntity.address.province.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={province} onValueChange={setProvince}>
-              <SelectTrigger id="province" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.address.province.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dki">{t("onboarding.businessEntity.address.province.options.dki")}</SelectItem>
-                <SelectItem value="jabar">{t("onboarding.businessEntity.address.province.options.jabar")}</SelectItem>
-                <SelectItem value="jateng">{t("onboarding.businessEntity.address.province.options.jateng")}</SelectItem>
-                <SelectItem value="jatim">{t("onboarding.businessEntity.address.province.options.jatim")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="province" value={province} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="city">
-              {t("onboarding.businessEntity.address.city.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger id="city" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.address.city.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="jakarta">{t("onboarding.businessEntity.address.city.options.jakarta")}</SelectItem>
-                <SelectItem value="bandung">{t("onboarding.businessEntity.address.city.options.bandung")}</SelectItem>
-                <SelectItem value="semarang">{t("onboarding.businessEntity.address.city.options.semarang")}</SelectItem>
-                <SelectItem value="surabaya">{t("onboarding.businessEntity.address.city.options.surabaya")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="city" value={city} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="district">
-              {t("onboarding.businessEntity.address.district.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={district} onValueChange={setDistrict}>
-              <SelectTrigger id="district" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.address.district.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="district-1">{t("onboarding.businessEntity.address.district.options.district1")}</SelectItem>
-                <SelectItem value="district-2">{t("onboarding.businessEntity.address.district.options.district2")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="district" value={district} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="subDistrict">
-              {t("onboarding.businessEntity.address.subDistrict.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
-            </label>
-            <Select value={subDistrict} onValueChange={setSubDistrict}>
-              <SelectTrigger id="subDistrict" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                <SelectValue placeholder={t("onboarding.businessEntity.address.subDistrict.placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sub-1">{t("onboarding.businessEntity.address.subDistrict.options.sub1")}</SelectItem>
-                <SelectItem value="sub-2">{t("onboarding.businessEntity.address.subDistrict.options.sub2")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="subDistrict" value={subDistrict} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="postalCode">
-              {t("onboarding.businessEntity.address.postalCode.label")}
-              <span className="ml-2 text-xs text-red-500">
-                {t("onboarding.businessEntity.common.required")}
-              </span>
+          )}
+
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor="merchantName">
+              Nama Merchant
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
-              id="postalCode"
-              name="postalCode"
+              id="merchantName"
+              name="merchantName"
               type="text"
-              value={postalCode}
-              onChange={(event) => setPostalCode(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              placeholder={t("onboarding.businessEntity.address.postalCode.placeholder")}
+              // value={merchantName}
+              // readOnly
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none"
+              placeholder="Your brand"
               required
             />
           </div>
 
-          <div className="md:col-span-2 space-y-2">
-            <p className="text-sm font-medium text-gray-700">
-              {t("onboarding.businessEntity.address.officePhoto.title")}
-            </p>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <UploadPreviewField
-                  id="insideOfficePhoto"
-                  name="insideOfficePhoto"
-                  label={t("onboarding.businessEntity.address.officePhoto.inside.label")}
-                  accept="image/*"
-                  file={insideOfficeFile}
-                  previewUrl={insideOfficePreview}
-                  onFileChange={setInsideOfficeFile}
-                  onClear={() => setInsideOfficeFile(null)}
-                  previewAlt={t("onboarding.businessEntity.address.officePhoto.inside.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <p className="mt-2 text-xs text-gray-500">
-                  {t("onboarding.businessEntity.address.officePhoto.helper")}
-                </p>
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
-              <div>
-                <UploadPreviewField
-                  id="outsideOfficePhoto"
-                  name="outsideOfficePhoto"
-                  label={t("onboarding.businessEntity.address.officePhoto.outside.label")}
-                  accept="image/*"
-                  file={outsideOfficeFile}
-                  previewUrl={outsideOfficePreview}
-                  onFileChange={setOutsideOfficeFile}
-                  onClear={() => setOutsideOfficeFile(null)}
-                  previewAlt={t("onboarding.businessEntity.address.officePhoto.outside.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <p className="mt-2 text-xs text-gray-500">
-                  {t("onboarding.businessEntity.address.officePhoto.helper")}
-                </p>
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
-            </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor="companyName">
+              Nama Perusahaan
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="companyName"
+              name="companyName"
+              type="text"
+              value={companyName}
+              onChange={(event) => setCompanyName(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required={isCompany}
+            />
           </div>
-        </div>
-      )}
-      {activeStep === "bank" && (
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {t("onboarding.businessEntity.bank.ownerSection.title")}
-            </h3>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <UploadPreviewField
-                  id="ownerKtp"
-                  name="ownerKtp"
-                  label={t("onboarding.businessEntity.bank.ownerSection.ktp.label")}
-                  accept="image/*,application/pdf"
-                  file={ownerKtpFile}
-                  previewUrl={ownerKtpPreview}
-                  onFileChange={setOwnerKtpFile}
-                  onClear={() => setOwnerKtpFile(null)}
-                  previewAlt={t("onboarding.businessEntity.bank.ownerSection.ktp.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
-              <div>
-                <UploadPreviewField
-                  id="ownerNpwpPhoto"
-                  name="ownerNpwpPhoto"
-                  label={t("onboarding.businessEntity.bank.ownerSection.npwpPhoto.label")}
-                  accept="image/*,application/pdf"
-                  file={ownerNpwpFile}
-                  previewUrl={ownerNpwpPreview}
-                  onFileChange={setOwnerNpwpFile}
-                  onClear={() => setOwnerNpwpFile(null)}
-                  previewAlt={t("onboarding.businessEntity.bank.ownerSection.npwpPhoto.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="ownerName">
-                  {t("onboarding.businessEntity.bank.ownerSection.name.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <input
-                  id="ownerName"
-                  name="ownerName"
-                  type="text"
-                  value={ownerName}
-                  onChange={(event) => setOwnerName(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                  placeholder={t("onboarding.businessEntity.bank.ownerSection.name.placeholder")}
-                  required
-                />
-                <p className="mt-2 text-xs text-gray-400">
-                  {t("onboarding.businessEntity.bank.ownerSection.name.helper")}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="ownerNik">
-                  {t("onboarding.businessEntity.bank.ownerSection.nik.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <input
-                  id="ownerNik"
-                  name="ownerNik"
-                  type="text"
-                  value={ownerNik}
-                  onChange={(event) => setOwnerNik(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                  placeholder={t("onboarding.businessEntity.bank.ownerSection.nik.placeholder")}
-                  required
-                />
-                <p className="mt-2 text-xs text-gray-400">
-                  {t("onboarding.businessEntity.bank.ownerSection.nik.helper")}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="ownerNpwp">
-                  {t("onboarding.businessEntity.bank.ownerSection.npwp.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <input
-                  id="ownerNpwp"
-                  name="ownerNpwp"
-                  type="text"
-                  value={ownerNpwp}
-                  onChange={(event) => setOwnerNpwp(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                  placeholder={t("onboarding.businessEntity.bank.ownerSection.npwp.placeholder")}
-                  required
-                />
-                <p className="mt-2 text-xs text-gray-400">
-                  {t("onboarding.businessEntity.bank.ownerSection.npwp.helper")}
-                </p>
-              </div>
-              <div className="md:col-span-2 grid gap-6 lg:grid-cols-2">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
-                    {t("onboarding.businessEntity.bank.ownerSection.addressKtp.title")}
-                  </h3>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpAddress">
-                      {t("onboarding.businessEntity.bank.ownerSection.addressKtp.streetName")}
-                      <span className="ml-2 text-xs text-red-500">
-                        {t("onboarding.businessEntity.common.required")}
-                      </span>
-                    </label>
-                    <Textarea
-                      id="ownerKtpAddress"
-                      name="ownerKtpAddress"
-                      value={ownerKtpAddress}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setOwnerKtpAddress(value);
-                        if (ownerDomicileSame) setOwnerDomicileAddress(value);
-                      }}
-                      className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
-                      placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.streetNamePlaceholder")}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpAddressNumber">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.addressNumber")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <input
-                        id="ownerKtpAddressNumber"
-                        name="ownerKtpAddressNumber"
-                        type="text"
-                        value={ownerKtpAddressNumber}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setOwnerKtpAddressNumber(value);
-                          if (ownerDomicileSame) setOwnerDomicileAddressNumber(value);
-                        }}
-                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.addressNumberPlaceholder")}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRt">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.rt")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <input
-                        id="ownerKtpRt"
-                        name="ownerKtpRt"
-                        type="text"
-                        value={ownerKtpRt}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setOwnerKtpRt(value);
-                          if (ownerDomicileSame) setOwnerDomicileRt(value);
-                        }}
-                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.rtPlaceholder")}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRw">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.rw")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <input
-                        id="ownerKtpRw"
-                        name="ownerKtpRw"
-                        type="text"
-                        value={ownerKtpRw}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setOwnerKtpRw(value);
-                          if (ownerDomicileSame) setOwnerDomicileRw(value);
-                        }}
-                        className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressKtp.rwPlaceholder")}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpProvince">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.province")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerKtpProvince}
-                        onValueChange={(value) => {
-                          setOwnerKtpProvince(value);
-                          if (ownerDomicileSame) setOwnerDomicileProvince(value);
-                        }}
-                      >
-                        <SelectTrigger id="ownerKtpProvince" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.province.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="dki">{t("onboarding.businessEntity.address.province.options.dki")}</SelectItem>
-                          <SelectItem value="jabar">{t("onboarding.businessEntity.address.province.options.jabar")}</SelectItem>
-                          <SelectItem value="jateng">{t("onboarding.businessEntity.address.province.options.jateng")}</SelectItem>
-                          <SelectItem value="jatim">{t("onboarding.businessEntity.address.province.options.jatim")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpCity">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.city")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerKtpCity}
-                        onValueChange={(value) => {
-                          setOwnerKtpCity(value);
-                          if (ownerDomicileSame) setOwnerDomicileCity(value);
-                        }}
-                      >
-                        <SelectTrigger id="ownerKtpCity" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.city.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="jakarta">{t("onboarding.businessEntity.address.city.options.jakarta")}</SelectItem>
-                          <SelectItem value="bandung">{t("onboarding.businessEntity.address.city.options.bandung")}</SelectItem>
-                          <SelectItem value="semarang">{t("onboarding.businessEntity.address.city.options.semarang")}</SelectItem>
-                          <SelectItem value="surabaya">{t("onboarding.businessEntity.address.city.options.surabaya")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpDistrict">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.district")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerKtpDistrict}
-                        onValueChange={(value) => {
-                          setOwnerKtpDistrict(value);
-                          if (ownerDomicileSame) setOwnerDomicileDistrict(value);
-                        }}
-                      >
-                        <SelectTrigger id="ownerKtpDistrict" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.district.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="district-1">{t("onboarding.businessEntity.address.district.options.district1")}</SelectItem>
-                          <SelectItem value="district-2">{t("onboarding.businessEntity.address.district.options.district2")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpSubDistrict">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressKtp.subDistrict")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerKtpSubDistrict}
-                        onValueChange={(value) => {
-                          setOwnerKtpSubDistrict(value);
-                          if (ownerDomicileSame) setOwnerDomicileSubDistrict(value);
-                        }}
-                      >
-                        <SelectTrigger id="ownerKtpSubDistrict" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.subDistrict.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sub-1">{t("onboarding.businessEntity.address.subDistrict.options.sub1")}</SelectItem>
-                          <SelectItem value="sub-2">{t("onboarding.businessEntity.address.subDistrict.options.sub2")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpPostalCode">
-                      {t("onboarding.businessEntity.bank.ownerSection.addressKtp.postalCode")}
-                      <span className="ml-2 text-xs text-red-500">
-                        {t("onboarding.businessEntity.common.required")}
-                      </span>
-                    </label>
-                    <input
-                      id="ownerKtpPostalCode"
-                      name="ownerKtpPostalCode"
-                      type="text"
-                      value={ownerKtpPostalCode}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setOwnerKtpPostalCode(value);
-                        if (ownerDomicileSame) setOwnerDomicilePostalCode(value);
-                      }}
-                      className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                      placeholder={t("onboarding.businessEntity.address.postalCode.placeholder")}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
-                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.title")}
-                    </h3>
-                    <label className="flex items-center gap-2 text-sm text-gray-600">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-gray-900"
-                        checked={ownerDomicileSame}
-                        onChange={(event) => syncOwnerDomicileWithKtp(event.target.checked)}
-                      />
-                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.sameAsKtp")}
-                    </label>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileAddress">
-                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.streetName")}
-                      <span className="ml-2 text-xs text-red-500">
-                        {t("onboarding.businessEntity.common.required")}
-                      </span>
-                    </label>
-                    <Textarea
-                      id="ownerDomicileAddress"
-                      name="ownerDomicileAddress"
-                      value={ownerDomicileAddress}
-                      onChange={(event) => setOwnerDomicileAddress(event.target.value)}
-                      readOnly={ownerDomicileSame}
-                      className={`mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0 ${
-                        ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                      }`}
-                      placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.streetNamePlaceholder")}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileAddressNumber">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.addressNumber")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <input
-                        id="ownerDomicileAddressNumber"
-                        name="ownerDomicileAddressNumber"
-                        type="text"
-                        value={ownerDomicileAddressNumber}
-                        onChange={(event) => setOwnerDomicileAddressNumber(event.target.value)}
-                        readOnly={ownerDomicileSame}
-                        className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
-                          ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                        }`}
-                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.addressNumberPlaceholder")}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRt">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rt")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <input
-                        id="ownerDomicileRt"
-                        name="ownerDomicileRt"
-                        type="text"
-                        value={ownerDomicileRt}
-                        onChange={(event) => setOwnerDomicileRt(event.target.value)}
-                        readOnly={ownerDomicileSame}
-                        className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
-                          ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                        }`}
-                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rtPlaceholder")}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRw">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rw")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <input
-                        id="ownerDomicileRw"
-                        name="ownerDomicileRw"
-                        type="text"
-                        value={ownerDomicileRw}
-                        onChange={(event) => setOwnerDomicileRw(event.target.value)}
-                        readOnly={ownerDomicileSame}
-                        className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
-                          ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                        }`}
-                        placeholder={t("onboarding.businessEntity.bank.ownerSection.addressDomicile.rwPlaceholder")}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileProvince">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.province")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerDomicileProvince}
-                        onValueChange={setOwnerDomicileProvince}
-                        disabled={ownerDomicileSame}
-                      >
-                        <SelectTrigger
-                          id="ownerDomicileProvince"
-                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
-                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                          }`}
-                        >
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.province.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="dki">{t("onboarding.businessEntity.address.province.options.dki")}</SelectItem>
-                          <SelectItem value="jabar">{t("onboarding.businessEntity.address.province.options.jabar")}</SelectItem>
-                          <SelectItem value="jateng">{t("onboarding.businessEntity.address.province.options.jateng")}</SelectItem>
-                          <SelectItem value="jatim">{t("onboarding.businessEntity.address.province.options.jatim")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileCity">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.city")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerDomicileCity}
-                        onValueChange={setOwnerDomicileCity}
-                        disabled={ownerDomicileSame}
-                      >
-                        <SelectTrigger
-                          id="ownerDomicileCity"
-                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
-                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                          }`}
-                        >
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.city.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="jakarta">{t("onboarding.businessEntity.address.city.options.jakarta")}</SelectItem>
-                          <SelectItem value="bandung">{t("onboarding.businessEntity.address.city.options.bandung")}</SelectItem>
-                          <SelectItem value="semarang">{t("onboarding.businessEntity.address.city.options.semarang")}</SelectItem>
-                          <SelectItem value="surabaya">{t("onboarding.businessEntity.address.city.options.surabaya")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileDistrict">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.district")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerDomicileDistrict}
-                        onValueChange={setOwnerDomicileDistrict}
-                        disabled={ownerDomicileSame}
-                      >
-                        <SelectTrigger
-                          id="ownerDomicileDistrict"
-                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
-                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                          }`}
-                        >
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.district.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="district-1">{t("onboarding.businessEntity.address.district.options.district1")}</SelectItem>
-                          <SelectItem value="district-2">{t("onboarding.businessEntity.address.district.options.district2")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileSubDistrict">
-                        {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.subDistrict")}
-                        <span className="ml-2 text-xs text-red-500">
-                          {t("onboarding.businessEntity.common.required")}
-                        </span>
-                      </label>
-                      <Select
-                        value={ownerDomicileSubDistrict}
-                        onValueChange={setOwnerDomicileSubDistrict}
-                        disabled={ownerDomicileSame}
-                      >
-                        <SelectTrigger
-                          id="ownerDomicileSubDistrict"
-                          className={`mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm ${
-                            ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                          }`}
-                        >
-                          <SelectValue placeholder={t("onboarding.businessEntity.address.subDistrict.placeholder")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sub-1">{t("onboarding.businessEntity.address.subDistrict.options.sub1")}</SelectItem>
-                          <SelectItem value="sub-2">{t("onboarding.businessEntity.address.subDistrict.options.sub2")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicilePostalCode">
-                      {t("onboarding.businessEntity.bank.ownerSection.addressDomicile.postalCode")}
-                      <span className="ml-2 text-xs text-red-500">
-                        {t("onboarding.businessEntity.common.required")}
-                      </span>
-                    </label>
-                    <input
-                      id="ownerDomicilePostalCode"
-                      name="ownerDomicilePostalCode"
-                      type="text"
-                      value={ownerDomicilePostalCode}
-                      onChange={(event) => setOwnerDomicilePostalCode(event.target.value)}
-                      readOnly={ownerDomicileSame}
-                      className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
-                        ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
-                      }`}
-                      placeholder={t("onboarding.businessEntity.address.postalCode.placeholder")}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-gray-700" htmlFor="businessStreetName">
+              Nama Jalan
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="businessStreetName"
+              name="businessStreetName"
+              type="text"
+              value={businessStreetName}
+              onChange={(event) => setBusinessStreetName(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="businessRt">
+                RT
+                <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+              </label>
+              <input
+                id="businessRt"
+                name="businessRt"
+                type="text"
+                inputMode="numeric"
+                value={businessRt}
+                onChange={handleNumericChange(setBusinessRt)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="businessRw">
+                RW
+                <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+              </label>
+              <input
+                id="businessRw"
+                name="businessRw"
+                type="text"
+                inputMode="numeric"
+                value={businessRw}
+                onChange={handleNumericChange(setBusinessRw)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                required
+              />
             </div>
           </div>
 
-          {isCompany && (
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="businessProvinceId">
+              Provinsi
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <SearchableSelect
+              id="businessProvinceId"
+              value={businessProvinceId}
+              onValueChange={setBusinessProvinceId}
+              options={provinceOptions}
+              placeholder="Pilih provinsi"
+            />
+            <input type="hidden" name="businessProvinceId" value={businessProvinceId} />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="businessCityId">
+              Kota / Kabupaten
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <SearchableSelect
+              id="businessCityId"
+              value={businessCityId}
+              onValueChange={setBusinessCityId}
+              options={cityOptionsByProvince[businessProvinceId] ?? []}
+              placeholder="Pilih kota/kabupaten"
+              disabled={!businessProvinceId}
+            />
+            <input type="hidden" name="businessCityId" value={businessCityId} />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="businessDistrictId">
+              Kecamatan
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <SearchableSelect
+              id="businessDistrictId"
+              value={businessDistrictId}
+              onValueChange={setBusinessDistrictId}
+              options={districtOptionsByCity[businessCityId] ?? []}
+              placeholder="Pilih kecamatan"
+              disabled={!businessCityId}
+            />
+            <input type="hidden" name="businessDistrictId" value={businessDistrictId} />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="businessSubdistrictId">
+              Kelurahan
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <SearchableSelect
+              id="businessSubdistrictId"
+              value={businessSubdistrictId}
+              onValueChange={setBusinessSubdistrictId}
+              options={subdistrictOptionsByDistrict[businessDistrictId] ?? []}
+              placeholder="Pilih kelurahan"
+              disabled={!businessDistrictId}
+            />
+            <input type="hidden" name="businessSubdistrictId" value={businessSubdistrictId} />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="businessPostalCode">
+              Kode Pos
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="businessPostalCode"
+              name="businessPostalCode"
+              type="number"
+              inputMode="numeric"
+              value={businessPostalCode}
+              onChange={handleNumericChange(setBusinessPostalCode)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="phoneNumber">
+              Nomor Handphone
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="phoneNumber"
+              name="phoneNumber"
+              type="tel"
+              inputMode="numeric"
+              value={phoneNumber}
+              onChange={handleNumericChange(setPhoneNumber)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="email">
+              Email
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="websiteLink">
+              Link Website
+            </label>
+            <input
+              id="websiteLink"
+              name="websiteLink"
+              type="url"
+              value={websiteLink}
+              onChange={(event) => setWebsiteLink(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="https://"
+            />
+          </div>
+
+          <div>
+          <p className="text-sm font-medium text-gray-700">
+            Jenis Usaha
+            <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+          </p>
+          <div className="mt-2 flex flex-wrap gap-4">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="businessMode"
+                value="online"
+                checked={businessMode === "online"}
+                onChange={() => setBusinessMode("online")}
+                className="h-4 w-4 border-gray-300 text-teal-600"
+                required
+              />
+              Online
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="businessMode"
+                value="offline"
+                checked={businessMode === "offline"}
+                onChange={() => setBusinessMode("offline")}
+                className="h-4 w-4 border-gray-300 text-teal-600"
+                required
+              />
+              Offline
+            </label>
+          </div>
+          </div>
+
+          <div>
+          <p className="text-sm font-medium text-gray-700">
+            Status Kepemilikan Usaha
+            <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+          </p>
+          <div className="mt-2 flex flex-wrap gap-4">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="ownershipStatus"
+                value="owned"
+                checked={ownershipStatus === "owned"}
+                onChange={() => setOwnershipStatus("owned")}
+                className="h-4 w-4 border-gray-300 text-teal-600"
+                required
+              />
+              Milik Sendiri
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="ownershipStatus"
+                value="rent"
+                checked={ownershipStatus === "rent"}
+                onChange={() => setOwnershipStatus("rent")}
+                className="h-4 w-4 border-gray-300 text-teal-600"
+                required
+              />
+              Sewa
+            </label>
+          </div>
+          </div>
+
+          <div className="md:col-span-2">
+          <label className="text-sm font-medium text-gray-700" htmlFor="mcc">
+            Kategori Usaha
+            <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+          </label>
+          <Select value={mcc} onValueChange={setMcc}>
+            <SelectTrigger id="mcc" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+              <SelectValue placeholder="Pilih kategori usaha" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mcc-5411">MCC 5411</SelectItem>
+              <SelectItem value="mcc-5812">MCC 5812</SelectItem>
+              <SelectItem value="mcc-5999">MCC 5999</SelectItem>
+            </SelectContent>
+          </Select>
+          <input type="hidden" name="mcc" value={mcc} />
+          </div>
+
+          {businessType === "company" && (
+            <>
+              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Akta Perusahaan ({"<= 5 tahun"})
+                      <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                    </p>
+                    <InfoPopover label="Informasi akta perusahaan">
+                      *yg menjabarkan jajaran direksi & pasal yg menerangkan "maksud & tujuan perusahaan"
+                    </InfoPopover>
+                  </div>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept={pdfAccept}
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={handlePdfChange(setDeedFile)}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    SK Kemenkumham
+                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                  </p>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept={pdfAccept}
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={handlePdfChange(setSkKemenkumhamFile)}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    NIB Perusahaan
+                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                  </p>
+                  <InfoPopover label="Informasi NIB perusahaan">*Harus sesuai dengan bidang usaha</InfoPopover>
+                </div>
+                <TableUpload
+                  maxFiles={1}
+                  multiple={false}
+                  accept={pdfAccept}
+                  simulateUpload={false}
+                  showDefaults={false}
+                  onFilesChange={handlePdfChange(setNibCompanyFile)}
+                  className="mt-2"
+                />
+                <input type="hidden" name="nibNumber" value={nibCompanyFile?.file.name ?? ""} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  NPWP Perusahaan
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </p>
+                <UploadPreviewField
+                  id="npwpNumber"
+                  name="npwpNumber"
+                  label=""
+                  accept={imageAccept}
+                  file={npwpCompanyFile}
+                  previewUrl={npwpCompanyPreview}
+                  onFileChange={handleImageChange("npwpCompanyFile", setNpwpCompanyFile)}
+                  onClear={() => setNpwpCompanyFile(null)}
+                  previewAlt="Pratinjau NPWP perusahaan"
+                  previewHeightClass="h-36"
+                />
+                <input type="hidden" name="npwpNumber" value={npwpCompanyFile?.name ?? ""} />
+                {photoErrors.npwpCompanyFile && (
+                  <p className="mt-2 text-xs text-red-500">{photoErrors.npwpCompanyFile}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {businessType === "individual" && (
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-gray-700">
+                  NIB / SKU (Surat Keterangan Usaha)
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </p>
+                <InfoPopover label="Informasi NIB/SKU">
+                  *SKU masa berlaku kurang dari 12 bulan; SKU bisa dari RT/RW, kelurahan, kecamatan setempat; Harus sesuai bidang usaha
+                </InfoPopover>
+              </div>
+              <TableUpload
+                maxFiles={1}
+                multiple={false}
+                accept={pdfAccept}
+                simulateUpload={false}
+                showDefaults={false}
+                onFilesChange={handlePdfChange(setNibSkuFile)}
+                className="mt-2"
+              />
+            </div>
+          )}
+
+          {businessType !== "" && (
+            <>
+              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Foto Usaha Tampak Depan (plang usaha terlihat)
+                      <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                    </p>
+                    <InfoPopover label="Informasi foto tampak depan">
+                      *bidang usaha jasa apabila tidak ada plang : foto lokasi usaha yg terlihat aktivitas usaha/Kartu nama/social media
+                    </InfoPopover>
+                  </div>
+                  <UploadPreviewField
+                    id="frontPhoto"
+                    name="frontPhoto"
+                    label=""
+                    accept={imageAccept}
+                    file={frontPhotoFile}
+                    previewUrl={frontPhotoPreview}
+                    onFileChange={handleImageChange("frontPhoto", setFrontPhotoFile)}
+                    onClear={() => setFrontPhotoFile(null)}
+                    previewAlt="Pratinjau foto tampak depan"
+                    previewHeightClass="h-36"
+                  />
+                  {photoErrors.frontPhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.frontPhoto}</p>}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    Foto Usaha Dalam (produk / aktivitas usaha)
+                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                  </p>
+                  <UploadPreviewField
+                    id="insidePhoto"
+                    name="insidePhoto"
+                    label=""
+                    accept={imageAccept}
+                    file={insidePhotoFile}
+                    previewUrl={insidePhotoPreview}
+                    onFileChange={handleImageChange("insidePhoto", setInsidePhotoFile)}
+                    onClear={() => setInsidePhotoFile(null)}
+                    previewAlt="Pratinjau foto usaha dalam"
+                    previewHeightClass="h-36"
+                  />
+                  {photoErrors.insidePhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.insidePhoto}</p>}
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    Foto Produk / Brosur / Price List
+                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                  </p>
+                  <InfoPopover label="Informasi foto produk">
+                    *bidang usaha jasa bisa melampirkan foto lokasi usaha yg terlihat aktivitas usaha
+                  </InfoPopover>
+                </div>
+                <UploadPreviewField
+                  id="productPhoto"
+                  name="productPhoto"
+                  label=""
+                  accept={imageAccept}
+                  file={productPhotoFile}
+                  previewUrl={productPhotoPreview}
+                  onFileChange={handleImageChange("productPhoto", setProductPhotoFile)}
+                  onClear={() => setProductPhotoFile(null)}
+                  previewAlt="Pratinjau foto produk"
+                  previewHeightClass="h-36"
+                />
+                {photoErrors.productPhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.productPhoto}</p>}
+              </div>
+
+              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">Logo Usaha (optional)</p>
+                    <InfoPopover label="Informasi logo usaha">
+                      *Kredivo wajib lampirkan logo (bentuk JPEG)
+                    </InfoPopover>
+                  </div>
+                  <UploadPreviewField
+                    id="logoFile"
+                    name="logoFile"
+                    label=""
+                    accept={imageAccept}
+                    file={logoFile}
+                    previewUrl={logoPreview}
+                    onFileChange={handleImageChange("logoFile", setLogoFile)}
+                    onClear={() => setLogoFile(null)}
+                    previewAlt="Pratinjau logo usaha"
+                    previewHeightClass="h-36"
+                  />
+                  {photoErrors.logoFile && <p className="mt-2 text-xs text-red-500">{photoErrors.logoFile}</p>}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">Dokumen Tambahan (optional)</p>
+                    <InfoPopover label="Informasi dokumen tambahan">
+                      *pengajuan Indodana lampirkan file excel sales volume, Online Card Payment lampirkan FPM BRI
+                    </InfoPopover>
+                  </div>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept={pdfAccept}
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={handlePdfChange(setAdditionalDocumentFile)}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        </section>
+      )}
+
+      {currentStep === 2 && (
+        <section className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Data Pemilik Usaha / Direktur</h3>
+          <p className="text-sm text-gray-500">Data {ownerLabel.toLowerCase()} utama untuk verifikasi.</p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerName">
+              Nama {ownerLabel}
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerName"
+              name="ownerName"
+              type="text"
+              value={ownerName}
+              onChange={(event) => setOwnerName(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerBirthPlace">
+              Tempat Lahir
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerBirthPlace"
+              name="ownerBirthPlace"
+              type="text"
+              value={ownerBirthPlace}
+              onChange={(event) => setOwnerBirthPlace(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerBirthDate">
+              Tanggal Lahir
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerBirthDate"
+              name="ownerBirthDate"
+              type="date"
+              value={ownerBirthDate}
+              onChange={(event) => setOwnerBirthDate(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerCitizenship">
+              Kewarganegaraan
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerCitizenship"
+              name="ownerCitizenship"
+              type="text"
+              value={ownerCitizenship}
+              onChange={(event) => setOwnerCitizenship(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div className="md:col-span-2 grid gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {t("onboarding.businessEntity.bank.legalDocuments.title")}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {t("onboarding.businessEntity.bank.legalDocuments.note")}
-                </p>
+                <h4 className="text-sm font-semibold text-gray-900">Alamat Pemilik (Sesuai KTP)</h4>
+                <p className="text-xs text-gray-500">Lengkapi alamat sesuai KTP.</p>
               </div>
-              <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpStreetName">
+                  Nama Jalan
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </label>
+                <input
+                  id="ownerKtpStreetName"
+                  name="ownerKtpStreetName"
+                  type="text"
+                  value={ownerKtpStreetName}
+                  onChange={(event) => setOwnerKtpStreetName(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  required
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-sm font-medium text-gray-700" htmlFor="nibNumber">
-                    {t("onboarding.businessEntity.bank.legalDocuments.nibNumber.label")}
-                    <span className="ml-2 text-xs text-red-500">
-                      {t("onboarding.businessEntity.common.required")}
-                    </span>
+                  <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRt">
+                    RT
+                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                   </label>
                   <input
-                    id="nibNumber"
-                    name="nibNumber"
+                    id="ownerKtpRt"
+                    name="ownerKtpRt"
                     type="text"
-                    value={nibNumber}
-                    onChange={(event) => setNibNumber(event.target.value)}
+                    inputMode="numeric"
+                    value={ownerKtpRt}
+                    onChange={handleNumericChange(setOwnerKtpRt)}
                     className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
                     required
                   />
                 </div>
-                <div />
                 <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("onboarding.businessEntity.bank.legalDocuments.nibDocument.label")}
-                    <span className="ml-2 text-xs text-red-500">
-                      {t("onboarding.businessEntity.common.required")}
-                    </span>
-                  </p>
-                  <TableUpload
-                    maxFiles={1}
-                    multiple={false}
-                    accept="application/pdf"
-                    simulateUpload={false}
-                    showDefaults={false}
-                    onFilesChange={(files) => setNibFile(files[0] ?? null)}
-                    className="mt-2"
+                  <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRw">
+                    RW
+                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                  </label>
+                  <input
+                    id="ownerKtpRw"
+                    name="ownerKtpRw"
+                    type="text"
+                    inputMode="numeric"
+                    value={ownerKtpRw}
+                    onChange={handleNumericChange(setOwnerKtpRw)}
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                    required
                   />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("onboarding.businessEntity.bank.legalDocuments.deedEstablishment.label")}
-                    <span className="ml-2 text-xs text-red-500">
-                      {t("onboarding.businessEntity.common.required")}
-                    </span>
-                  </p>
-                  <TableUpload
-                    maxFiles={1}
-                    multiple={false}
-                    accept="application/pdf"
-                    simulateUpload={false}
-                    showDefaults={false}
-                    onFilesChange={(files) => setDeedEstablishmentFile(files[0] ?? null)}
-                    className="mt-2"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("onboarding.businessEntity.bank.legalDocuments.skMenkumhamEstablishment.label")}
-                    <span className="ml-2 text-xs text-red-500">
-                      {t("onboarding.businessEntity.common.required")}
-                    </span>
-                  </p>
-                  <TableUpload
-                    maxFiles={1}
-                    multiple={false}
-                    accept="application/pdf"
-                    simulateUpload={false}
-                    showDefaults={false}
-                    onFilesChange={(files) => setSkMenkumhamEstablishmentFile(files[0] ?? null)}
-                    className="mt-2"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("onboarding.businessEntity.bank.legalDocuments.deedAmendment.label")}
-                  </p>
-                  <TableUpload
-                    maxFiles={1}
-                    multiple={false}
-                    accept="application/pdf"
-                    simulateUpload={false}
-                    showDefaults={false}
-                    onFilesChange={(files) => setDeedAmendmentFile(files[0] ?? null)}
-                    className="mt-2"
-                  />
-                  <p className="mt-2 text-xs text-gray-400">
-                    {t("onboarding.businessEntity.bank.legalDocuments.deedAmendment.helper")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("onboarding.businessEntity.bank.legalDocuments.skMenkumhamAmendment.label")}
-                  </p>
-                  <TableUpload
-                    maxFiles={1}
-                    multiple={false}
-                    accept="application/pdf"
-                    simulateUpload={false}
-                    showDefaults={false}
-                    onFilesChange={(files) => setSkMenkumhamAmendmentFile(files[0] ?? null)}
-                    className="mt-2"
-                  />
-                  <p className="mt-2 text-xs text-gray-400">
-                    {t("onboarding.businessEntity.bank.legalDocuments.skMenkumhamAmendment.helper")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("onboarding.businessEntity.bank.legalDocuments.pseLicense.label")}
-                    <span className="ml-2 text-xs text-red-500">
-                      {t("onboarding.businessEntity.common.required")}
-                    </span>
-                  </p>
-                  <TableUpload
-                    maxFiles={1}
-                    multiple={false}
-                    accept="application/pdf"
-                    simulateUpload={false}
-                    showDefaults={false}
-                    onFilesChange={(files) => setPseLicenseFile(files[0] ?? null)}
-                    className="mt-2"
-                  />
-                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpProvinceId">
+                  Provinsi
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </label>
+                <SearchableSelect
+                  id="ownerKtpProvinceId"
+                  value={ownerKtpProvinceId}
+                  onValueChange={setOwnerKtpProvinceId}
+                  options={provinceOptions}
+                  placeholder="Pilih provinsi"
+                />
+                <input type="hidden" name="ownerKtpProvinceId" value={ownerKtpProvinceId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpCityId">
+                  Kota / Kabupaten
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </label>
+                <SearchableSelect
+                  id="ownerKtpCityId"
+                  value={ownerKtpCityId}
+                  onValueChange={setOwnerKtpCityId}
+                  options={cityOptionsByProvince[ownerKtpProvinceId] ?? []}
+                  placeholder="Pilih kota/kabupaten"
+                  disabled={!ownerKtpProvinceId}
+                />
+                <input type="hidden" name="ownerKtpCityId" value={ownerKtpCityId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpDistrictId">
+                  Kecamatan
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </label>
+                <SearchableSelect
+                  id="ownerKtpDistrictId"
+                  value={ownerKtpDistrictId}
+                  onValueChange={setOwnerKtpDistrictId}
+                  options={districtOptionsByCity[ownerKtpCityId] ?? []}
+                  placeholder="Pilih kecamatan"
+                  disabled={!ownerKtpCityId}
+                />
+                <input type="hidden" name="ownerKtpDistrictId" value={ownerKtpDistrictId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpSubdistrictId">
+                  Kelurahan
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </label>
+                <SearchableSelect
+                  id="ownerKtpSubdistrictId"
+                  value={ownerKtpSubdistrictId}
+                  onValueChange={setOwnerKtpSubdistrictId}
+                  options={subdistrictOptionsByDistrict[ownerKtpDistrictId] ?? []}
+                  placeholder="Pilih kelurahan"
+                  disabled={!ownerKtpDistrictId}
+                />
+                <input type="hidden" name="ownerKtpSubdistrictId" value={ownerKtpSubdistrictId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpPostalCode">
+                  Kode Pos
+                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                </label>
+                <input
+                  id="ownerKtpPostalCode"
+                  name="ownerKtpPostalCode"
+                  type="number"
+                  inputMode="numeric"
+                  value={ownerKtpPostalCode}
+                  onChange={handleNumericChange(setOwnerKtpPostalCode)}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  required
+                />
               </div>
             </div>
-          )}
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {t("onboarding.businessEntity.bank.bankSection.title")}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {t("onboarding.businessEntity.bank.bankSection.subtitle")}
-            </p>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="bankName">
-                  {t("onboarding.businessEntity.bank.bankSection.bankName.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <Select value={bankName} onValueChange={setBankName}>
-                  <SelectTrigger id="bankName" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-                    <SelectValue placeholder={t("onboarding.businessEntity.bank.bankSection.bankName.placeholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bca">BCA</SelectItem>
-                    <SelectItem value="bni">BNI</SelectItem>
-                    <SelectItem value="bri">BRI</SelectItem>
-                    <SelectItem value="mandiri">Mandiri</SelectItem>
-                  </SelectContent>
-                </Select>
-                <input type="hidden" name="bankName" value={bankName} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="bankAccountNumber">
-                  {t("onboarding.businessEntity.bank.bankSection.accountNumber.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <input
-                  id="bankAccountNumber"
-                  name="bankAccountNumber"
-                  type="text"
-                  value={bankAccountNumber}
-                  onChange={(event) => setBankAccountNumber(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                  placeholder={t("onboarding.businessEntity.bank.bankSection.accountNumber.placeholder")}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700" htmlFor="bankAccountName">
-                  {t("onboarding.businessEntity.bank.bankSection.accountName.label")}
-                  <span className="ml-2 text-xs text-red-500">
-                    {t("onboarding.businessEntity.common.required")}
-                  </span>
-                </label>
-                <input
-                  id="bankAccountName"
-                  name="bankAccountName"
-                  type="text"
-                  value={bankAccountName}
-                  onChange={(event) => setBankAccountName(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-                  placeholder={t("onboarding.businessEntity.bank.bankSection.accountName.placeholder")}
-                  required
-                />
-              </div>
-              <div />
-              <div>
-                <UploadPreviewField
-                  id="bankBookCover"
-                  name="bankBookCover"
-                  label={t("onboarding.businessEntity.bank.bankSection.bankBook.label")}
-                  accept="image/*,application/pdf"
-                  file={bankBookFile}
-                  previewUrl={bankBookPreview}
-                  onFileChange={setBankBookFile}
-                  onClear={() => setBankBookFile(null)}
-                  previewAlt={t("onboarding.businessEntity.bank.bankSection.bankBook.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
-              <div>
-                <UploadPreviewField
-                  id="bankMutation"
-                  name="bankMutation"
-                  label={t("onboarding.businessEntity.bank.bankSection.bankMutation.label")}
-                  accept="image/*,application/pdf"
-                  file={bankMutationFile}
-                  previewUrl={bankMutationPreview}
-                  onFileChange={setBankMutationFile}
-                  onClear={() => setBankMutationFile(null)}
-                  previewAlt={t("onboarding.businessEntity.bank.bankSection.bankMutation.previewAlt")}
-                  previewHeightClass="h-36"
-                />
-                <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                  {t("onboarding.businessEntity.common.seeGuideline")}
-                </button>
-              </div>
-              {!isCompany && (
-                <div>
-                  <UploadPreviewField
-                    id="bankSku"
-                    name="bankSku"
-                    label={t("onboarding.businessEntity.bank.bankSection.sku.label")}
-                    accept="image/*,application/pdf"
-                    file={bankSkuFile}
-                    previewUrl={bankSkuPreview}
-                    onFileChange={setBankSkuFile}
-                    onClear={() => setBankSkuFile(null)}
-                    previewAlt={t("onboarding.businessEntity.bank.bankSection.sku.previewAlt")}
-                    previewHeightClass="h-36"
-                  />
-                  <button type="button" className="mt-2 text-sm font-semibold text-teal-500">
-                    {t("onboarding.businessEntity.common.seeGuideline")}
-                  </button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">Alamat Pemilik (Domisili)</h4>
+                    <p className="text-xs text-gray-500">Lengkapi alamat domisili saat ini.</p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={ownerDomicileSame}
+                      onChange={(event) => handleDomicileSameChange(event.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-teal-600"
+                    />
+                    Sama seperti alamat KTP
+                  </label>
                 </div>
-              )}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileStreetName">
+                  Nama Jalan
+                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                </label>
+                <input
+                  id="ownerDomicileStreetName"
+                  name="ownerDomicileStreetName"
+                  type="text"
+                  value={ownerDomicileStreetName}
+                  onChange={(event) => setOwnerDomicileStreetName(event.target.value)}
+                  className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                    ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                  }`}
+                  required={!ownerDomicileSame}
+                  disabled={ownerDomicileSame}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRt">
+                    RT
+                    {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                  </label>
+                  <input
+                    id="ownerDomicileRt"
+                    name="ownerDomicileRt"
+                    type="text"
+                    inputMode="numeric"
+                    value={ownerDomicileRt}
+                    onChange={handleNumericChange(setOwnerDomicileRt)}
+                    className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                      ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                    }`}
+                    required={!ownerDomicileSame}
+                    disabled={ownerDomicileSame}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRw">
+                    RW
+                    {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                  </label>
+                  <input
+                    id="ownerDomicileRw"
+                    name="ownerDomicileRw"
+                    type="text"
+                    inputMode="numeric"
+                    value={ownerDomicileRw}
+                    onChange={handleNumericChange(setOwnerDomicileRw)}
+                    className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                      ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                    }`}
+                    required={!ownerDomicileSame}
+                    disabled={ownerDomicileSame}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileProvinceId">
+                  Provinsi
+                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                </label>
+                <SearchableSelect
+                  id="ownerDomicileProvinceId"
+                  value={ownerDomicileProvinceId}
+                  onValueChange={setOwnerDomicileProvinceId}
+                  options={provinceOptions}
+                  placeholder="Pilih provinsi"
+                  disabled={ownerDomicileSame}
+                />
+                <input type="hidden" name="ownerDomicileProvinceId" value={ownerDomicileProvinceId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileCityId">
+                  Kota / Kabupaten
+                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                </label>
+                <SearchableSelect
+                  id="ownerDomicileCityId"
+                  value={ownerDomicileCityId}
+                  onValueChange={setOwnerDomicileCityId}
+                  options={cityOptionsByProvince[ownerDomicileProvinceId] ?? []}
+                  placeholder="Pilih kota/kabupaten"
+                  disabled={!ownerDomicileProvinceId || ownerDomicileSame}
+                />
+                <input type="hidden" name="ownerDomicileCityId" value={ownerDomicileCityId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileDistrictId">
+                  Kecamatan
+                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                </label>
+                <SearchableSelect
+                  id="ownerDomicileDistrictId"
+                  value={ownerDomicileDistrictId}
+                  onValueChange={setOwnerDomicileDistrictId}
+                  options={districtOptionsByCity[ownerDomicileCityId] ?? []}
+                  placeholder="Pilih kecamatan"
+                  disabled={!ownerDomicileCityId || ownerDomicileSame}
+                />
+                <input type="hidden" name="ownerDomicileDistrictId" value={ownerDomicileDistrictId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileSubdistrictId">
+                  Kelurahan
+                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                </label>
+                <SearchableSelect
+                  id="ownerDomicileSubdistrictId"
+                  value={ownerDomicileSubdistrictId}
+                  onValueChange={setOwnerDomicileSubdistrictId}
+                  options={subdistrictOptionsByDistrict[ownerDomicileDistrictId] ?? []}
+                  placeholder="Pilih kelurahan"
+                  disabled={!ownerDomicileDistrictId || ownerDomicileSame}
+                />
+                <input type="hidden" name="ownerDomicileSubdistrictId" value={ownerDomicileSubdistrictId} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicilePostalCode">
+                  Kode Pos
+                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                </label>
+                <input
+                  id="ownerDomicilePostalCode"
+                  name="ownerDomicilePostalCode"
+                  type="number"
+                  inputMode="numeric"
+                  value={ownerDomicilePostalCode}
+                  onChange={handleNumericChange(setOwnerDomicilePostalCode)}
+                  className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                    ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
+                  }`}
+                  required={!ownerDomicileSame}
+                  disabled={ownerDomicileSame}
+                />
+              </div>
             </div>
           </div>
+
+          <div>
+            <UploadPreviewField
+              id="ownerKtp"
+              name="ownerKtp"
+              label="KTP Pemilik Usaha atau Direktur"
+              accept={imageAccept}
+              file={ownerKtpFile}
+              previewUrl={ownerKtpPreview}
+              onFileChange={handleImageChange("ownerKtpFile", setOwnerKtpFile)}
+              onClear={() => setOwnerKtpFile(null)}
+              previewAlt="Pratinjau KTP"
+              previewHeightClass="h-36"
+            />
+          </div>
+
+          <div>
+            <UploadPreviewField
+              id="ownerNpwp"
+              name="ownerNpwp"
+              label="NPWP Pemilik Usaha atau Direktur"
+              accept={imageAccept}
+              file={ownerNpwpFile}
+              previewUrl={ownerNpwpPreview}
+              onFileChange={handleImageChange("ownerNpwpFile", setOwnerNpwpFile)}
+              onClear={() => setOwnerNpwpFile(null)}
+              previewAlt="Pratinjau NPWP"
+              previewHeightClass="h-36"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerNik">
+              NIK
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerNik"
+              name="ownerNik"
+              type="text"
+              inputMode="numeric"
+              value={ownerNik}
+              onChange={handleNumericChange(setOwnerNik)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerPhone">
+              Nomor Handphone
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerPhone"
+              name="ownerPhone"
+              type="tel"
+              inputMode="numeric"
+              value={ownerPhone}
+              onChange={handleNumericChange(setOwnerPhone)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerEmail">
+              Email
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="ownerEmail"
+              name="ownerEmail"
+              type="email"
+              value={ownerEmail}
+              onChange={(event) => setOwnerEmail(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
         </div>
+      </section>
       )}
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        {activeStep !== "business" ? (
+
+      {currentStep === 3 && (
+      <section className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Data PIC Admin</h3>
+          <p className="text-sm text-gray-500">PIC Admin dapat berbeda dengan pemilik usaha.</p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="picName">
+              Nama PIC Admin
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="picName"
+              name="picName"
+              type="text"
+              value={picName}
+              onChange={(event) => setPicName(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="picEmail">
+              Email
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="picEmail"
+              name="picEmail"
+              type="email"
+              value={picEmail}
+              onChange={(event) => setPicEmail(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="picPhone">
+              Nomor Handphone
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="picPhone"
+              name="picPhone"
+              type="tel"
+              inputMode="numeric"
+              value={picPhone}
+              onChange={handleNumericChange(setPicPhone)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+        </div>
+        </section>
+      )}
+
+      {currentStep === 4 && (
+        <section className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Data Rekening Settlement</h3>
+          <p className="text-sm text-gray-500">Rekening tujuan pencairan dana settlement merchant.</p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="bankName">
+              Nama Bank
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <Select value={bankName} onValueChange={setBankName}>
+              <SelectTrigger id="bankName" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                <SelectValue placeholder="Pilih bank" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bca">BCA</SelectItem>
+                <SelectItem value="bni">BNI</SelectItem>
+                <SelectItem value="bri">BRI</SelectItem>
+                <SelectItem value="mandiri">Mandiri</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="bankName" value={bankName} />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="bankAccountNumber">
+              Nomor Akun Bank
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="bankAccountNumber"
+              name="bankAccountNumber"
+              type="text"
+              inputMode="numeric"
+              value={bankAccountNumber}
+              onChange={handleNumericChange(setBankAccountNumber)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="bankAccountName">
+              Nama Pemilik Akun
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="bankAccountName"
+              name="bankAccountName"
+              type="text"
+              value={bankAccountName}
+              onChange={(event) => setBankAccountName(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="settlementEmail">
+              Email Settlement
+              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <input
+              id="settlementEmail"
+              name="settlementEmail"
+              type="email"
+              value={settlementEmail}
+              onChange={(event) => setSettlementEmail(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              required
+            />
+          </div>
+        </div>
+        </section>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        {!isFirstStep && (
           <button
             type="button"
-            className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700"
-            onClick={(event) => {
-              event.preventDefault();
-              setActiveStep(activeStep === "bank" ? "address" : "business");
-            }}
-          >
-            {t("onboarding.businessEntity.actions.previous")}
-          </button>
-        ) : (
-          <button
-            type="reset"
+            onClick={handlePrevStep}
             className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700"
           >
-            {t("onboarding.businessEntity.actions.clearAll")}
+            Kembali
           </button>
         )}
-        <button
-          type="submit"
-          disabled={
-            activeStep === "business"
-              ? !isBusinessStepValid
-              : activeStep === "address"
-              ? !isAddressStepValid
-              : !isBankStepValid
-          }
-          className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition ${
-            activeStep === "business" ? "bg-teal-500 hover:bg-teal-600" : "bg-teal-500 hover:bg-teal-600"
-          } ${
-            activeStep === "business"
-              ? !isBusinessStepValid
-                ? "cursor-not-allowed opacity-60"
-                : ""
-              : activeStep === "address"
-              ? !isAddressStepValid
-                ? "cursor-not-allowed opacity-60"
-                : ""
-              : !isBankStepValid
-              ? "cursor-not-allowed opacity-60"
-              : ""
-          }`}
-        >
-          {activeStep === "bank"
-            ? t("onboarding.businessEntity.actions.submit")
-            : t("onboarding.businessEntity.actions.next")}
-        </button>
+        <div className="ml-auto">
+          {isLastStep ? (
+            <button
+              type="submit"
+              disabled={!isFormValid}
+              className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition ${
+                !isFormValid ? "cursor-not-allowed bg-teal-300" : "bg-teal-500 hover:bg-teal-600"
+              }`}
+            >
+              Selanjutnya
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNextStep}
+              disabled={!isStepValid}
+              className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition ${
+                !isStepValid ? "cursor-not-allowed bg-teal-300" : "bg-teal-500 hover:bg-teal-600"
+              }`}
+            >
+              Selanjutnya
+            </button>
+          )}
+        </div>
       </div>
     </form>
   );

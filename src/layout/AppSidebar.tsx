@@ -26,9 +26,9 @@ type SidebarItem =
 
 const onboardingSteps: TimelineStep[] = [
   {
-    title: "sidebar.onboarding.steps.businessType.title",
-    description: "sidebar.onboarding.steps.businessType.description",
-    href: "/business-type",
+    title: "sidebar.onboarding.steps.businessEntity.title",
+    description: "sidebar.onboarding.steps.businessEntity.description",
+    href: "/business-entity",
   },
   {
     title: "sidebar.onboarding.steps.paymentFeature.title",
@@ -45,11 +45,6 @@ const onboardingSteps: TimelineStep[] = [
   //   description: "sidebar.onboarding.steps.representative.description",
   //   href: "/business-representative-information",
   // },
-  {
-    title: "sidebar.onboarding.steps.businessEntity.title",
-    description: "sidebar.onboarding.steps.businessEntity.description",
-    href: "/business-entity",
-  },
   {
     title: "sidebar.onboarding.steps.terms.title",
     description: "sidebar.onboarding.steps.terms.description",
@@ -99,11 +94,10 @@ const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
   const isOnboardingRoute = [
-    "/business-type",
+    "/business-entity",
     "/payment-feature",
     "/edc-information",
     "/business-representative-information",
-    "/business-entity",
     "/terms",
     "/in-review",
     "/finish",

@@ -20,7 +20,7 @@ export default function SignInForm() {
       description: "Sign-in belum dihubungkan ke backend.",
     });
     setIsLoading(false);
-    router.push("/business-type");
+    router.push("/business-entity");
   };
 
   return (

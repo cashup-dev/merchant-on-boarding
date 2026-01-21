@@ -24,70 +24,83 @@ type EdcInformation = {
 
 type BusinessEntityDraft = {
   business: {
-    brandName: string;
-    legalName: string;
-    description: string;
-    category: string;
-    establishedYear: string;
-    employeeCount: string;
-    monthlyVolume: string;
-    socialType: string;
-    socialLink: string;
-    logoFileName: string;
+    merchantName: string;
+    businessType: string;
+    companyType?: string;
+    companyName?: string;
+    phoneNumber: string;
+    email: string;
+    websiteLink?: string;
+    businessMode: string;
+    ownershipStatus: string;
+    mcc: string;
+    nibNumber?: string;
+    npwpNumber?: string;
   };
-  address: {
-    houseNumber?: string;
-    addressDetail: string;
+  businessAddress: {
+    streetName: string;
     rt: string;
     rw: string;
-    province: string;
-    city: string;
-    district: string;
-    subDistrict: string;
+    provinceId: string;
+    cityId: string;
+    districtId: string;
+    subdistrictId: string;
     postalCode: string;
-    insideOfficeFileName: string;
-    outsideOfficeFileName: string;
   };
-  bank: {
-    ownerName: string;
-    ownerNik: string;
-    ownerNpwp: string;
-    ownerKtpAddress: string;
-    ownerKtpAddressNumber: string;
-    ownerKtpRt: string;
-    ownerKtpRw: string;
-    ownerKtpProvince: string;
-    ownerKtpCity: string;
-    ownerKtpDistrict: string;
-    ownerKtpSubDistrict: string;
-    ownerKtpPostalCode: string;
-    ownerDomicileSame: boolean;
-    ownerDomicileAddress: string;
-    ownerDomicileAddressNumber: string;
-    ownerDomicileRt: string;
-    ownerDomicileRw: string;
-    ownerDomicileProvince: string;
-    ownerDomicileCity: string;
-    ownerDomicileDistrict: string;
-    ownerDomicileSubDistrict: string;
-    ownerDomicilePostalCode: string;
+  documents: {
+    deedFileName?: string;
+    skKemenkumhamFileName?: string;
+    nibSkuFileName?: string;
+    additionalDocumentFileName?: string;
+  };
+  photos: {
+    frontPhotoFileName: string;
+    insidePhotoFileName: string;
+    productPhotoFileName: string;
+    logoFileName?: string;
+  };
+  owner: {
+    name: string;
+    birthPlace: string;
+    birthDate: string;
+    citizenship: string;
+    ktpFileName: string;
+    npwpFileName: string;
+    nik: string;
+    phoneNumber: string;
+    email: string;
+  };
+  ownerKtpAddress: {
+    streetName: string;
+    rt: string;
+    rw: string;
+    provinceId: string;
+    cityId: string;
+    districtId: string;
+    subdistrictId: string;
+    postalCode: string;
+  };
+  ownerDomicileAddress: {
+    isSameAsKtp: boolean;
+    streetName: string;
+    rt: string;
+    rw: string;
+    provinceId: string;
+    cityId: string;
+    districtId: string;
+    subdistrictId: string;
+    postalCode: string;
+  };
+  picAdmin: {
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
+  settlement: {
     bankName: string;
     accountNumber: string;
     accountName: string;
-    ownerKtpFileName: string;
-    ownerNpwpFileName: string;
-    bankBookFileName: string;
-    bankMutationFileName: string;
-    bankSkuFileName: string;
-  };
-  legalDocuments?: {
-    nibNumber: string;
-    nibFileName: string;
-    deedEstablishmentFileName: string;
-    skMenkumhamEstablishmentFileName: string;
-    deedAmendmentFileName: string;
-    skMenkumhamAmendmentFileName: string;
-    pseLicenseFileName: string;
+    email: string;
   };
 };
 
