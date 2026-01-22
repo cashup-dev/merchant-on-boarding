@@ -4,12 +4,14 @@ import UploadPreviewField from "@/components/form/UploadPreviewField";
 import TableUpload from "@/components/table-upload";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Info } from "lucide-react";
 import { z } from "zod";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOnboardingStore } from "@/store/onboardingStore";
-import type { FileWithPreview } from "@/hooks/use-file-upload";
+import mccCodes from "@/data/mcc-codes.json";
+import type { FileMetadata, FileWithPreview } from "@/hooks/use-file-upload";
 
 const imageAccept = "image/jpeg,image/png";
 const pdfAccept = "application/pdf";
@@ -30,20 +32,20 @@ const addressSchema = z.object({
 const ownerDomicileSchema = z
   .object({
     isSameAsKtp: z.boolean(),
-    streetName: z.string().optional(),
-    rt: z.string().optional(),
-    rw: z.string().optional(),
-    provinceId: z.string().optional(),
-    cityId: z.string().optional(),
-    districtId: z.string().optional(),
-    subdistrictId: z.string().optional(),
-    postalCode: z.string().optional(),
+    streetName: z.string().default(""),
+    rt: z.string().default(""),
+    rw: z.string().default(""),
+    provinceId: z.string().default(""),
+    cityId: z.string().default(""),
+    districtId: z.string().default(""),
+    subdistrictId: z.string().default(""),
+    postalCode: z.string().default(""),
   })
   .superRefine((value, ctx) => {
     if (value.isSameAsKtp) {
       return;
     }
-    const fields = [
+    const fields: Array<[string, string]> = [
       ["streetName", value.streetName],
       ["rt", value.rt],
       ["rw", value.rw],
@@ -165,6 +167,12 @@ type SelectOption = {
   label: string;
 };
 
+type MccEntry = {
+  mcc: string;
+  edited_description?: string;
+  combined_description?: string;
+};
+
 function SearchableSelect({
   id,
   value,
@@ -284,6 +292,11 @@ const subdistrictOptionsByDistrict: Record<string, SelectOption[]> = {
   ],
 };
 
+const mccOptions: SelectOption[] = (mccCodes as MccEntry[]).map((entry) => ({
+  value: entry.mcc,
+  label: entry.combined_description || entry.edited_description || entry.mcc,
+}));
+
 export default function BusinessEntityForm() {
   const router = useRouter();
   const storedBusinessEntity = useOnboardingStore((state) => state.businessEntity);
@@ -293,6 +306,8 @@ export default function BusinessEntityForm() {
   const [businessType, setBusinessType] = useState("");
   const [companyType, setCompanyType] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [establishedYear, setEstablishedYear] = useState("");
+  const [monthlyVolume, setMonthlyVolume] = useState("");
   const [businessStreetName, setBusinessStreetName] = useState("");
   const [businessRt, setBusinessRt] = useState("");
   const [businessRw, setBusinessRw] = useState("");
@@ -351,6 +366,9 @@ export default function BusinessEntityForm() {
   const [ownerKtpPreview, setOwnerKtpPreview] = useState("");
   const [ownerNpwpFile, setOwnerNpwpFile] = useState<File | null>(null);
   const [ownerNpwpPreview, setOwnerNpwpPreview] = useState("");
+  const [ownerPassportNumber, setOwnerPassportNumber] = useState("");
+  const [ownerPassportFile, setOwnerPassportFile] = useState<File | null>(null);
+  const [ownerPassportPreview, setOwnerPassportPreview] = useState("");
   const [ownerNik, setOwnerNik] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -611,12 +629,23 @@ export default function BusinessEntityForm() {
     return () => URL.revokeObjectURL(url);
   }, [ownerNpwpFile]);
 
+  useEffect(() => {
+    if (!ownerPassportFile || !ownerPassportFile.type.startsWith("image/")) {
+      setOwnerPassportPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(ownerPassportFile);
+    setOwnerPassportPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [ownerPassportFile]);
+
   const handleNumericChange = (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setter(event.target.value.replace(/\D/g, ""));
   };
 
   const hasFile = (file: File | null) => file instanceof File;
   const hasFileWrapper = (file: FileWithPreview | null) => !!file?.file;
+  const normalizeUploadFile = (file?: File | FileMetadata | null) => (file instanceof File ? file : null);
 
   const handlePdfChange =
     (setter: (file: FileWithPreview | null) => void) => (files: FileWithPreview[]) =>
@@ -639,9 +668,10 @@ export default function BusinessEntityForm() {
 
   const buildMultipartPayload = () => {
     const formData = new FormData();
-    const appendIf = (key: string, file?: File | null) => {
-      if (file) {
-        formData.append(key, file);
+    const appendIf = (key: string, file?: File | FileMetadata | null) => {
+      const normalized = normalizeUploadFile(file);
+      if (normalized) {
+        formData.append(key, normalized);
       }
     };
     appendIf("companyDeedFile", deedFile?.file ?? null);
@@ -674,6 +704,8 @@ export default function BusinessEntityForm() {
     return (
       merchantName.trim().length > 0 &&
       businessType !== "" &&
+      establishedYear.trim().length > 0 &&
+      monthlyVolume.trim().length > 0 &&
       businessStreetName.trim().length > 0 &&
       businessRt.trim().length > 0 &&
       businessRw.trim().length > 0 &&
@@ -717,9 +749,11 @@ export default function BusinessEntityForm() {
         ownerDomicileSubdistrictId !== "" &&
         ownerDomicilePostalCode.trim().length > 0)) &&
     ownerCitizenship.trim().length > 0 &&
-    hasFile(ownerKtpFile) &&
-    hasFile(ownerNpwpFile) &&
     ownerNik.trim().length > 0 &&
+    hasFile(ownerKtpFile) &&
+    (ownerCitizenship !== "wna" ||
+      (ownerPassportNumber.trim().length > 0 && hasFile(ownerPassportFile))) &&
+    hasFile(ownerNpwpFile) &&
     ownerPhone.trim().length > 0 &&
     ownerEmail.trim().length > 0;
 
@@ -740,6 +774,10 @@ export default function BusinessEntityForm() {
     { id: 3, label: "Data PIC Admin" },
     { id: 4, label: "Data Rekening Settlement" },
   ];
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 100 }, (_, index) => String(currentYear - index));
+  }, []);
 
   const isStepValid =
     currentStep === 1
@@ -773,6 +811,7 @@ export default function BusinessEntityForm() {
 
   const isCompany = businessType === "company";
   const ownerLabel = isCompany ? "Direktur" : "Pemilik Usaha";
+  const isForeignOwner = ownerCitizenship === "wna";
 
   return (
     <form
@@ -783,6 +822,8 @@ export default function BusinessEntityForm() {
         setBusinessType("");
         setCompanyType("");
         setCompanyName("");
+        setEstablishedYear("");
+        setMonthlyVolume("");
         setBusinessStreetName("");
         setBusinessRt("");
         setBusinessRw("");
@@ -837,6 +878,9 @@ export default function BusinessEntityForm() {
         setOwnerKtpPreview("");
         setOwnerNpwpFile(null);
         setOwnerNpwpPreview("");
+        setOwnerPassportNumber("");
+        setOwnerPassportFile(null);
+        setOwnerPassportPreview("");
         setOwnerNik("");
         setOwnerPhone("");
         setOwnerEmail("");
@@ -992,7 +1036,6 @@ export default function BusinessEntityForm() {
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-gray-700">
               Tipe Bisnis
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {[
@@ -1037,7 +1080,6 @@ export default function BusinessEntityForm() {
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-gray-700">
                 Tipe Perusahaan
-                <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
               </label>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {["PT", "CV", "Firma", "Koperasi", "Nirlaba"].map((type) => (
@@ -1062,57 +1104,111 @@ export default function BusinessEntityForm() {
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-gray-700" htmlFor="merchantName">
               Nama Merchant
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="merchantName"
               name="merchantName"
               type="text"
-              // value={merchantName}
-              // readOnly
+              value={merchantName}
+              onChange={(event) => setMerchantName(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none"
-              placeholder="Your brand"
+              placeholder="Masukkan nama merchant"
               required
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-700" htmlFor="companyName">
-              Nama Perusahaan
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <input
-              id="companyName"
-              name="companyName"
-              type="text"
-              value={companyName}
-              onChange={(event) => setCompanyName(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              required={isCompany}
-            />
+          {isCompany ? (
+            <div className="md:col-span-2">
+              <div>
+                <label className="text-sm font-medium text-gray-700" htmlFor="companyName">
+                  Nama Perusahaan
+                </label>
+                <input
+                  id="companyName"
+                  name="companyName"
+                  type="text"
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  placeholder="Masukkan nama perusahaan"
+                  required={isCompany}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700" htmlFor="companyName">
+                Nama Perusahaan (optional)
+              </label>
+              <input
+                id="companyName"
+                name="companyName"
+                type="text"
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder="Masukkan nama perusahaan"
+                required={isCompany}
+              />
+            </div>
+          )}
+
+          <div className="md:col-span-2 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="establishedYear">
+                Tahun Berdiri
+              </label>
+              <Select value={establishedYear} onValueChange={setEstablishedYear}>
+                <SelectTrigger id="establishedYear" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                  <SelectValue placeholder="Pilih tahun berdiri" />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input type="hidden" name="establishedYear" value={establishedYear} required />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="monthlyVolume">
+                Perkiraan Volume Transaksi Bulanan
+              </label>
+              <input
+                id="monthlyVolume"
+                name="monthlyVolume"
+                type="number"
+                inputMode="numeric"
+                value={monthlyVolume}
+                onChange={(event) => setMonthlyVolume(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder="Masukkan estimasi volume"
+                required
+              />
+            </div>
           </div>
 
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-gray-700" htmlFor="businessStreetName">
-              Nama Jalan
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+              Alamat
             </label>
-            <input
+            <Textarea
               id="businessStreetName"
               name="businessStreetName"
-              type="text"
               value={businessStreetName}
               onChange={(event) => setBusinessStreetName(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
+              placeholder="Masukkan alamat lengkap"
               required
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="md:col-span-2 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium text-gray-700" htmlFor="businessRt">
                 RT
-                <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
               </label>
               <input
                 id="businessRt"
@@ -1122,13 +1218,13 @@ export default function BusinessEntityForm() {
                 value={businessRt}
                 onChange={handleNumericChange(setBusinessRt)}
                 className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder="Masukkan RT"
                 required
               />
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700" htmlFor="businessRw">
                 RW
-                <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
               </label>
               <input
                 id="businessRw"
@@ -1138,78 +1234,78 @@ export default function BusinessEntityForm() {
                 value={businessRw}
                 onChange={handleNumericChange(setBusinessRw)}
                 className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder="Masukkan RW"
                 required
               />
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="businessProvinceId">
-              Provinsi
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <SearchableSelect
-              id="businessProvinceId"
-              value={businessProvinceId}
-              onValueChange={setBusinessProvinceId}
-              options={provinceOptions}
-              placeholder="Pilih provinsi"
-            />
-            <input type="hidden" name="businessProvinceId" value={businessProvinceId} />
+          <div className="md:col-span-2 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="businessProvinceId">
+                Provinsi
+              </label>
+              <SearchableSelect
+                id="businessProvinceId"
+                value={businessProvinceId}
+                onValueChange={setBusinessProvinceId}
+                options={provinceOptions}
+                placeholder="Pilih provinsi"
+              />
+              <input type="hidden" name="businessProvinceId" value={businessProvinceId} />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="businessCityId">
+                Kota / Kabupaten
+              </label>
+              <SearchableSelect
+                id="businessCityId"
+                value={businessCityId}
+                onValueChange={setBusinessCityId}
+                options={cityOptionsByProvince[businessProvinceId] ?? []}
+                placeholder="Pilih kota/kabupaten"
+                disabled={!businessProvinceId}
+              />
+              <input type="hidden" name="businessCityId" value={businessCityId} />
+            </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="businessCityId">
-              Kota / Kabupaten
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <SearchableSelect
-              id="businessCityId"
-              value={businessCityId}
-              onValueChange={setBusinessCityId}
-              options={cityOptionsByProvince[businessProvinceId] ?? []}
-              placeholder="Pilih kota/kabupaten"
-              disabled={!businessProvinceId}
-            />
-            <input type="hidden" name="businessCityId" value={businessCityId} />
-          </div>
+          <div className="md:col-span-2 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="businessDistrictId">
+                Kecamatan
+              </label>
+              <SearchableSelect
+                id="businessDistrictId"
+                value={businessDistrictId}
+                onValueChange={setBusinessDistrictId}
+                options={districtOptionsByCity[businessCityId] ?? []}
+                placeholder="Pilih kecamatan"
+                disabled={!businessCityId}
+              />
+              <input type="hidden" name="businessDistrictId" value={businessDistrictId} />
+            </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="businessDistrictId">
-              Kecamatan
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <SearchableSelect
-              id="businessDistrictId"
-              value={businessDistrictId}
-              onValueChange={setBusinessDistrictId}
-              options={districtOptionsByCity[businessCityId] ?? []}
-              placeholder="Pilih kecamatan"
-              disabled={!businessCityId}
-            />
-            <input type="hidden" name="businessDistrictId" value={businessDistrictId} />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="businessSubdistrictId">
-              Kelurahan
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <SearchableSelect
-              id="businessSubdistrictId"
-              value={businessSubdistrictId}
-              onValueChange={setBusinessSubdistrictId}
-              options={subdistrictOptionsByDistrict[businessDistrictId] ?? []}
-              placeholder="Pilih kelurahan"
-              disabled={!businessDistrictId}
-            />
-            <input type="hidden" name="businessSubdistrictId" value={businessSubdistrictId} />
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="businessSubdistrictId">
+                Kelurahan
+              </label>
+              <SearchableSelect
+                id="businessSubdistrictId"
+                value={businessSubdistrictId}
+                onValueChange={setBusinessSubdistrictId}
+                options={subdistrictOptionsByDistrict[businessDistrictId] ?? []}
+                placeholder="Pilih kelurahan"
+                disabled={!businessDistrictId}
+              />
+              <input type="hidden" name="businessSubdistrictId" value={businessSubdistrictId} />
+            </div>
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="businessPostalCode">
               Kode Pos
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="businessPostalCode"
@@ -1219,6 +1315,7 @@ export default function BusinessEntityForm() {
               value={businessPostalCode}
               onChange={handleNumericChange(setBusinessPostalCode)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan kode pos"
               required
             />
           </div>
@@ -1226,7 +1323,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="phoneNumber">
               Nomor Handphone
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="phoneNumber"
@@ -1236,6 +1332,7 @@ export default function BusinessEntityForm() {
               value={phoneNumber}
               onChange={handleNumericChange(setPhoneNumber)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nomor handphone"
               required
             />
           </div>
@@ -1243,7 +1340,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="email">
               Email
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="email"
@@ -1252,13 +1348,14 @@ export default function BusinessEntityForm() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan alamat email"
               required
             />
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="websiteLink">
-              Link Website
+              Link Website / Sosial Media (optional)
             </label>
             <input
               id="websiteLink"
@@ -1267,14 +1364,13 @@ export default function BusinessEntityForm() {
               value={websiteLink}
               onChange={(event) => setWebsiteLink(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              placeholder="https://"
+              placeholder="Masukkan link website"
             />
           </div>
 
           <div>
           <p className="text-sm font-medium text-gray-700">
             Jenis Usaha
-            <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
           </p>
           <div className="mt-2 flex flex-wrap gap-4">
             <label className="inline-flex items-center gap-2 text-sm text-gray-700">
@@ -1307,7 +1403,6 @@ export default function BusinessEntityForm() {
           <div>
           <p className="text-sm font-medium text-gray-700">
             Status Kepemilikan Usaha
-            <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
           </p>
           <div className="mt-2 flex flex-wrap gap-4">
             <label className="inline-flex items-center gap-2 text-sm text-gray-700">
@@ -1340,29 +1435,24 @@ export default function BusinessEntityForm() {
           <div className="md:col-span-2">
           <label className="text-sm font-medium text-gray-700" htmlFor="mcc">
             Kategori Usaha
-            <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
           </label>
-          <Select value={mcc} onValueChange={setMcc}>
-            <SelectTrigger id="mcc" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
-              <SelectValue placeholder="Pilih kategori usaha" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="mcc-5411">MCC 5411</SelectItem>
-              <SelectItem value="mcc-5812">MCC 5812</SelectItem>
-              <SelectItem value="mcc-5999">MCC 5999</SelectItem>
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            id="mcc"
+            value={mcc}
+            onValueChange={setMcc}
+            options={mccOptions}
+            placeholder="Pilih kategori usaha"
+          />
           <input type="hidden" name="mcc" value={mcc} />
           </div>
 
           {businessType === "company" && (
             <>
-              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
+              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-gray-700">
                       Akta Perusahaan ({"<= 5 tahun"})
-                      <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                     </p>
                     <InfoPopover label="Informasi akta perusahaan">
                       *yg menjabarkan jajaran direksi & pasal yg menerangkan "maksud & tujuan perusahaan"
@@ -1381,7 +1471,6 @@ export default function BusinessEntityForm() {
                 <div>
                   <p className="text-sm font-medium text-gray-700">
                     SK Kemenkumham
-                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                   </p>
                   <TableUpload
                     maxFiles={1}
@@ -1393,82 +1482,78 @@ export default function BusinessEntityForm() {
                     className="mt-2"
                   />
                 </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-gray-700">
-                    NIB Perusahaan
-                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-                  </p>
-                  <InfoPopover label="Informasi NIB perusahaan">*Harus sesuai dengan bidang usaha</InfoPopover>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      NIB Perusahaan
+                    </p>
+                    <InfoPopover label="Informasi NIB perusahaan">*Harus sesuai dengan bidang usaha</InfoPopover>
+                  </div>
+                  <TableUpload
+                    maxFiles={1}
+                    multiple={false}
+                    accept={pdfAccept}
+                    simulateUpload={false}
+                    showDefaults={false}
+                    onFilesChange={handlePdfChange(setNibCompanyFile)}
+                    className="mt-2"
+                  />
+                  <input type="hidden" name="nibNumber" value={nibCompanyFile?.file.name ?? ""} />
                 </div>
-                <TableUpload
-                  maxFiles={1}
-                  multiple={false}
-                  accept={pdfAccept}
-                  simulateUpload={false}
-                  showDefaults={false}
-                  onFilesChange={handlePdfChange(setNibCompanyFile)}
-                  className="mt-2"
-                />
-                <input type="hidden" name="nibNumber" value={nibCompanyFile?.file.name ?? ""} />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  NPWP Perusahaan
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-                </p>
-                <UploadPreviewField
-                  id="npwpNumber"
-                  name="npwpNumber"
-                  label=""
-                  accept={imageAccept}
-                  file={npwpCompanyFile}
-                  previewUrl={npwpCompanyPreview}
-                  onFileChange={handleImageChange("npwpCompanyFile", setNpwpCompanyFile)}
-                  onClear={() => setNpwpCompanyFile(null)}
-                  previewAlt="Pratinjau NPWP perusahaan"
-                  previewHeightClass="h-36"
-                />
-                <input type="hidden" name="npwpNumber" value={npwpCompanyFile?.name ?? ""} />
-                {photoErrors.npwpCompanyFile && (
-                  <p className="mt-2 text-xs text-red-500">{photoErrors.npwpCompanyFile}</p>
-                )}
-              </div>
-            </>
-          )}
 
-          {businessType === "individual" && (
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-gray-700">
-                  NIB / SKU (Surat Keterangan Usaha)
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-                </p>
-                <InfoPopover label="Informasi NIB/SKU">
-                  *SKU masa berlaku kurang dari 12 bulan; SKU bisa dari RT/RW, kelurahan, kecamatan setempat; Harus sesuai bidang usaha
-                </InfoPopover>
+              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    NPWP Perusahaan
+                  </p>
+                  <UploadPreviewField
+                    id="npwpNumber"
+                    name="npwpNumber"
+                    label=""
+                    accept={imageAccept}
+                    file={npwpCompanyFile}
+                    previewUrl={npwpCompanyPreview}
+                    onFileChange={handleImageChange("npwpCompanyFile", setNpwpCompanyFile)}
+                    onClear={() => setNpwpCompanyFile(null)}
+                    previewAlt="Pratinjau NPWP perusahaan"
+                    previewHeightClass="h-36"
+                  />
+                  <input type="hidden" name="npwpNumber" value={npwpCompanyFile?.name ?? ""} />
+                  {photoErrors.npwpCompanyFile && (
+                    <p className="mt-2 text-xs text-red-500">{photoErrors.npwpCompanyFile}</p>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Foto Produk / Brosur / Price List
+                    </p>
+                    <InfoPopover label="Informasi foto produk">
+                      *bidang usaha jasa bisa melampirkan foto lokasi usaha yg terlihat aktivitas usaha
+                    </InfoPopover>
+                  </div>
+                  <UploadPreviewField
+                    id="productPhoto"
+                    name="productPhoto"
+                    label=""
+                    accept={imageAccept}
+                    file={productPhotoFile}
+                    previewUrl={productPhotoPreview}
+                    onFileChange={handleImageChange("productPhoto", setProductPhotoFile)}
+                    onClear={() => setProductPhotoFile(null)}
+                    previewAlt="Pratinjau foto produk"
+                    previewHeightClass="h-36"
+                  />
+                  {photoErrors.productPhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.productPhoto}</p>}
+                </div>
               </div>
-              <TableUpload
-                maxFiles={1}
-                multiple={false}
-                accept={pdfAccept}
-                simulateUpload={false}
-                showDefaults={false}
-                onFilesChange={handlePdfChange(setNibSkuFile)}
-                className="mt-2"
-              />
-            </div>
-          )}
 
-          {businessType !== "" && (
-            <>
               <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-gray-700">
                       Foto Usaha Tampak Depan (plang usaha terlihat)
-                      <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                     </p>
                     <InfoPopover label="Informasi foto tampak depan">
                       *bidang usaha jasa apabila tidak ada plang : foto lokasi usaha yg terlihat aktivitas usaha/Kartu nama/social media
@@ -1491,7 +1576,6 @@ export default function BusinessEntityForm() {
                 <div>
                   <p className="text-sm font-medium text-gray-700">
                     Foto Usaha Dalam (produk / aktivitas usaha)
-                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                   </p>
                   <UploadPreviewField
                     id="insidePhoto"
@@ -1509,58 +1593,129 @@ export default function BusinessEntityForm() {
                 </div>
               </div>
 
-              <div className="md:col-span-2">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-gray-700">
-                    Foto Produk / Brosur / Price List
-                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-                  </p>
-                  <InfoPopover label="Informasi foto produk">
-                    *bidang usaha jasa bisa melampirkan foto lokasi usaha yg terlihat aktivitas usaha
-                  </InfoPopover>
+
+              <div className="md:col-span-2 pt-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-700">Logo Usaha (optional)</p>
+                      <InfoPopover label="Informasi logo usaha">
+                        *Kredivo wajib lampirkan logo (bentuk JPEG)
+                      </InfoPopover>
+                    </div>
+                    <UploadPreviewField
+                      id="logoFile"
+                      name="logoFile"
+                      label=""
+                      accept={imageAccept}
+                      file={logoFile}
+                      previewUrl={logoPreview}
+                      onFileChange={handleImageChange("logoFile", setLogoFile)}
+                      onClear={() => setLogoFile(null)}
+                      previewAlt="Pratinjau logo usaha"
+                      previewHeightClass="h-36"
+                    />
+                    {photoErrors.logoFile && <p className="mt-2 text-xs text-red-500">{photoErrors.logoFile}</p>}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-700">Dokumen Tambahan (optional)</p>
+                      <InfoPopover label="Informasi dokumen tambahan">
+                        *pengajuan Indodana lampirkan file excel sales volume, Online Card Payment lampirkan FPM BRI
+                      </InfoPopover>
+                    </div>
+                    <TableUpload
+                      maxFiles={1}
+                      multiple={false}
+                      accept={pdfAccept}
+                      simulateUpload={false}
+                      showDefaults={false}
+                      onFilesChange={handlePdfChange(setAdditionalDocumentFile)}
+                      className="mt-2"
+                    />
+                  </div>
                 </div>
-                <UploadPreviewField
-                  id="productPhoto"
-                  name="productPhoto"
-                  label=""
-                  accept={imageAccept}
-                  file={productPhotoFile}
-                  previewUrl={productPhotoPreview}
-                  onFileChange={handleImageChange("productPhoto", setProductPhotoFile)}
-                  onClear={() => setProductPhotoFile(null)}
-                  previewAlt="Pratinjau foto produk"
-                  previewHeightClass="h-36"
-                />
-                {photoErrors.productPhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.productPhoto}</p>}
+              </div>
+            </>
+          )}
+
+          {businessType === "individual" && (
+            <>
+              <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Foto Usaha Tampak Depan (plang usaha terlihat)
+                    </p>
+                    <InfoPopover label="Informasi foto tampak depan">
+                      *bidang usaha jasa apabila tidak ada plang : foto lokasi usaha yg terlihat aktivitas usaha/Kartu nama/social media
+                    </InfoPopover>
+                  </div>
+                  <UploadPreviewField
+                    id="frontPhoto"
+                    name="frontPhoto"
+                    label=""
+                    accept={imageAccept}
+                    file={frontPhotoFile}
+                    previewUrl={frontPhotoPreview}
+                    onFileChange={handleImageChange("frontPhoto", setFrontPhotoFile)}
+                    onClear={() => setFrontPhotoFile(null)}
+                    previewAlt="Pratinjau foto tampak depan"
+                    previewHeightClass="h-36"
+                  />
+                  {photoErrors.frontPhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.frontPhoto}</p>}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    Foto Usaha Dalam (produk / aktivitas usaha)
+                  </p>
+                  <UploadPreviewField
+                    id="insidePhoto"
+                    name="insidePhoto"
+                    label=""
+                    accept={imageAccept}
+                    file={insidePhotoFile}
+                    previewUrl={insidePhotoPreview}
+                    onFileChange={handleImageChange("insidePhoto", setInsidePhotoFile)}
+                    onClear={() => setInsidePhotoFile(null)}
+                    previewAlt="Pratinjau foto usaha dalam"
+                    previewHeightClass="h-36"
+                  />
+                  {photoErrors.insidePhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.insidePhoto}</p>}
+                </div>
               </div>
 
               <div className="md:col-span-2 grid gap-6 sm:grid-cols-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-700">Logo Usaha (optional)</p>
-                    <InfoPopover label="Informasi logo usaha">
-                      *Kredivo wajib lampirkan logo (bentuk JPEG)
+                    <p className="text-sm font-medium text-gray-700">
+                      Foto Produk / Brosur / Price List
+                    </p>
+                    <InfoPopover label="Informasi foto produk">
+                      *bidang usaha jasa bisa melampirkan foto lokasi usaha yg terlihat aktivitas usaha
                     </InfoPopover>
                   </div>
                   <UploadPreviewField
-                    id="logoFile"
-                    name="logoFile"
+                    id="productPhoto"
+                    name="productPhoto"
                     label=""
                     accept={imageAccept}
-                    file={logoFile}
-                    previewUrl={logoPreview}
-                    onFileChange={handleImageChange("logoFile", setLogoFile)}
-                    onClear={() => setLogoFile(null)}
-                    previewAlt="Pratinjau logo usaha"
+                    file={productPhotoFile}
+                    previewUrl={productPhotoPreview}
+                    onFileChange={handleImageChange("productPhoto", setProductPhotoFile)}
+                    onClear={() => setProductPhotoFile(null)}
+                    previewAlt="Pratinjau foto produk"
                     previewHeightClass="h-36"
                   />
-                  {photoErrors.logoFile && <p className="mt-2 text-xs text-red-500">{photoErrors.logoFile}</p>}
+                  {photoErrors.productPhoto && <p className="mt-2 text-xs text-red-500">{photoErrors.productPhoto}</p>}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-700">Dokumen Tambahan (optional)</p>
-                    <InfoPopover label="Informasi dokumen tambahan">
-                      *pengajuan Indodana lampirkan file excel sales volume, Online Card Payment lampirkan FPM BRI
+                    <p className="text-sm font-medium text-gray-700">
+                      NIB / SKU (Surat Keterangan Usaha)
+                    </p>
+                    <InfoPopover label="Informasi NIB/SKU">
+                      *SKU masa berlaku kurang dari 12 bulan; SKU bisa dari RT/RW, kelurahan, kecamatan setempat; Harus sesuai bidang usaha
                     </InfoPopover>
                   </div>
                   <TableUpload
@@ -1569,9 +1724,52 @@ export default function BusinessEntityForm() {
                     accept={pdfAccept}
                     simulateUpload={false}
                     showDefaults={false}
-                    onFilesChange={handlePdfChange(setAdditionalDocumentFile)}
+                    onFilesChange={handlePdfChange(setNibSkuFile)}
                     className="mt-2"
                   />
+                </div>
+              </div>
+
+              <div className="md:col-span-2 pt-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-700">Logo Usaha (optional)</p>
+                      <InfoPopover label="Informasi logo usaha">
+                        *Kredivo wajib lampirkan logo (bentuk JPEG)
+                      </InfoPopover>
+                    </div>
+                    <UploadPreviewField
+                      id="logoFile"
+                      name="logoFile"
+                      label=""
+                      accept={imageAccept}
+                      file={logoFile}
+                      previewUrl={logoPreview}
+                      onFileChange={handleImageChange("logoFile", setLogoFile)}
+                      onClear={() => setLogoFile(null)}
+                      previewAlt="Pratinjau logo usaha"
+                      previewHeightClass="h-36"
+                    />
+                    {photoErrors.logoFile && <p className="mt-2 text-xs text-red-500">{photoErrors.logoFile}</p>}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-700">Dokumen Tambahan (optional)</p>
+                      <InfoPopover label="Informasi dokumen tambahan">
+                        *pengajuan Indodana lampirkan file excel sales volume, Online Card Payment lampirkan FPM BRI
+                      </InfoPopover>
+                    </div>
+                    <TableUpload
+                      maxFiles={1}
+                      multiple={false}
+                      accept={pdfAccept}
+                      simulateUpload={false}
+                      showDefaults={false}
+                      onFilesChange={handlePdfChange(setAdditionalDocumentFile)}
+                      className="mt-2"
+                    />
+                  </div>
                 </div>
               </div>
             </>
@@ -1589,8 +1787,7 @@ export default function BusinessEntityForm() {
         <div className="grid gap-6 md:grid-cols-2">
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="ownerName">
-              Nama {ownerLabel}
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+              Nama Pemilik Usaha / Direktur
             </label>
             <input
               id="ownerName"
@@ -1599,22 +1796,7 @@ export default function BusinessEntityForm() {
               value={ownerName}
               onChange={(event) => setOwnerName(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="ownerBirthPlace">
-              Tempat Lahir
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <input
-              id="ownerBirthPlace"
-              name="ownerBirthPlace"
-              type="text"
-              value={ownerBirthPlace}
-              onChange={(event) => setOwnerBirthPlace(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nama pemilik usaha / direktur"
               required
             />
           </div>
@@ -1622,7 +1804,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="ownerBirthDate">
               Tanggal Lahir
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="ownerBirthDate"
@@ -1631,6 +1812,7 @@ export default function BusinessEntityForm() {
               value={ownerBirthDate}
               onChange={(event) => setOwnerBirthDate(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="DD/MM/YYYY"
               required
             />
           </div>
@@ -1638,15 +1820,99 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="ownerCitizenship">
               Kewarganegaraan
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+            </label>
+            <Select value={ownerCitizenship} onValueChange={setOwnerCitizenship}>
+              <SelectTrigger id="ownerCitizenship" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
+                <SelectValue placeholder="Pilih kewarganegaraan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="wni">WNI</SelectItem>
+                <SelectItem value="wna">WNA</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="ownerCitizenship" value={ownerCitizenship} />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerNik">
+              {isForeignOwner ? "Nomor KITAS" : "NIK"}
             </label>
             <input
-              id="ownerCitizenship"
-              name="ownerCitizenship"
+              id="ownerNik"
+              name="ownerNik"
               type="text"
-              value={ownerCitizenship}
-              onChange={(event) => setOwnerCitizenship(event.target.value)}
+              inputMode="numeric"
+              value={ownerNik}
+              onChange={handleNumericChange(setOwnerNik)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder={isForeignOwner ? "Masukkan nomor KITAS" : "Masukkan NIK"}
+              required
+            />
+          </div>
+
+          {isForeignOwner && (
+            <div>
+              <label className="text-sm font-medium text-gray-700" htmlFor="ownerPassportNumber">
+                Nomor PASPOR
+              </label>
+              <input
+                id="ownerPassportNumber"
+                name="ownerPassportNumber"
+                type="text"
+                value={ownerPassportNumber}
+                onChange={(event) => setOwnerPassportNumber(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                placeholder="Masukkan nomor paspor"
+                required
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerPhone">
+              Nomor Handphone
+            </label>
+            <input
+              id="ownerPhone"
+              name="ownerPhone"
+              type="tel"
+              inputMode="numeric"
+              value={ownerPhone}
+              onChange={handleNumericChange(setOwnerPhone)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nomor handphone"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerEmail">
+              Email
+            </label>
+            <input
+              id="ownerEmail"
+              name="ownerEmail"
+              type="email"
+              value={ownerEmail}
+              onChange={(event) => setOwnerEmail(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan alamat email"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700" htmlFor="ownerBirthPlace">
+              Tempat Lahir
+            </label>
+            <input
+              id="ownerBirthPlace"
+              name="ownerBirthPlace"
+              type="text"
+              value={ownerBirthPlace}
+              onChange={(event) => setOwnerBirthPlace(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan tempat lahir"
               required
             />
           </div>
@@ -1659,16 +1925,15 @@ export default function BusinessEntityForm() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpStreetName">
-                  Nama Jalan
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
+                  Alamat
                 </label>
-                <input
+                <Textarea
                   id="ownerKtpStreetName"
                   name="ownerKtpStreetName"
-                  type="text"
                   value={ownerKtpStreetName}
                   onChange={(event) => setOwnerKtpStreetName(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  className="mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0"
+                  placeholder="Masukkan alamat lengkap sesuai KTP"
                   required
                 />
               </div>
@@ -1676,7 +1941,6 @@ export default function BusinessEntityForm() {
                 <div>
                   <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRt">
                     RT
-                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                   </label>
                   <input
                     id="ownerKtpRt"
@@ -1686,13 +1950,13 @@ export default function BusinessEntityForm() {
                     value={ownerKtpRt}
                     onChange={handleNumericChange(setOwnerKtpRt)}
                     className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                    placeholder="Masukkan RT"
                     required
                   />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpRw">
                     RW
-                    <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                   </label>
                   <input
                     id="ownerKtpRw"
@@ -1702,6 +1966,7 @@ export default function BusinessEntityForm() {
                     value={ownerKtpRw}
                     onChange={handleNumericChange(setOwnerKtpRw)}
                     className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                    placeholder="Masukkan RW"
                     required
                   />
                 </div>
@@ -1709,7 +1974,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpProvinceId">
                   Provinsi
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                 </label>
                 <SearchableSelect
                   id="ownerKtpProvinceId"
@@ -1723,7 +1987,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpCityId">
                   Kota / Kabupaten
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                 </label>
                 <SearchableSelect
                   id="ownerKtpCityId"
@@ -1738,7 +2001,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpDistrictId">
                   Kecamatan
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                 </label>
                 <SearchableSelect
                   id="ownerKtpDistrictId"
@@ -1753,7 +2015,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpSubdistrictId">
                   Kelurahan
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                 </label>
                 <SearchableSelect
                   id="ownerKtpSubdistrictId"
@@ -1768,7 +2029,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerKtpPostalCode">
                   Kode Pos
-                  <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
                 </label>
                 <input
                   id="ownerKtpPostalCode"
@@ -1778,6 +2038,7 @@ export default function BusinessEntityForm() {
                   value={ownerKtpPostalCode}
                   onChange={handleNumericChange(setOwnerKtpPostalCode)}
                   className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+                  placeholder="Masukkan kode pos"
                   required
                 />
               </div>
@@ -1803,18 +2064,17 @@ export default function BusinessEntityForm() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileStreetName">
-                  Nama Jalan
-                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
+                  Alamat
                 </label>
-                <input
+                <Textarea
                   id="ownerDomicileStreetName"
                   name="ownerDomicileStreetName"
-                  type="text"
                   value={ownerDomicileStreetName}
                   onChange={(event) => setOwnerDomicileStreetName(event.target.value)}
-                  className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
+                  className={`mt-2 min-h-[96px] w-full rounded-xl border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus-visible:border-gray-400 focus-visible:ring-0 ${
                     ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
                   }`}
+                  placeholder="Masukkan alamat lengkap domisili"
                   required={!ownerDomicileSame}
                   disabled={ownerDomicileSame}
                 />
@@ -1823,7 +2083,6 @@ export default function BusinessEntityForm() {
                 <div>
                   <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRt">
                     RT
-                    {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                   </label>
                   <input
                     id="ownerDomicileRt"
@@ -1835,6 +2094,7 @@ export default function BusinessEntityForm() {
                     className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
                       ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
                     }`}
+                    placeholder="Masukkan RT"
                     required={!ownerDomicileSame}
                     disabled={ownerDomicileSame}
                   />
@@ -1842,7 +2102,6 @@ export default function BusinessEntityForm() {
                 <div>
                   <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileRw">
                     RW
-                    {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                   </label>
                   <input
                     id="ownerDomicileRw"
@@ -1854,6 +2113,7 @@ export default function BusinessEntityForm() {
                     className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
                       ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
                     }`}
+                    placeholder="Masukkan RW"
                     required={!ownerDomicileSame}
                     disabled={ownerDomicileSame}
                   />
@@ -1862,7 +2122,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileProvinceId">
                   Provinsi
-                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                 </label>
                 <SearchableSelect
                   id="ownerDomicileProvinceId"
@@ -1877,7 +2136,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileCityId">
                   Kota / Kabupaten
-                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                 </label>
                 <SearchableSelect
                   id="ownerDomicileCityId"
@@ -1892,7 +2150,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileDistrictId">
                   Kecamatan
-                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                 </label>
                 <SearchableSelect
                   id="ownerDomicileDistrictId"
@@ -1907,7 +2164,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicileSubdistrictId">
                   Kelurahan
-                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                 </label>
                 <SearchableSelect
                   id="ownerDomicileSubdistrictId"
@@ -1922,7 +2178,6 @@ export default function BusinessEntityForm() {
               <div>
                 <label className="text-sm font-medium text-gray-700" htmlFor="ownerDomicilePostalCode">
                   Kode Pos
-                  {!ownerDomicileSame && <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>}
                 </label>
                 <input
                   id="ownerDomicilePostalCode"
@@ -1934,6 +2189,7 @@ export default function BusinessEntityForm() {
                   className={`mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 ${
                     ownerDomicileSame ? "bg-gray-50 text-gray-500" : ""
                   }`}
+                  placeholder="Masukkan kode pos"
                   required={!ownerDomicileSame}
                   disabled={ownerDomicileSame}
                 />
@@ -1945,16 +2201,33 @@ export default function BusinessEntityForm() {
             <UploadPreviewField
               id="ownerKtp"
               name="ownerKtp"
-              label="KTP Pemilik Usaha atau Direktur"
+              label={isForeignOwner ? "Upload KITAS" : "Upload KTP"}
               accept={imageAccept}
               file={ownerKtpFile}
               previewUrl={ownerKtpPreview}
               onFileChange={handleImageChange("ownerKtpFile", setOwnerKtpFile)}
               onClear={() => setOwnerKtpFile(null)}
-              previewAlt="Pratinjau KTP"
+              previewAlt={isForeignOwner ? "Pratinjau KITAS" : "Pratinjau KTP"}
               previewHeightClass="h-36"
             />
           </div>
+
+          {isForeignOwner && (
+            <div>
+              <UploadPreviewField
+                id="ownerPassport"
+                name="ownerPassport"
+                label="Upload PASPOR"
+                accept={imageAccept}
+                file={ownerPassportFile}
+                previewUrl={ownerPassportPreview}
+                onFileChange={handleImageChange("ownerPassportFile", setOwnerPassportFile)}
+                onClear={() => setOwnerPassportFile(null)}
+                previewAlt="Pratinjau PASPOR"
+                previewHeightClass="h-36"
+              />
+            </div>
+          )}
 
           <div>
             <UploadPreviewField
@@ -1968,56 +2241,6 @@ export default function BusinessEntityForm() {
               onClear={() => setOwnerNpwpFile(null)}
               previewAlt="Pratinjau NPWP"
               previewHeightClass="h-36"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="ownerNik">
-              NIK
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <input
-              id="ownerNik"
-              name="ownerNik"
-              type="text"
-              inputMode="numeric"
-              value={ownerNik}
-              onChange={handleNumericChange(setOwnerNik)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="ownerPhone">
-              Nomor Handphone
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <input
-              id="ownerPhone"
-              name="ownerPhone"
-              type="tel"
-              inputMode="numeric"
-              value={ownerPhone}
-              onChange={handleNumericChange(setOwnerPhone)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700" htmlFor="ownerEmail">
-              Email
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
-            </label>
-            <input
-              id="ownerEmail"
-              name="ownerEmail"
-              type="email"
-              value={ownerEmail}
-              onChange={(event) => setOwnerEmail(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
-              required
             />
           </div>
         </div>
@@ -2034,7 +2257,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="picName">
               Nama PIC Admin
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="picName"
@@ -2043,6 +2265,7 @@ export default function BusinessEntityForm() {
               value={picName}
               onChange={(event) => setPicName(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nama PIC"
               required
             />
           </div>
@@ -2050,7 +2273,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="picEmail">
               Email
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="picEmail"
@@ -2059,6 +2281,7 @@ export default function BusinessEntityForm() {
               value={picEmail}
               onChange={(event) => setPicEmail(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan alamat email"
               required
             />
           </div>
@@ -2066,7 +2289,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="picPhone">
               Nomor Handphone
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="picPhone"
@@ -2076,6 +2298,7 @@ export default function BusinessEntityForm() {
               value={picPhone}
               onChange={handleNumericChange(setPicPhone)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nomor handphone"
               required
             />
           </div>
@@ -2093,7 +2316,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="bankName">
               Nama Bank
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <Select value={bankName} onValueChange={setBankName}>
               <SelectTrigger id="bankName" className="mt-2 h-11 rounded-xl border-gray-200 px-4 text-sm">
@@ -2112,7 +2334,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="bankAccountNumber">
               Nomor Akun Bank
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="bankAccountNumber"
@@ -2122,6 +2343,7 @@ export default function BusinessEntityForm() {
               value={bankAccountNumber}
               onChange={handleNumericChange(setBankAccountNumber)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nomor rekening"
               required
             />
           </div>
@@ -2129,7 +2351,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="bankAccountName">
               Nama Pemilik Akun
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="bankAccountName"
@@ -2138,6 +2359,7 @@ export default function BusinessEntityForm() {
               value={bankAccountName}
               onChange={(event) => setBankAccountName(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan nama pemilik akun"
               required
             />
           </div>
@@ -2145,7 +2367,6 @@ export default function BusinessEntityForm() {
           <div>
             <label className="text-sm font-medium text-gray-700" htmlFor="settlementEmail">
               Email Settlement
-              <span className="ml-2 text-xs text-red-500">(wajib diisi)</span>
             </label>
             <input
               id="settlementEmail"
@@ -2154,6 +2375,7 @@ export default function BusinessEntityForm() {
               value={settlementEmail}
               onChange={(event) => setSettlementEmail(event.target.value)}
               className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
+              placeholder="Masukkan email settlement"
               required
             />
           </div>

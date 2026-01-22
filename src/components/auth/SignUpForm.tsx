@@ -152,7 +152,7 @@ export default function SignUpForm() {
                 
                 <div className="sm:col-span-2">
                   <Label htmlFor="referralCode">
-                    {t("signup.register.fields.referral.label")}
+                    {t("signup.register.fields.referral.label")} (optional)
                   </Label>
                   <div className="relative">
                     <Input
@@ -166,7 +166,6 @@ export default function SignUpForm() {
                       }}
                       onFocus={() => setIsSalesOpen(true)}
                       className="dropdown-toggle"
-                      required
                     />
                     <input type="hidden" name="referralCode" value={referralCode} />
                     <Dropdown

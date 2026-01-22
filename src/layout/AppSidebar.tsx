@@ -35,11 +35,11 @@ const onboardingSteps: TimelineStep[] = [
     description: "sidebar.onboarding.steps.paymentFeature.description",
     href: "/payment-feature",
   },
-  {
-    title: "sidebar.onboarding.steps.edcInformation.title",
-    description: "sidebar.onboarding.steps.edcInformation.description",
-    href: "/edc-information",
-  },
+  // {
+  //   title: "sidebar.onboarding.steps.edcInformation.title",
+  //   description: "sidebar.onboarding.steps.edcInformation.description",
+  //   href: "/edc-information",
+  // },
   // {
   //   title: "sidebar.onboarding.steps.representative.title",
   //   description: "sidebar.onboarding.steps.representative.description",
@@ -96,7 +96,7 @@ const AppSidebar: React.FC = () => {
   const isOnboardingRoute = [
     "/business-entity",
     "/payment-feature",
-    "/edc-information",
+    // "/edc-information",
     "/business-representative-information",
     "/terms",
     "/in-review",

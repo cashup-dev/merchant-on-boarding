@@ -51,7 +51,7 @@ export default function PaymentFeatureForm() {
       onSubmit={(event) => {
         event.preventDefault();
         setOnboardingPaymentFeature(selected);
-        router.push("/edc-information");
+        router.push("/terms");
       }}
     >
       <div className="grid gap-4 lg:grid-cols-2">

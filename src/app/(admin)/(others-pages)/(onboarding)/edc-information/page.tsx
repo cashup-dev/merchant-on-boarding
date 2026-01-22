@@ -1,5 +1,5 @@
 import React from "react";
-import EDCInformationClient from "./EDCInformationClient";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "EDC Information",
@@ -7,9 +7,6 @@ export const metadata = {
 };
 
 export default function EDCInformationPage() {
-  return (
-    <section className="bg-white">
-      <EDCInformationClient />
-    </section>
-  );
+  // Temporary: disable EDC step and route.
+  redirect("/terms");
 }

@@ -40,7 +40,7 @@ export default function SignInForm() {
             <div className="space-y-5">
               <div>
                 <Label htmlFor="signin-email">
-                  Email<span className="text-error-500">*</span>
+                  Email<span className="text-error-500"></span>
                 </Label>
                 <Input
                   type="email"
@@ -51,7 +51,7 @@ export default function SignInForm() {
               </div>
               <div>
                 <Label htmlFor="signin-password">
-                  Password<span className="text-error-500">*</span>
+                  Password<span className="text-error-500"></span>
                 </Label>
                 <Input
                   type="password"
