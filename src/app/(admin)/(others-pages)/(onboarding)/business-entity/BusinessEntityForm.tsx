@@ -118,12 +118,12 @@ const businessEntitySchema = z
   })
   .superRefine((value, ctx) => {
     const { business, documents } = value;
+    if (!business.companyName || business.companyName.trim().length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "companyName"], message: "Required" });
+    }
     if (business.businessType === "company") {
       if (!business.companyType || business.companyType.trim().length === 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "companyType"], message: "Required" });
-      }
-      if (!business.companyName || business.companyName.trim().length === 0) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "companyName"], message: "Required" });
       }
       if (!business.nibNumber || business.nibNumber.trim().length === 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["business", "nibNumber"], message: "Required" });
@@ -693,7 +693,6 @@ export default function BusinessEntityForm() {
     const hasCompanyDocuments =
       businessType !== "company" ||
       (companyType !== "" &&
-        companyName.trim().length > 0 &&
         hasFileWrapper(deedFile) &&
         hasFileWrapper(skKemenkumhamFile) &&
         hasFileWrapper(nibCompanyFile) &&
@@ -704,6 +703,7 @@ export default function BusinessEntityForm() {
     return (
       merchantName.trim().length > 0 &&
       businessType !== "" &&
+      companyName.trim().length > 0 &&
       establishedYear.trim().length > 0 &&
       monthlyVolume.trim().length > 0 &&
       businessStreetName.trim().length > 0 &&
@@ -1138,7 +1138,7 @@ export default function BusinessEntityForm() {
           ) : (
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-gray-700" htmlFor="companyName">
-                Nama Perusahaan (optional)
+                Nama Perusahaan
               </label>
               <input
                 id="companyName"
@@ -1148,7 +1148,7 @@ export default function BusinessEntityForm() {
                 onChange={(event) => setCompanyName(event.target.value)}
                 className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400"
                 placeholder="Masukkan nama perusahaan"
-                required={isCompany}
+                required
               />
             </div>
           )}

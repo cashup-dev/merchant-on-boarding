@@ -30,7 +30,7 @@ Field dan komponen:
 - `businessType` (button toggle: `individual` / `company`).
 - `companyType` (hanya jika company, button list: PT/CV/Firma/Koperasi/Nirlaba).
 - `merchantName` (text input).
-- `companyName` (wajib untuk company, optional untuk individual).
+- `companyName` (wajib untuk company & individual).
 - `establishedYear` (tanggal berdiri, optional; hanya jika company).
 - `monthlyVolume` (perkiraan volume transaksi bulanan, optional).
 - Alamat usaha: `businessStreetName`, `businessRt`, `businessRw`, `businessProvinceId`, `businessCityId`, `businessDistrictId`, `businessSubdistrictId`, `businessPostalCode`.
@@ -87,7 +87,7 @@ Dependency antar step:
   - Menghapus file/dokumen yang tidak relevan.
   - Menghapus semua upload terkait (dokumen, foto, logo, additional doc) dan error upload.
 - Dampak ke rendering:
-- `companyType` dan dokumen company hanya muncul untuk `company`; `companyName` tampil untuk keduanya tetapi diwajibkan saat `company`.
+- `companyType` dan dokumen company hanya muncul untuk `company`; `companyName` tampil untuk keduanya dan selalu wajib.
   - `nibSkuFile` hanya muncul untuk `individual`.
   - Foto usaha tampil untuk kedua tipe, tetapi hanya setelah `businessType` dipilih.
 - Dampak ke validasi:
