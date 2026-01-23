@@ -9,24 +9,39 @@ type FeatureCard = {
   id: string;
   titleKey: string;
   descriptionKey: string;
-  detailKey: string;
   badges?: string[];
 };
 
 const featureOptions: FeatureCard[] = [
   {
-    id: "cashlez",
-    titleKey: "onboarding.paymentFeature.options.cashlez.title",
-    descriptionKey: "onboarding.paymentFeature.options.cashlez.description",
-    detailKey: "onboarding.paymentFeature.options.cashlez.detail",
-    badges: ["QRIS", "Credit/Debit"],
+    id: "edc",
+    titleKey: "onboarding.paymentFeature.options.edc.title",
+    descriptionKey: "onboarding.paymentFeature.options.edc.description",
+    badges: ["Credit/Debit Card Present", "POS"],
   },
   {
     id: "softpos",
     titleKey: "onboarding.paymentFeature.options.softpos.title",
     descriptionKey: "onboarding.paymentFeature.options.softpos.description",
-    detailKey: "onboarding.paymentFeature.options.softpos.detail",
-    badges: ["NFC", "Contactless", "Card Present"],
+    badges: ["NFC", "Contactless"],
+  },
+  {
+    id: "soundbox-qr-static",
+    titleKey: "onboarding.paymentFeature.options.soundboxQrStatic.title",
+    descriptionKey: "onboarding.paymentFeature.options.soundboxQrStatic.description",
+    badges: ["Soundbox", "QRIS"],
+  },
+  {
+    id: "qr-static",
+    titleKey: "onboarding.paymentFeature.options.qrStatic.title",
+    descriptionKey: "onboarding.paymentFeature.options.qrStatic.description",
+    badges: ["QRIS"],
+  },
+  {
+    id: "payment-link",
+    titleKey: "onboarding.paymentFeature.options.paymentLink.title",
+    descriptionKey: "onboarding.paymentFeature.options.paymentLink.description",
+    badges: ["Link", "VA", "BNPL"],
   },
 ];
 
@@ -35,14 +50,31 @@ export default function PaymentFeatureForm() {
   const router = useRouter();
   const storedPaymentFeature = useOnboardingStore((state) => state.paymentFeature);
   const setOnboardingPaymentFeature = useOnboardingStore((state) => state.setPaymentFeature);
-  const [selected, setSelected] = useState<string>(storedPaymentFeature || "cashlez");
+  const [selected, setSelected] = useState<string[]>(
+    Array.isArray(storedPaymentFeature)
+      ? storedPaymentFeature
+      : storedPaymentFeature
+      ? [storedPaymentFeature]
+      : []
+  );
 
   useEffect(() => {
-    if (!storedPaymentFeature) {
+    if (!storedPaymentFeature || storedPaymentFeature.length === 0) {
+      setSelected([]);
       return;
     }
-    setSelected(storedPaymentFeature === "czlink" ? "softpos" : storedPaymentFeature);
+    if (Array.isArray(storedPaymentFeature)) {
+      setSelected(storedPaymentFeature);
+      return;
+    }
+    setSelected([storedPaymentFeature]);
   }, [storedPaymentFeature]);
+
+  const toggleFeature = (featureId: string) => {
+    setSelected((prev) =>
+      prev.includes(featureId) ? prev.filter((item) => item !== featureId) : [...prev, featureId]
+    );
+  };
 
   return (
     <form
@@ -56,12 +88,12 @@ export default function PaymentFeatureForm() {
     >
       <div className="grid gap-4 lg:grid-cols-2">
         {featureOptions.map((feature) => {
-          const isActive = selected === feature.id;
+          const isActive = selected.includes(feature.id);
           return (
             <button
               key={feature.id}
               type="button"
-              onClick={() => setSelected(feature.id)}
+              onClick={() => toggleFeature(feature.id)}
               className={`group flex flex-col gap-4 rounded-2xl border p-5 text-left transition ${
                 isActive
                   ? "border-teal-400 bg-teal-50 shadow-sm"
@@ -81,7 +113,6 @@ export default function PaymentFeatureForm() {
                   {isActive ? "✓" : ""}
                 </span>
               </div>
-              <div className="text-sm text-gray-500">{t(feature.detailKey)}</div>
               {feature.badges && (
                 <div className="flex flex-wrap items-center gap-2">
                   {feature.badges.map((badge) => (
@@ -98,10 +129,6 @@ export default function PaymentFeatureForm() {
           );
         })}
       </div>
-
-      <p className="text-sm text-gray-500">
-        {t("onboarding.paymentFeature.note")}
-      </p>
 
     </form>
   );

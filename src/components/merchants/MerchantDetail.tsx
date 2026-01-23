@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Store, ArrowLeft, Landmark, Percent, CheckCircle2, Wallet } from "lucide-react";
+import { Store, ArrowLeft, Landmark, Percent, CheckCircle2, Wallet, FileText, Download } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
@@ -38,42 +38,93 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
     { value: "MTI", label: "MTI - Bank MTI" },
   ];
 
-  // Dummy merchant data
+  // Dummy merchant data (aligned with latest business-entity payload shape)
   const merchantData = {
-    name: "Decoupling Demo",
-    trademark: "Decoupling Demo",
-    subtitle: "test, Kota Jakarta Selatan, 12780, Dki Jakarta, Indonesia",
-    type: "Individual",
-    classification: "Retail",
-    category: "Miscellaneous and Specialty Retail Stores",
-    establishedYear: "2018",
-    employeeCount: "21-50",
-    monthlyVolume: "50-200 juta",
-    storeUrl: "https://example-merchant.com",
-    bankName: "BANK CENTRAL ASIA",
-    bankBranch: "Sunter",
-    bankAccount: "1234567890",
-    bankOnBehalf: "Eunike Candice Cantikasari",
-    bankClearingCode: "0140397",
-    bankCurrency: "IDR",
-    ownerName: "Diana Engelia Agustin",
-    ownerBirthDate: "08/08/1958",
-    ownerIdNumber: "317437465928475",
-    ownerNationality: "WNI",
-    ownerTaxNumber: "096128186016000",
-    ownerAddressKtp:
-      "Jl. Gaharu VI 37 RT 003 RW 011, Cilandak Barat, Cilandak, Jakarta Selatan. DKI Jakarta. 12430.",
-    ownerAddressDomicile:
-      "Jl. Gaharu VI 37 RT 003 RW 011, Cilandak Barat, Cilandak, Jakarta Selatan. DKI Jakarta. 12430.",
-    ownerEmail: "accounting_sing@aquaexpeditions.com",
-    ownerPhone: "6282183583",
-    idNumber: "000000000000000",
-    taxNumber: "00.000.000.0-000.000",
-    familyCertificate: "000000000000000",
-    address: "test, Kota Jakarta Selatan, 12780, Dki Jakarta, Indonesia",
-    phone: "0812345678910",
     registrationStatus: "Approved",
     documentCompleteness: "0%",
+    business: {
+      merchantName: "Decoupling Demo",
+      businessType: "individual",
+      companyType: "",
+      companyName: "PT. Decoupling Demo",
+      phoneNumber: "0812345678910",
+      email: "merchant@example.com",
+      websiteLink: "https://example-merchant.com",
+      businessMode: "online",
+      ownershipStatus: "owned",
+      mcc: "5411",
+      nibNumber: "",
+      npwpNumber: "",
+      establishedYear: "2018",
+      monthlyVolume: "50-200 juta",
+    },
+    businessAddress: {
+      streetName: "Jl. Gaharu VI 37",
+      rt: "003",
+      rw: "011",
+      provinceId: "DKI Jakarta",
+      cityId: "Jakarta Selatan",
+      districtId: "Cilandak",
+      subdistrictId: "Cilandak Barat",
+      postalCode: "12430",
+    },
+    documents: {
+      deedFileName: "akta-perusahaan.pdf",
+      skKemenkumhamFileName: "sk-kemenkumham.pdf",
+      nibSkuFileName: "nib-sku.pdf",
+      additionalDocumentFileName: "",
+    },
+    photos: {
+      frontPhotoFileName: "front-photo.jpg",
+      insidePhotoFileName: "inside-photo.jpg",
+      productPhotoFileName: "product-photo.jpg",
+      logoFileName: "logo.jpg",
+    },
+    owner: {
+      name: "Diana Engelia Agustin",
+      birthPlace: "Jakarta",
+      birthDate: "08/08/1958",
+      citizenship: "wni",
+      ktpFileName: "ktp.jpg",
+      npwpFileName: "npwp-owner.jpg",
+      nik: "317437465928475",
+      phoneNumber: "6282183583",
+      email: "accounting_sing@aquaexpeditions.com",
+      passportNumber: "",
+      passportFileName: "",
+    },
+    ownerKtpAddress: {
+      streetName: "Jl. Gaharu VI 37",
+      rt: "003",
+      rw: "011",
+      provinceId: "DKI Jakarta",
+      cityId: "Jakarta Selatan",
+      districtId: "Cilandak",
+      subdistrictId: "Cilandak Barat",
+      postalCode: "12430",
+    },
+    ownerDomicileAddress: {
+      isSameAsKtp: true,
+      streetName: "Jl. Gaharu VI 37",
+      rt: "003",
+      rw: "011",
+      provinceId: "DKI Jakarta",
+      cityId: "Jakarta Selatan",
+      districtId: "Cilandak",
+      subdistrictId: "Cilandak Barat",
+      postalCode: "12430",
+    },
+    picAdmin: {
+      name: "Nadia Putri",
+      email: "nadia.putri@example.com",
+      phoneNumber: "628111234567",
+    },
+    settlement: {
+      bankName: "BANK CENTRAL ASIA",
+      accountNumber: "1234567890",
+      accountName: "Eunike Candice Cantikasari",
+      email: "settlement@example.com",
+    },
   };
 
   const tabs = [
@@ -86,33 +137,59 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
     // { id: "transactions" as TabType, label: "Transactions" },
   ];
 
+  const formatAddress = (address: {
+    streetName: string;
+    rt: string;
+    rw: string;
+    subdistrictId: string;
+    districtId: string;
+    cityId: string;
+    provinceId: string;
+    postalCode: string;
+  }) => (
+    <div className="space-y-1 text-sm">
+      <div>{address.streetName}</div>
+      <div>{`RT/RW ${address.rt}/${address.rw}`}</div>
+      <div>{`${address.subdistrictId}, ${address.districtId}`}</div>
+      <div>{`${address.cityId}, ${address.provinceId}`}</div>
+      <div>{`Kode Pos ${address.postalCode}`}</div>
+    </div>
+  );
+
+  const businessTypeLabel = merchantData.business.businessType === "company" ? "Company" : "Individual";
+  const businessModeLabel = merchantData.business.businessMode === "online" ? "Online" : "Offline";
+  const ownershipStatusLabel = merchantData.business.ownershipStatus === "owned" ? "Milik Sendiri" : "Sewa";
+  const isForeignOwner = merchantData.owner.citizenship === "wna";
+
   const merchantInfoRows = [
-    { label: "Name", value: merchantData.name },
-    { label: "Trademark", value: merchantData.trademark },
-    { label: "Type", value: merchantData.type },
-    { label: "Classification", value: merchantData.classification },
-    { label: "Category", value: merchantData.category },
-    { label: "Tahun Berdiri", value: merchantData.establishedYear },
-    { label: "Jumlah Karyawan", value: merchantData.employeeCount },
-    { label: "Perkiraan Volume Transaksi Bulanan", value: merchantData.monthlyVolume },
+    { label: "Nama Merchant", value: merchantData.business.merchantName },
+    { label: "Nama Perusahaan", value: merchantData.business.companyName || "-" },
+    ...(merchantData.business.businessType === "company"
+      ? [{ label: "Tipe Perusahaan", value: merchantData.business.companyType || "-" }]
+      : []),
+    { label: "Tahun Berdiri", value: merchantData.business.establishedYear || "-" },
+    { label: "Perkiraan Volume Transaksi Bulanan", value: merchantData.business.monthlyVolume || "-" },
+    { label: "Business Mode", value: businessModeLabel },
+    { label: "Ownership Status", value: ownershipStatusLabel },
+    { label: "Category", value: merchantData.business.mcc || "-" },
+    { label: "Phone", value: merchantData.business.phoneNumber || "-" },
+    { label: "Email", value: merchantData.business.email || "-" },
     {
       label: "Store URL",
-      value: (
+      value: merchantData.business.websiteLink ? (
         <a
-          href={merchantData.storeUrl}
+          href={merchantData.business.websiteLink}
           className="text-blue-600 hover:text-blue-700"
           target="_blank"
           rel="noreferrer"
         >
-          {merchantData.storeUrl}
+          {merchantData.business.websiteLink}
         </a>
+      ) : (
+        "-"
       ),
     },
-    // { label: "ID #", value: merchantData.idNumber },
-    { label: "Tax #", value: merchantData.taxNumber },
-    // { label: "Family Certificate #", value: merchantData.familyCertificate },
-    { label: "Address", value: merchantData.address },
-    { label: "Phone", value: merchantData.phone },
+    { label: "Address", value: formatAddress(merchantData.businessAddress) },
   ];
 
   const mdrTabs = [
@@ -283,7 +360,7 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   };
 
   const registrationRows = [
-    { label: "Type", value: merchantData.type },
+    { label: "Type", value: businessTypeLabel },
     {
       label: "Status",
       value: (
@@ -310,42 +387,168 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
   ];
 
   const registrationDocuments = [
-    { label: "KTP (WNI) / Passport (WNA)", image: "/images/carousel/carousel-01.png" },
-    { label: "NPWP", image: "/images/carousel/carousel-02.png" },
-    { label: "SIUP", image: "/images/carousel/carousel-03.png" },
-    { label: "TDP", image: "/images/carousel/carousel-04.png" },
-    { label: "SITU/SKDU", value: "-" },
-    { label: "Akta Perusahaan", value: "-" },
-    { label: "Foto Usaha", image: "/images/carousel/carousel-01.png" },
-    { label: "Surat Kuasa", value: "-" },
+    {
+      label: isForeignOwner ? "KITAS" : "KTP",
+      image: merchantData.owner.ktpFileName ? "/images/carousel/carousel-01.png" : "",
+      value: merchantData.owner.ktpFileName ? undefined : "-",
+    },
+    ...(isForeignOwner
+      ? [
+          {
+            label: "PASPOR",
+            image: merchantData.owner.passportFileName ? "/images/carousel/carousel-02.png" : "",
+            value: merchantData.owner.passportFileName ? undefined : "-",
+          },
+        ]
+      : []),
+    {
+      label: "NPWP Pemilik",
+      image: merchantData.owner.npwpFileName ? "/images/carousel/carousel-03.png" : "",
+      value: merchantData.owner.npwpFileName ? undefined : "-",
+    },
+    {
+      label: "Akta Perusahaan",
+      value: merchantData.documents.deedFileName ? (
+        <div className="flex items-center gap-3">
+          <a className="text-blue-600 hover:text-blue-700" href="#" target="_blank" rel="noreferrer" title="View">
+            <FileText className="h-4 w-4" />
+          </a>
+          <a className="text-blue-600 hover:text-blue-700" href="#" download title="Download">
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
+      ) : (
+        "-"
+      ),
+    },
+    {
+      label: "SK Kemenkumham",
+      value: merchantData.documents.skKemenkumhamFileName ? (
+        <div className="flex items-center gap-3">
+          <a className="text-blue-600 hover:text-blue-700" href="#" target="_blank" rel="noreferrer" title="View">
+            <FileText className="h-4 w-4" />
+          </a>
+          <a className="text-blue-600 hover:text-blue-700" href="#" download title="Download">
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
+      ) : (
+        "-"
+      ),
+    },
+    {
+      label: "NIB Perusahaan",
+      value: merchantData.business.nibNumber ? (
+        <div className="flex items-center gap-3">
+          <a className="text-blue-600 hover:text-blue-700" href="#" target="_blank" rel="noreferrer" title="View">
+            <FileText className="h-4 w-4" />
+          </a>
+          <a className="text-blue-600 hover:text-blue-700" href="#" download title="Download">
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
+      ) : (
+        "-"
+      ),
+    },
+    {
+      label: "NPWP Perusahaan",
+      image: merchantData.business.npwpNumber ? "/images/carousel/carousel-04.png" : "",
+      value: merchantData.business.npwpNumber ? undefined : "-",
+    },
+    {
+      label: "NIB / SKU",
+      value: merchantData.documents.nibSkuFileName ? (
+        <div className="flex items-center gap-3">
+          <a className="text-blue-600 hover:text-blue-700" href="#" target="_blank" rel="noreferrer" title="View">
+            <FileText className="h-4 w-4" />
+          </a>
+          <a className="text-blue-600 hover:text-blue-700" href="#" download title="Download">
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
+      ) : (
+        "-"
+      ),
+    },
+    {
+      label: "Foto Usaha Tampak Depan",
+      image: merchantData.photos.frontPhotoFileName ? "/images/carousel/carousel-01.png" : "",
+      value: merchantData.photos.frontPhotoFileName ? undefined : "-",
+    },
+    {
+      label: "Foto Usaha Tampak Dalam",
+      image: merchantData.photos.insidePhotoFileName ? "/images/carousel/carousel-02.png" : "",
+      value: merchantData.photos.insidePhotoFileName ? undefined : "-",
+    },
+    {
+      label: "Foto Produk",
+      image: merchantData.photos.productPhotoFileName ? "/images/carousel/carousel-03.png" : "",
+      value: merchantData.photos.productPhotoFileName ? undefined : "-",
+    },
+    {
+      label: "Logo Usaha",
+      image: merchantData.photos.logoFileName ? "/images/carousel/carousel-04.png" : "",
+      value: merchantData.photos.logoFileName ? undefined : "-",
+    },
+    {
+      label: "Dokumen Tambahan",
+      value: merchantData.documents.additionalDocumentFileName ? (
+        <div className="flex items-center gap-3">
+          <a className="text-blue-600 hover:text-blue-700" href="#" target="_blank" rel="noreferrer" title="View">
+            <FileText className="h-4 w-4" />
+          </a>
+          <a className="text-blue-600 hover:text-blue-700" href="#" download title="Download">
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
+      ) : (
+        "-"
+      ),
+    },
   ];
 
   const bankRows = [
-    { label: "Name", value: merchantData.bankName },
-    { label: "Branch", value: merchantData.bankBranch },
-    { label: "Account #", value: merchantData.bankAccount },
-    { label: "On Behalf", value: merchantData.bankOnBehalf },
-    { label: "Clearing Code", value: merchantData.bankClearingCode },
-    { label: "Currency", value: merchantData.bankCurrency },
+    { label: "Bank Name", value: merchantData.settlement.bankName || "-" },
+    { label: "Account Number", value: merchantData.settlement.accountNumber || "-" },
+    { label: "Account Name", value: merchantData.settlement.accountName || "-" },
+    { label: "Settlement Email", value: merchantData.settlement.email || "-" },
   ];
 
   const ownerRows = [
-    { label: "Nama Pemilik Merchant", value: merchantData.ownerName },
-    { label: "Tempat & Tanggal Lahir", value: merchantData.ownerBirthDate },
-    { label: "Alamat Sesuai KTP", value: merchantData.ownerAddressKtp },
-    { label: "Alamat Domisili", value: merchantData.ownerAddressDomicile },
-    { label: "Kewarganegaraan", value: merchantData.ownerNationality },
-    { label: "Email", value: merchantData.ownerEmail },
-    { label: "Nomor Identitas", value: merchantData.ownerIdNumber },
-    { label: "No Hp.", value: merchantData.ownerPhone },
-    { label: "NPWP", value: merchantData.ownerTaxNumber },
+    { label: "Nama Pemilik Usaha / Direktur", value: merchantData.owner.name },
+    { label: "Tanggal Lahir", value: merchantData.owner.birthDate },
+    { label: "Tempat Lahir", value: merchantData.owner.birthPlace },
+    { label: "Kewarganegaraan", value: merchantData.owner.citizenship.toUpperCase() },
+    { label: isForeignOwner ? "Nomor KITAS" : "NIK", value: merchantData.owner.nik },
+    ...(isForeignOwner ? [{ label: "Nomor Paspor", value: merchantData.owner.passportNumber || "-" }] : []),
+    { label: "No. HP", value: merchantData.owner.phoneNumber },
+    { label: "Email", value: merchantData.owner.email },
+    { label: "Alamat KTP", value: formatAddress(merchantData.ownerKtpAddress) },
+    {
+      label: "Alamat Domisili",
+      value: merchantData.ownerDomicileAddress.isSameAsKtp
+        ? "Sama dengan KTP"
+        : formatAddress(merchantData.ownerDomicileAddress),
+    },
+  ];
+
+  const picRows = [
+    { label: "Nama", value: merchantData.picAdmin.name || "-" },
+    { label: "Email", value: merchantData.picAdmin.email || "-" },
+    { label: "Phone", value: merchantData.picAdmin.phoneNumber || "-" },
   ];
 
   const deviceInfoRows = [
     { label: "Kepemilikan EDC", value: "Beli" },
     { label: "Tipe", value: "T6D" },
     { label: "Jumlah", value: "3" },
-    { label: "Alamat Pengiriman", value: merchantData.ownerAddressDomicile },
+    {
+      label: "Alamat Pengiriman",
+      value: merchantData.ownerDomicileAddress.isSameAsKtp
+        ? "Sama dengan KTP"
+        : formatAddress(merchantData.ownerDomicileAddress),
+    },
   ];
 
   useEffect(() => {
@@ -387,10 +590,10 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {merchantData.name}
+                  {merchantData.business.merchantName}
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {merchantData.subtitle}
+                  {`${merchantData.businessAddress.streetName}, ${merchantData.businessAddress.cityId}, ${merchantData.businessAddress.postalCode}, ${merchantData.businessAddress.provinceId}`}
                 </p>
               </div>
               <button className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 transition-colors">
@@ -527,16 +730,48 @@ const MerchantDetail: React.FC<MerchantDetailProps> = ({ merchantId }) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Penanggung Jawab
+                      Informasi Pemilik/Direktur
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Data penanggung jawab merchant
+                      Data Pemilik/Direktur
                     </p>
                   </div>
                 </div>
 
                 <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {ownerRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="text-sm text-gray-900 dark:text-white sm:text-right sm:max-w-[60%]">
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="break-inside-avoid">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/20">
+                    <CheckCircle2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      PIC Admin
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Kontak admin utama merchant
+                    </p>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {picRows.map((row) => (
                     <div
                       key={row.label}
                       className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"

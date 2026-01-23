@@ -96,32 +96,36 @@ export const resources = {
             submit: "Submit",
           },
         },
-          paymentFeature: {
-            title: "Fitur Pembayaran",
-            subtitle: "Pilih produk atau fitur pembayaran cashUP yang ingin digunakan.",
-            note: "Semua fitur dapat digunakan dalam 1-3 hari setelah tim cashUP menyetujui permintaan Anda.",
+        paymentFeature: {
+          title: "Fitur Pembayaran",
+          subtitle: "Pilih fitur pembayaran yang dibutuhkan.",
           options: {
-            cashlez: {
-              title: "Cashlez",
-              description: "Lorem ipsum dolor sit.",
-              detail: "Metode tersedia: VA, transfer bank, e-wallet, QRIS, kartu.",
-            },
-            czlink: {
-              title: "softPOS",
-              description: "Kirim pembayaran melalui Link",
-              detail: "Lorem ipsum dolor sit amet",
+            edc: {
+              title: "EDC",
+              description: "Pembayaran kartu menggunakan perangkat EDC.",
             },
             softpos: {
-              title: "Softpos",
-              description: "Kirim pembayaran kartu melalui smartphone anda",
-              detail: "Lorem ipsum dolor sit amet",
+              title: "SoftPOS",
+              description: "Terima pembayaran kartu langsung dari smartphone.",
+            },
+            soundboxQrStatic: {
+              title: "Soundbox QR Static",
+              description: "Notifikasi suara otomatis untuk pembayaran QR.",
+            },
+            qrStatic: {
+              title: "QR Static",
+              description: "Tampilkan QR statis untuk pembayaran instan.",
+            },
+            paymentLink: {
+              title: "Payment Link",
+              description: "Kirim link pembayaran ke pelanggan.",
             },
           },
-            actions: {
-              previous: "Previous",
-              submit: "Submit",
-            },
+          actions: {
+            previous: "Previous",
+            submit: "Berikutnya",
           },
+        },
           edcInformation: {
             title: "Informasi EDC",
             subtitle: "Lengkapi kebutuhan EDC untuk merchant Anda.",
@@ -674,32 +678,36 @@ export const resources = {
             submit: "Submit",
           },
         },
-          paymentFeature: {
-            title: "Payment Features",
-            subtitle: "Choose the cashUP payment products or features you want to use.",
-            note: "All features can be used within 1-3 days after the cashUP team approves your request.",
+        paymentFeature: {
+          title: "Payment Features",
+          subtitle: "Choose the payment features you need.",
           options: {
-            cashlez: {
-              title: "Cashlez",
-              description: "Lorem ipsum dolor sit.",
-              detail: "Available methods: VA, bank transfer, e-wallet, QRIS, card.",
-            },
-            czlink: {
-              title: "Cashlez Link",
-              description: "Send payments via link",
-              detail: "Lorem ipsum dolor sit amet",
+            edc: {
+              title: "EDC",
+              description: "Card payments using EDC devices.",
             },
             softpos: {
-              title: "Softpos",
-              description: "Send payments via link",
-              detail: "Lorem ipsum dolor sit amet",
+              title: "SoftPOS",
+              description: "Accept card payments directly from a smartphone.",
+            },
+            soundboxQrStatic: {
+              title: "Soundbox QR Static",
+              description: "Audio notifications for QR payments.",
+            },
+            qrStatic: {
+              title: "QR Static",
+              description: "Show a static QR code for instant payments.",
+            },
+            paymentLink: {
+              title: "Payment Link",
+              description: "Send a payment link to customers.",
             },
           },
-            actions: {
-              previous: "Previous",
-              submit: "Submit",
-            },
+          actions: {
+            previous: "Previous",
+            submit: "Next",
           },
+        },
           edcInformation: {
             title: "EDC Information",
             subtitle: "Provide the EDC requirements for this merchant.",

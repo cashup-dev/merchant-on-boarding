@@ -107,11 +107,11 @@ type BusinessEntityDraft = {
 type OnboardingState = {
   businessType: string;
   companyType: string;
-  paymentFeature: string;
+  paymentFeature: string[];
   edcInformation: EdcInformation;
   businessEntity: BusinessEntityDraft | null;
   setBusinessType: (businessType: string, companyType: string) => void;
-  setPaymentFeature: (paymentFeature: string) => void;
+  setPaymentFeature: (paymentFeature: string[]) => void;
   setEdcInformation: (edcInformation: EdcInformation) => void;
   setBusinessEntity: (businessEntity: BusinessEntityDraft) => void;
   reset: () => void;
@@ -137,7 +137,7 @@ const emptyEdcInformation: EdcInformation = {
 const initialState = {
   businessType: "individual",
   companyType: "pt",
-  paymentFeature: "",
+  paymentFeature: [],
   edcInformation: emptyEdcInformation,
   businessEntity: null,
 };
