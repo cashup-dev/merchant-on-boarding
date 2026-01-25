@@ -36,10 +36,10 @@ export default function SignUpForm() {
   );
 
   return (
-    <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
+    <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-2xl mx-auto">
         <div>
-          <div className="border-gray-200 bg-white p-6">
+          <div className="border-gray-200 p-6">
             <div className="flex flex-col gap-6">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white/90">
@@ -187,7 +187,6 @@ export default function SignUpForm() {
                               className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                             >
                               <span className="font-medium text-gray-900">{option.name}</span>
-                              <span className="ml-2 text-xs text-gray-400">{option.id}</span>
                             </button>
                           ))
                         ) : (

@@ -104,16 +104,30 @@ type BusinessEntityDraft = {
   };
 };
 
+type BusinessEntityMeta = {
+  merchant?: {
+    establishedYear?: string;
+    monthlyVolume?: string;
+  };
+  owner?: {
+    passportNumber?: string;
+  };
+};
+
 type OnboardingState = {
   businessType: string;
   companyType: string;
   paymentFeature: string[];
   edcInformation: EdcInformation;
   businessEntity: BusinessEntityDraft | null;
+  businessEntityMeta: BusinessEntityMeta | null;
+  businessEntityCompletedSteps: string[];
   setBusinessType: (businessType: string, companyType: string) => void;
   setPaymentFeature: (paymentFeature: string[]) => void;
   setEdcInformation: (edcInformation: EdcInformation) => void;
   setBusinessEntity: (businessEntity: BusinessEntityDraft) => void;
+  setBusinessEntityMeta: (meta: BusinessEntityMeta) => void;
+  setBusinessEntityCompletedSteps: (steps: string[]) => void;
   reset: () => void;
 };
 
@@ -140,6 +154,8 @@ const initialState = {
   paymentFeature: [],
   edcInformation: emptyEdcInformation,
   businessEntity: null,
+  businessEntityMeta: null,
+  businessEntityCompletedSteps: [],
 };
 
 export const useOnboardingStore = create<OnboardingState>()(
@@ -151,6 +167,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       setPaymentFeature: (paymentFeature) => set({ paymentFeature }),
       setEdcInformation: (edcInformation) => set({ edcInformation }),
       setBusinessEntity: (businessEntity) => set({ businessEntity }),
+      setBusinessEntityMeta: (meta) => set({ businessEntityMeta: meta }),
+      setBusinessEntityCompletedSteps: (steps) => set({ businessEntityCompletedSteps: steps }),
       reset: () => set({ ...initialState }),
     }),
     {

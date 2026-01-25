@@ -1,72 +1,88 @@
 # Business Entity Page — Technical Deep Dive
 
 ## 1. Page Overview
-Halaman `/business-entity` adalah wizard single-page untuk mengumpulkan data onboarding merchant. Page ini merangkum 4 step internal di satu form dan, ketika valid, menyimpan draft `businessEntity` ke Zustand lalu menavigasi ke `/payment-feature`.
+Halaman onboarding Business Entity kini dipecah menjadi multi-page per step untuk mengurangi re-render global dan mempercepat respons UI. Route utama `/business-entity` hanya melakukan redirect ke step pertama.
 
-File utama:
-- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/page.tsx`
-- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/BusinessEntityClient.tsx`
-- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/BusinessEntityForm.tsx`
+Route aktif:
+- `/business-entity/merchant` (Step 1: Informasi Merchant / Badan Usaha)
+- `/business-entity/owner` (Step 2: Data Pemilik Usaha / Direktur)
+- `/business-entity/pic-admin` (Step 3: Data PIC Admin)
+- `/business-entity/settlement` (Step 4: Data Rekening Settlement)
 
-Komponen dan dependensi terkait:
-- `src/components/form/UploadPreviewField.tsx` (upload image + preview + camera)
-- `src/components/table-upload.tsx` + `src/hooks/use-file-upload.ts` (upload dokumen PDF)
-- `src/components/ui/select.tsx`, `src/components/ui/popover.tsx` (UI primitives)
-- `src/store/onboardingStore.ts` (Zustand store)
+Redirect:
+- `/business-entity` → `/business-entity/merchant`
 
-## 2. Wizard & Step Architecture
-- Wizard diimplementasikan sebagai single form dengan state `currentStep` (1-4) dan array `steps` yang berisi label step.
-- Render step dilakukan dengan conditional rendering `currentStep === n` di `BusinessEntityForm.tsx`.
-- Stepper UI adalah list indikator (angka + label) yang menandai status aktif/selesai berdasarkan `currentStep`, tanpa navigasi klik.
-- Navigasi:
-  - `handleNextStep()` memindahkan step jika `isStepValid` true.
-  - `handlePrevStep()` memindahkan step ke belakang.
-  - Tombol `Selanjutnya` pada step terakhir submit form secara penuh.
-- `goToStep()` juga memanggil `window.scrollTo` agar user kembali ke top setiap pergantian step.
+## 2. Struktur File Baru
+Entry point (App Router):
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/page.tsx` (redirect)
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/merchant/page.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/owner/page.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/pic-admin/page.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/settlement/page.tsx`
 
-## 3. Step-by-Step Breakdown
+Komponen step + layout:
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/PageShell.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/Stepper.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/MerchantStepForm.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/OwnerStepForm.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/PicAdminStepForm.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/SettlementStepForm.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/AddressFields.tsx`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_components/ImageUploadField.tsx`
+
+Hook & utils:
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_hooks/useOnboardingDraft.ts`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_hooks/useAddressCascade.ts`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_schema/*.ts`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_utils/normalize.ts`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_utils/file.ts`
+- `src/app/(admin)/(others-pages)/(onboarding)/business-entity/_utils/locations.ts`
+
+API draft:
+- `src/app/api/onboarding/route.ts` (GET/PATCH draft; merge partial update)
+- `src/lib/api/onboarding.ts` (client wrapper)
+
+Komponen umum terkait:
+- `src/components/ui/SearchableSelect.tsx` (search + filter di Select)
+- `src/components/ui/InfoPopover.tsx`
+- `src/components/table-upload.tsx` + `src/hooks/use-file-upload.ts`
+- `src/components/form/UploadPreviewField.tsx`
+- `src/store/onboardingStore.ts`
+
+## 3. Stepper & Navigasi
+- Stepper ditaruh di semua page step melalui `Stepper` + `PageShell`.
+- Status step:
+  - `active`: berdasarkan route saat ini.
+  - `completed`: berdasarkan `completedSteps` dari draft (API/store).
+- Tombol `Next`:
+  - Validate data di step tersebut menggunakan Zod.
+  - Save draft via `PATCH /api/onboarding`.
+  - Jika sukses, navigate ke step berikutnya.
+- Tombol `Back`: kembali ke step sebelumnya tanpa mengubah data.
+
+## 4. Step-by-Step Breakdown
 ### Step 1: Informasi Merchant / Badan Usaha
 Field dan komponen:
-- `businessType` (button toggle: `individual` / `company`).
-- `companyType` (hanya jika company, button list: PT/CV/Firma/Koperasi/Nirlaba).
-- `merchantName` (text input).
-- `companyName` (wajib untuk company & individual).
-- `establishedYear` (tanggal berdiri, optional; hanya jika company).
-- `monthlyVolume` (perkiraan volume transaksi bulanan, optional).
+- `businessType` (toggle `individual` / `company`).
+- `companyType` (hanya jika company, PT/CV/Firma/Koperasi/Nirlaba).
+- `merchantName`, `companyName`.
+- `establishedYear`, `monthlyVolume`.
 - Alamat usaha: `businessStreetName`, `businessRt`, `businessRw`, `businessProvinceId`, `businessCityId`, `businessDistrictId`, `businessSubdistrictId`, `businessPostalCode`.
-- Kontak usaha: `phoneNumber`, `email`, `websiteLink` (optional).
-- `businessMode` (radio: `online`/`offline`).
-- `ownershipStatus` (radio: `owned`/`rent`).
-- `mcc` (Select: MCC 5411/5812/5999).
-- Dokumen company (hanya jika `company`):
-  - `deedFile` (PDF) via `TableUpload`.
-  - `skKemenkumhamFile` (PDF) via `TableUpload`.
-  - `nibCompanyFile` (PDF) via `TableUpload` → nama file disimpan ke `nibNumber` (hidden input).
-  - `npwpCompanyFile` (image) via `UploadPreviewField` → nama file disimpan ke `npwpNumber` (hidden input).
-- Dokumen individual (hanya jika `individual`):
-  - `nibSkuFile` (PDF) via `TableUpload`.
-- Foto usaha (hanya jika `businessType` terpilih):
-  - `frontPhotoFile`, `insidePhotoFile`, `productPhotoFile` (image) via `UploadPreviewField`.
-  - `logoFile` (optional image) via `UploadPreviewField`.
-  - `additionalDocumentFile` (optional PDF) via `TableUpload`.
-
-Ketergantungan penting:
-- Field city/district/subdistrict bergantung pada pilihan region sebelumnya (cascading select).
-- Dokumen yang wajib berbeda antara `company` vs `individual`.
-- Foto usaha hanya diminta setelah `businessType` terisi.
+- Kontak usaha: `phoneNumber`, `email`, `websiteLink` (Optional).
+- `businessMode` (online/offline), `ownershipStatus` (owned/rent), `kategoriUsaha` (label UI: "Kategori Usaha", opsi masih berbasis MCC).
+- Dokumen company: `deedFile` (label: "Akta Perusahaan (<= 5 tahun)"), `skKemenkumhamFile` ("SK Kemenkumham"), `nibCompanyFile` ("NIB Perusahaan"), `npwpCompanyFile` ("NPWP Perusahaan").
+- Dokumen individual: `nibSkuFile`.
+- Foto usaha: `productPhotoFile` (label: "Foto Produk / Brosur / Price List"), `frontPhotoFile` ("Foto Usaha Tampak Depan (plang usaha terlihat)"), `insidePhotoFile` ("Foto Usaha Dalam (produk / aktivitas usaha)"), `logoFile` (optional), `additionalDocumentFile` (optional PDF).
+- Layout upload company (urutan): row 1 (Akta/Sk Kemenkumham/NIB), row 2 (NPWP + Foto Produk), row 3 (Foto Tampak Depan + Foto Usaha Dalam), row 4 optional (Logo + Dokumen Tambahan).
+- Layout upload individual (urutan): row 1 (Foto Tampak Depan + Foto Usaha Dalam), row 2 (Foto Produk + NIB/SKU), row 3 optional (Logo + Dokumen Tambahan).
 
 ### Step 2: Data Pemilik Usaha / Direktur
 Field dan komponen:
-- Identitas owner: `ownerName`, `ownerBirthPlace`, `ownerBirthDate`, `ownerCitizenship`.
-- Alamat KTP: `ownerKtpStreetName`, `ownerKtpRt`, `ownerKtpRw`, `ownerKtpProvinceId`, `ownerKtpCityId`, `ownerKtpDistrictId`, `ownerKtpSubdistrictId`, `ownerKtpPostalCode`.
-- Alamat domisili: `ownerDomicileStreetName`, `ownerDomicileRt`, `ownerDomicileRw`, `ownerDomicileProvinceId`, `ownerDomicileCityId`, `ownerDomicileDistrictId`, `ownerDomicileSubdistrictId`, `ownerDomicilePostalCode`.
-- Checkbox `ownerDomicileSame` untuk mirror alamat KTP ke domisili.
-- Upload image: `ownerKtpFile`, `ownerNpwpFile` via `UploadPreviewField`.
-- Identitas tambahan: `ownerNik`, `ownerPhone`, `ownerEmail`.
-
-Ketergantungan penting:
-- `ownerDomicileSame` mem-bypass validasi domisili dan mengunci input domisili.
-- Label owner berubah sesuai `businessType` (Pemilik Usaha vs Direktur).
+- Identitas owner: `ownerName`, `ownerBirthPlace`, `ownerBirthDate`, `ownerCitizenship` (WNI/WNA).
+- Alamat KTP & domisili (cascading select).
+- `ownerDomicileSame` untuk mirror alamat.
+- Upload: `ownerKtpFile`, `ownerNpwpFile`, dan `ownerPassportFile` jika WNA.
+- Field khusus WNA: `ownerPassportNumber`.
 
 ### Step 3: Data PIC Admin
 Field:
@@ -74,97 +90,46 @@ Field:
 
 ### Step 4: Data Rekening Settlement
 Field:
-- `bankName` (Select: BCA/BNI/BRI/Mandiri).
-- `bankAccountNumber`, `bankAccountName`, `settlementEmail`.
+- `bankName`, `bankAccountNumber`, `bankAccountName`, `settlementEmail`.
 
-Dependency antar step:
-- Tidak ada dependency lintas step yang bersifat hard dependency di UI, tapi validasi final memakai semua step.
+## 5. Draft, Resume, dan Data Flow
+- `useOnboardingDraft()` melakukan:
+  - `GET /api/onboarding` saat page load.
+  - Sync hasil ke Zustand (`businessEntity`, `businessEntityMeta`, `businessEntityCompletedSteps`).
+- `saveDraft()`:
+  - `PATCH /api/onboarding` hanya untuk section step yang sedang aktif.
+  - Backend melakukan merge partial update (tidak overwrite section lain).
+- Resume:
+  - Jika user reload atau kembali, data draft otomatis diprefill dari store/response.
+- `businessEntityMeta` menyimpan field yang sebelumnya hanya local:
+  - `merchant.establishedYear`, `merchant.monthlyVolume`.
+  - `owner.passportNumber`.
 
-## 4. Business Type Logic
-- `businessType` dipilih lewat tombol toggle dan disimpan di local state `businessType`.
-- `handleBusinessTypeChange()`:
-  - Reset `companyType`.
-  - Menghapus file/dokumen yang tidak relevan.
-  - Menghapus semua upload terkait (dokumen, foto, logo, additional doc) dan error upload.
-- Dampak ke rendering:
-- `companyType` dan dokumen company hanya muncul untuk `company`; `companyName` tampil untuk keduanya dan selalu wajib.
-  - `nibSkuFile` hanya muncul untuk `individual`.
-  - Foto usaha tampil untuk kedua tipe, tetapi hanya setelah `businessType` dipilih.
-- Dampak ke validasi:
-  - `isStep1Valid` mensyaratkan dokumen berbeda tergantung `businessType`.
-  - Zod `superRefine` juga menegakkan requirement yang sama di level submit final.
-- Reset state:
-  - Semua file state (PDF & image) dan error reset setiap perubahan `businessType`, sehingga user harus re-upload.
+## 6. Validation Strategy (Per-Step Zod)
+- Validasi dilakukan per step dengan schema terpisah:
+  - `merchant.schema.ts`, `owner.schema.ts`, `pic.schema.ts`, `settlement.schema.ts`.
+- Validasi berjalan saat `onSubmit` step dan menampilkan error per-field.
+- Tidak ada lagi `isStepValid()` global yang dieksekusi di setiap keystroke.
 
-## 5. Validation Strategy
-- Strategi hybrid:
-  - Imperatif untuk per-step: `isStep1Valid`, `isStep2Valid`, `isStep3Valid`, `isStep4Valid` berbasis pengecekan string dan keberadaan file.
-  - Schema-based untuk submit final: `businessEntitySchema.safeParse(payload)` dengan `superRefine` untuk kondisi company/individual dan alamat domisili.
-- Tombol `Selanjutnya`:
-  - Step 1-3: disabled jika `isStepValid` false.
-  - Step 4: disabled jika `isFormValid` false.
-- Validasi per-step bersifat blocking, tetapi tidak ada error message granular di UI (hanya disable tombol).
-- Validasi Zod tidak memunculkan error ke UI; jika gagal, submit silently returns.
+## 7. Performance Improvement yang Diimplementasikan
+- **Isolasi render**: setiap step hanya menyimpan state lokal untuk field step tersebut.
+- **SearchableSelect dioptimasi**:
+  - `useDeferredValue` untuk query.
+  - `useMemo` untuk filtered options.
+- **Upload preview diisolasi**:
+  - `ImageUploadField` mengelola preview internal (tidak lagi di parent).
+- **Cascade alamat lebih ringan**:
+  - `useAddressCascade` melakukan reset city/district/subdistrict dalam satu update per perubahan parent.
 
-## 6. File & Image Upload Handling
-- PDF:
-  - Menggunakan `TableUpload` dengan `accept = application/pdf`, `maxFiles = 1`, `simulateUpload = false`, `showDefaults = false`.
-  - `TableUpload` memakai `useFileUpload` untuk validasi type/size dan state file.
-  - Default `maxSize` dari `TableUpload` adalah 50 MB (karena tidak di-override di form).
-- Image:
-  - Menggunakan `UploadPreviewField` dengan `accept = image/jpeg,image/png`.
-  - Validasi tipe file dilakukan manual di `handleImageChange` (hanya JPG/JPEG/PNG).
-  - Preview URL dikelola di `BusinessEntityForm` via `URL.createObjectURL` dan cleanup di `useEffect`.
-  - `UploadPreviewField` mendukung drag-drop dan kamera (WebRTC), walau di form ini tidak memakai `capture` prop.
-- State upload:
-  - Dokumen PDF disimpan sebagai `FileWithPreview` (dari `use-file-upload`).
-  - Image disimpan sebagai `File` lokal + `previewUrl` terpisah di state.
-- Risiko:
-  - File hanya disimpan lokal di state; tidak ada persisten ke store sebelum submit final.
-  - `buildMultipartPayload()` menyusun `FormData` tetapi tidak dipakai untuk request.
+## 8. File & Image Upload Handling
+- PDF: `TableUpload` (`accept=application/pdf`, `maxFiles=1`, `showDefaults=false`).
+- Image: `UploadPreviewField` dibungkus `ImageUploadField` agar preview tidak memicu re-render global.
+- File yang tersimpan di draft hanya **nama file**; file fisik tetap lokal di step masing-masing.
 
-## 7. Address Handling
-- Tiga blok alamat:
-  - Alamat usaha (`business*`).
-  - Alamat KTP owner (`ownerKtp*`).
-  - Alamat domisili owner (`ownerDomicile*`).
-- Cascading select:
-  - `provinceOptions`, `cityOptionsByProvince`, `districtOptionsByCity`, `subdistrictOptionsByDistrict` didefinisikan statis di file.
-  - `SearchableSelect` mem-filter opsi berdasarkan query lokal.
-  - `useEffect` mengosongkan city/district/subdistrict ketika parent value berubah, untuk menjaga konsistensi.
-- Mirror alamat KTP ke domisili:
-  - `ownerDomicileSame` mem-copy semua field dari KTP ke domisili.
-  - `useEffect` juga menjaga agar perubahan KTP ikut memperbarui domisili saat checkbox aktif.
-- Enable/disable:
-  - Saat `ownerDomicileSame` true, field domisili disabled dan required flag dimatikan.
+## 9. Risiko & Catatan Teknis
+- Draft API di `src/app/api/onboarding/route.ts` masih in-memory (belum persisten ke DB).
+- File upload tidak disimpan ke backend; draft hanya menyimpan nama file.
+- Data lokasi masih hardcoded di `_utils/locations.ts`.
+- Tidak ada validasi format spesifik (email/telepon/kode pos) selain non-empty.
 
-## 8. State Management & Data Flow
-- Source of truth utama adalah local state di `BusinessEntityForm` (banyak `useState`).
-- Zustand (`useOnboardingStore`) hanya menerima data ketika submit final sukses dan lulus Zod validation.
-- Prefill:
-  - Jika `storedBusinessEntity` tersedia, `useEffect` mengisi state text/enum dari store.
-  - File upload tidak dipulihkan dari store (file states di-reset ke `null`), karena store hanya menyimpan nama file.
-- Data flow:
-  - User mengisi step-by-step; state hanya lokal.
-  - Submit final (step 4) membuat `payload` dengan data + nama file, validasi Zod, lalu `setBusinessEntity` ke store dan `router.push('/payment-feature')`.
-- Reset:
-  - Form reset manual via `onReset`, mengosongkan semua state lokal dan kembali ke step 1.
-  - Tidak ada reset eksplisit untuk store di halaman ini.
-
-## 9. UX-Driven Technical Decisions
-- Wizard single-page untuk mengurangi navigasi route dan menjaga konteks data.
-- Stepper visual untuk menunjukkan progres, namun navigasi step dibatasi agar flow tetap linear.
-- Cascading select + searchable select untuk memudahkan input alamat tanpa dropdown besar.
-- Gating upload berdasarkan `businessType` untuk mengurangi field tidak relevan.
-- Mirror alamat KTP ke domisili untuk mengurangi input duplikat.
-
-## 10. Risks, Edge Cases & Improvement Opportunities
-- Zod validation tidak menampilkan error ke UI; invalid submit hanya silent return tanpa feedback.
-- `buildMultipartPayload()` tidak digunakan; tidak ada request API, sehingga upload file hanya lokal dan tidak tersimpan.
-- Store hanya menyimpan nama file, bukan file itu sendiri; ketika user kembali ke halaman ini, file harus di-upload ulang.
-- `establishedYear` dan `monthlyVolume` hanya tersimpan di local state dan tidak ikut masuk payload/store.
-- Address options adalah hardcoded sample; belum ada integrasi API/real data, dan tidak ada validasi format kode pos/telepon/email selain non-empty.
-- Reset pada `handleBusinessTypeChange()` menghapus semua file dan preview, termasuk foto usaha, sehingga user kehilangan input jika mengganti tipe bisnis.
-- Conditional requirement untuk dokumen company/individual hanya terlihat pada validation logic; UI tidak memberikan ringkasan error per-field.
-
-Catatan: Jika ada logic di luar `BusinessEntityForm.tsx` yang mem-validasi atau mem-prefill `merchantName` via API, hal tersebut tidak terlihat di kode yang diinspeksi.
+Catatan: UI, layout, label, dan urutan field tetap mengikuti tampilan sebelumnya; perubahan fokus pada isolasi render, pemisahan step, dan alur draft per halaman.

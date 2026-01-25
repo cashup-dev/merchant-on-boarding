@@ -1,5 +1,4 @@
-import React from "react";
-import BusinessEntityClient from "./BusinessEntityClient";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Informasi Merchant/Badan Usaha",
@@ -7,5 +6,5 @@ export const metadata = {
 };
 
 export default function BusinessEntityPage() {
-  return <BusinessEntityClient />;
+  redirect("/business-entity/merchant");
 }

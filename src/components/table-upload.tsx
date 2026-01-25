@@ -288,14 +288,14 @@ export default function TableUpload({
             </div>
           </div>
 
-          <div className="rounded-lg border">
-            <Table>
+          <div className="rounded-lg border overflow-x-auto">
+            <Table className="w-full table-fixed min-w-[300px]">
               <TableHeader>
                 <TableRow className="text-xs">
-                  <TableHead className="h-9">Name</TableHead>
+                  <TableHead className="h-9 ">Name</TableHead>
                   <TableHead className="h-9">Type</TableHead>
                   <TableHead className="h-9">Size</TableHead>
-                  <TableHead className="h-9 w-[100px] text-end">Actions</TableHead>
+                  <TableHead className="h-9 text-end">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -346,7 +346,7 @@ export default function TableUpload({
                             </div>
                           )}
                         </div>
-                        <p className="flex items-center gap-1 truncate text-sm font-medium">
+                        <p className="flex items-center gap-1 truncate text-sm font-medium max-w-[180px] sm:max-w-none">
                           {fileItem.file.name}
                           {fileItem.status === 'error' && (
                             <Badge variant="destructive" size="sm" appearance="light">

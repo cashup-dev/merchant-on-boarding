@@ -218,11 +218,13 @@ const AppHeader: React.FC = () => {
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button> */}
           </div>
-          <div className="lg:hidden">
+          <div className="flex w-full items-center justify-between lg:hidden">
             <LanguageToggle />
+            <UserDropdown />
           </div>
-          {/* <!-- User Area --> */}
-          <UserDropdown />
+          <div className="hidden lg:block">
+            <UserDropdown />
+          </div>
         </div>
       </div>
     </header>
